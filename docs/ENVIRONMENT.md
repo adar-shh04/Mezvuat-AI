@@ -5,6 +5,18 @@ I inspected this machine on **2026-11-08**. Each item is marked:
 - **[coordinator]**: reported by the coordinator; I did not re-check it.
 - **[research]**: taken from a public source; the source and date are given.
 
+## 0. Phase 2 verified state (2026-11-09, supersedes the plans below where they differ)
+
+| Item | Result | How |
+|---|---|---|
+| uv | 0.13.7, not on PATH; `scripts/dev-env.sh` adds it and points all caches at `X:/mezvuat-cache` | [verified] |
+| Python | CPython 3.13.18, uv-managed under `X:/mezvuat-cache/python`, pinned by `backend/.python-version` | [verified] |
+| **CUDA** | **Works.** `torch 2.15.0+cu132`, CUDA 13.2 build on driver 610.60, `torch.cuda.is_available() == True`, device "NVIDIA GeForce RTX 3050 Ti Laptop GPU", arch list includes `sm_86`, a real tensor matmul ran on the GPU | [verified: executed in `backend/.venv`] |
+| Global Python | Untouched. The system 3.14 CPU-only torch is not used. | [verified] |
+| Docker | Running, capped at 3.82 GiB and shared with other projects. The stack uses compose project `mezvuat` and ports 15433 (Postgres), 16333 (Qdrant), 18000 (API), all on 127.0.0.1. | [verified] |
+| Host networking quirk | Use `127.0.0.1`, not `localhost`: psycopg on this machine stalls on the `::1` attempt (8 s with a timeout, indefinitely without one). Measured with a direct connect test. | [verified] |
+| LLM providers | No API keys, no Ollama. Nothing that needs a live provider has run. | [verified] |
+
 ## 1. Machine
 
 | Item | Value | How |

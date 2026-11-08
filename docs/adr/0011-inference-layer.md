@@ -1,6 +1,6 @@
 # 0011. Inference layer: provider-independent LLM interface, ModelMesh client, direct-provider fallback
 
-Proposed · 2026-11-08 · **Amended 2026-11-08 for contract 1.0-rc2** · Spec §1.5 Inference, §3, §4.1, §4.3, §5.3, §8 items 7 and 8 · Contract: `docs/contract/inference-api-v1.md` (1.0-rc2), `docs/contract/openapi-v1.yaml` (normative), `docs/contract/CR_RESOLUTIONS.md`
+Proposed · 2026-11-08 · **Amended 2026-11-08 for contract 1.0 and decision D1 (`docs/DECISIONS.md`)** · Spec §1.5 Inference, §3, §4.1, §4.3, §5.3, §8 items 7 and 8 · Contract: `docs/contract/inference-api-v1.md` (1.0, frozen), `docs/contract/openapi-v1.yaml` (normative), `docs/contract/CR_RESOLUTIONS.md`
 
 ## Context
 
@@ -26,7 +26,8 @@ No API keys exist yet.
 
 | Provider | Structured output | Data | Verdict |
 |---|---|---|---|
-| **Groq** | `json_schema` + `strict: true` (constrained decoding) on gpt-oss-20b/120b and qwen3.8-27b. No streaming together with structured output. | No retention of inference data by default; Zero Data Retention available. A **no-training statement has not been verified**; ModelMesh attests Groq as `data_use: unknown`. | **Technical choice.** Data-policy eligibility is an **open product-owner decision** (below). |
+| **Groq** | `json_schema` + `strict: true` (constrained decoding) on gpt-oss-20b/120b and qwen3.8-27b. No streaming together with structured output. | No retention of inference data by default; Zero Data Retention available. A no-training statement has not been verified; ModelMesh attests Groq as `data_use: unknown`. | **Chosen for public-corpus workspaces only** (D1, D4). |
+| **Ollama** (local) | Structured output depends on the model and is unverified. | Stays on the machine. | **Chosen for private workspaces** (D1). Not installed yet. |
 | Gemini | JSON schema supported; streaming | Free tier: prompts **are used to improve Google products**; human review possible (terms effective 2026-03-23). Paid tier: not used. | Free tier unacceptable for user documents (§5.3). Paid tier is one of the PO options. |
 
 ## Decision
@@ -91,9 +92,9 @@ The `ContractCapabilities` service is cached in the process.
 
 **Model and routing:**
 - `model="auto"`, unless the request pins a model.
-- Default `routing.policy` is `quality_balanced` for every task type.
-  - `cost_optimized` is avoided until clarification CQ-1 in `CHANGE_REQUESTS.md` is answered.
-  - The reason: that policy applies a default `min_quality` of 0.6 while no task type is calibrated, which could make every model ineligible.
+- Default `routing.policy` per task type: `cost_optimized` for `query_classification` and `query_rewriting`, `quality_balanced` otherwise.
+  - The earlier `quality_balanced`-only workaround (CQ-1) is no longer needed. Contract 1.0 (F1) makes the `cost_optimized` default floor of 0.6 apply only to calibrated task types and never hard, and F2 defines `quality_balanced` and `quality_max` when predicted quality is unavailable (rules policy).
+  - Warnings such as `default_min_quality_skipped:uncalibrated` are logged, not treated as errors.
 - `routing.timeout_ms` = the node's remaining deadline. The httpx client timeout is set to that value + 2 s.
 - `routing.fallback` is left at its default (`within_constraints` for `auto`), except for the judge (below).
 
@@ -131,7 +132,7 @@ There is no nested `tags` object, and no `task_type_intended` key except in the 
 - **No intelligent routing.** Mezvuat does not route here; that would duplicate ModelMesh (§4.2).
 - **Structured output:** `strict: true` with the same portable-subset schemas.
 - **Streaming:** `stream_options.include_usage: true`.
-- **Data policy:** the backend **enforces the workspace data policy itself** (contract §3.1). It has a config attestation table, `DIRECT_PROVIDER_DATA_USE`, which defaults to `groq=unknown` until the PO decides. See the open decision below.
+- **Data policy:** the backend **enforces the workspace data policy itself** (contract §3.1): Groq serves public workspaces only.
 
 #### Both backends
 
@@ -245,41 +246,23 @@ Responses are handled per item:
 
 Workspace or user deletion calls `DELETE /v1/feedback/{request_id}` for that workspace's stored mmr ids.
 
-### Open product-owner decision: data policy for document-bearing calls
+### Data policy for LLM calls (decided: D1, options E + C)
 
-Every call from a workspace carries user content: the question, and for most nodes the document text. Spec §5.3 forbids sending that to external providers without authorization.
+The product owner chose public cloud for the public corpus and local models for everything else. `docs/DECISIONS.md` is authoritative.
 
-**Default.** Mezvuat's default workspace policy is `data_policy: "no_training_providers"`. This is sent to ModelMesh and enforced by the direct backend.
-
-**Current catalog (rc2 attestations, per `CR_RESOLUTIONS.md`):**
-- Only **local Ollama** models qualify.
-- Gemini free tier is `may_train`.
-- Groq and OpenRouter are `unknown`.
-
-**Mezvuat's own direct Groq backend** is in the same position: `unknown`, so it is ineligible under the default.
-
-**The consequence today:**
-- With the default policy, LLM features would be blocked on both paths.
-- ModelMesh would return `422 no_eligible_model` unless it has an Ollama model configured.
-- The direct path would refuse with `inference_not_permitted`.
-
-**I am not deciding this.** The options are:
-
-| # | Option | Effect | Cost / risk |
-|---|---|---|---|
-| A | **Review and approve Groq's terms.** Mezvuat sets `groq=no_training` in its attestation table, and ModelMesh attests its Groq account the same way. | Groq usable on both paths, plus Zero Data Retention if enabled. | Needs a documented terms review (no official no-training statement was verified 2026-11-08), and possibly enabling ZDR. Free-tier rate limits (~30 RPM / 8K TPM on large models, docs table) throttle evaluation. |
-| B | **Review and approve selected OpenRouter endpoints.** | More model choice through ModelMesh. | Per-upstream terms vary, so the review is per endpoint. Mezvuat's direct backend would also need an OpenRouter adapter (not planned). |
-| C | **Local-only** (`data_policy: "local_only"`). Ollama, through ModelMesh and/or a new direct Ollama adapter in Mezvuat. | Strongest privacy. | Ollama is not installed. 4 GB VRAM limits us to roughly ≤ 4B quantized models (EST), with likely weaker synthesis, verification and judge quality. Structured-output reliability on small local models is unverified. |
-| D | **Paid tier**, e.g. Gemini paid (`no_training` per Google's terms) or a paid Groq plan. | Fewer rate limits and clear terms. | Money. Gemini would need a direct adapter if it is to be the direct fallback. |
-| E | **Per-workspace opt-in to `any`** for workspaces containing only public, CC-licensed documents (the arXiv demo corpus, ADR-0013). The default stays `no_training_providers` for user uploads. | Lets development and demos proceed on public data. | The PO must accept that free-tier providers may train on demo prompts. User questions are still sent, so the UI must warn the user. |
-
-These options can be combined, for example E for the demo corpus plus A for user workspaces. **Until the PO decides:**
-- M4 development uses a fake `LLMClient`, plus option E **only if approved**.
-- No real document content is sent to any provider.
+- **Classification is derived, never declared.** A workspace is `public` only when it has documents and every one is verified against the allowlisted CC-licensed demo corpus by the SHA-256 of its bytes (`workspace.data_classification`, computed by `recompute_classification`). Adding any other document makes it `private`. The API has no way to set it.
+- **ModelMesh:** public workspaces send `routing.data_policy: "any"`; private workspaces send `"local_only"`.
+- **Direct fallback follows the same rule:**
+  - Public workspaces may use Groq (free tier only, D4).
+  - Private workspaces use a **direct Ollama backend**, so Mezvuat stays usable without ModelMesh. Its weaker models are accepted.
+  - The `DIRECT_PROVIDER_DATA_USE` attestation table from the earlier draft is replaced by this rule.
+- **If no permitted backend is available, the call fails** with `inference_not_permitted`. The policy is never widened.
+- **Offline jobs obey D1 too:** RAGAS judging and LLM pre-labelling run only on the public corpus.
+- **Rate limits.** A new ModelMesh key defaults to 20 RPM, 50K TPM and $0.25/day, and a research run can make 12 calls with large evidence payloads. 429 is handled as specified above; if the defaults block normal use, report it and request explicit limits.
 
 ## Consequences
 
-- Mezvuat runs fully with only a direct-provider key, **subject to the data-policy decision**. ModelMesh adds routing, caching and telemetry with no node changes.
+- Mezvuat runs without ModelMesh: public workspaces need a Groq key, private workspaces need Ollama. ModelMesh adds routing, caching and telemetry with no node changes.
 - Start-up negotiation makes Mezvuat tolerant of older or newer 1.x ModelMesh servers, without silently dropping isolation or privacy fields.
 - Under 429 Mezvuat degrades by waiting or by failing the step. It does not reroute.
 - We maintain a small client generated from `openapi-v1.yaml`, with contract tests derived from it.

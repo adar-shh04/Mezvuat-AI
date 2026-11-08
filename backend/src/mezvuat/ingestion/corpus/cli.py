@@ -16,6 +16,7 @@ from typing import Any
 
 import httpx
 
+from mezvuat.core.errors import ParseFailedError
 from mezvuat.core.logging import configure_logging
 from mezvuat.ingestion.corpus.manifest import manifest_from_records, select_papers
 from mezvuat.ingestion.corpus.oai import (
@@ -26,6 +27,8 @@ from mezvuat.ingestion.corpus.oai import (
     fetch_record,
     search_ids,
 )
+from mezvuat.ingestion.corpus.splits import Family, build_splits
+from mezvuat.ingestion.parsers.pdf import PdfParser
 
 log = logging.getLogger("mezvuat.corpus")
 MAX_PDF_BYTES = 40 * 1024 * 1024
@@ -135,6 +138,33 @@ def cmd_download(args: argparse.Namespace) -> None:
     log.info("download finished", extra={"failures": failures})
 
 
+def cmd_split(args: argparse.Namespace) -> None:
+    """Split families before any query exists. Text comes from each paper's latest downloaded version."""
+    manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
+    pdf_dir = _data_root() / "arxiv"
+    parser = PdfParser()
+    families: list[Family] = []
+    skipped: list[str] = []
+    for paper in manifest["papers"]:
+        downloaded = [v for v in paper["versions"] if v.get("raw_sha256")]
+        if not downloaded:
+            skipped.append(paper["arxiv_id"])
+            continue
+        latest = max(downloaded, key=lambda v: v["ordinal"])
+        raw = (pdf_dir / f"{paper['arxiv_id'].replace('/', '_')}{latest['label']}.pdf").read_bytes()
+        try:
+            text = parser.parse(raw).text
+        except ParseFailedError:
+            skipped.append(paper["arxiv_id"])
+            continue
+        year = min(v["submitted"][:4] for v in paper["versions"])
+        families.append(Family(paper["arxiv_id"], f"{paper['categories'][0]}/{year}", text))
+    result = dict(build_splits(families, seed=args.seed))
+    result["skipped"] = skipped
+    Path(args.out).write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
+    log.info("splits written", extra={"families": len(families), "skipped": len(skipped)})
+
+
 def main() -> None:
     configure_logging()
     parser = argparse.ArgumentParser(prog="mezvuat-corpus")
@@ -151,6 +181,11 @@ def main() -> None:
     p_download.add_argument("--manifest", default="../data/manifests/demo_corpus.json")
     p_download.add_argument("--limit", type=int, default=0)
     p_download.set_defaults(func=cmd_download)
+    p_split = sub.add_parser("split")
+    p_split.add_argument("--manifest", default="../data/manifests/demo_corpus.json")
+    p_split.add_argument("--out", default="../data/manifests/demo_corpus_splits.json")
+    p_split.add_argument("--seed", type=int, default=13)
+    p_split.set_defaults(func=cmd_split)
     args = parser.parse_args()
     args.func(args)
 

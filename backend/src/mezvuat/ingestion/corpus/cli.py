@@ -18,10 +18,21 @@ import httpx
 
 from mezvuat.core.logging import configure_logging
 from mezvuat.ingestion.corpus.manifest import manifest_from_records, select_papers
-from mezvuat.ingestion.corpus.oai import USER_AGENT, ArxivRecord, ArxivVersion, RateLimiter, harvest
+from mezvuat.ingestion.corpus.oai import (
+    USER_AGENT,
+    ArxivRecord,
+    ArxivVersion,
+    RateLimiter,
+    fetch_record,
+    search_ids,
+)
 
 log = logging.getLogger("mezvuat.corpus")
 MAX_PDF_BYTES = 40 * 1024 * 1024
+DEFAULT_QUERY = (
+    '(cat:cs.IR OR cat:cs.CL) AND (abs:"retrieval-augmented" OR abs:"retrieval augmented" OR abs:rerank '
+    'OR abs:reranking OR abs:"dense retrieval" OR abs:"hybrid retrieval" OR abs:"passage retrieval" OR abs:"BM25")'
+)
 
 
 def _data_root() -> Path:
@@ -44,22 +55,30 @@ def _record_from_json(item: dict[str, Any]) -> ArxivRecord:
 
 
 def cmd_harvest(args: argparse.Namespace) -> None:
+    """Find candidates through the search API, then fetch licence and version data for each. Resumable."""
     out = _data_root() / "harvest.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
+    done: set[str] = set()
+    if out.exists():
+        with out.open(encoding="utf-8") as handle:
+            done = {json.loads(line)["arxiv_id"] for line in handle}
     limiter = RateLimiter()
-    count = 0
     with (
         httpx.Client(headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client,
-        out.open("w", encoding="utf-8") as handle,
+        out.open("a", encoding="utf-8") as handle,
     ):
-        for set_spec in args.sets:
-            for record in harvest(set_spec, date.fromisoformat(args.since), client, limiter):
+        candidates = list(dict.fromkeys(search_ids(args.query, client, limiter, max_results=args.max_candidates)))
+        log.info("candidates found", extra={"candidates": len(candidates), "already_done": len(done)})
+        for number, arxiv_id in enumerate(candidates, start=1):
+            if arxiv_id in done:
+                continue
+            record = fetch_record(arxiv_id, client, limiter)
+            if record is not None:
                 handle.write(json.dumps(record.to_json()) + "\n")
-                count += 1
-                if count % 1000 == 0:
-                    handle.flush()
-                    log.info("harvested", extra={"records": count, "set": set_spec})
-    log.info("harvest complete", extra={"records": count, "path": str(out)})
+                handle.flush()
+            if number % 100 == 0:
+                log.info("harvest progress", extra={"processed": number})
+    log.info("harvest complete", extra={"path": str(out)})
 
 
 def cmd_select(args: argparse.Namespace) -> None:
@@ -121,8 +140,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="mezvuat-corpus")
     sub = parser.add_subparsers(required=True)
     p_harvest = sub.add_parser("harvest")
-    p_harvest.add_argument("--sets", nargs="+", default=["cs:cs:IR", "cs:cs:CL"])
-    p_harvest.add_argument("--since", default="2023-06-01")
+    p_harvest.add_argument("--query", default=DEFAULT_QUERY)
+    p_harvest.add_argument("--max-candidates", type=int, default=1200)
     p_harvest.set_defaults(func=cmd_harvest)
     p_select = sub.add_parser("select")
     p_select.add_argument("--target", type=int, default=150)

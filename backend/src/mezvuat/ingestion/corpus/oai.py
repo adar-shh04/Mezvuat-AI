@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
@@ -14,11 +15,14 @@ import defusedxml.ElementTree as SafeET
 import httpx
 
 OAI_BASE_URL = "https://oaipmh.arxiv.org/oai"
+API_BASE_URL = "https://export.arxiv.org/api/query"
 USER_AGENT = "mezvuat-ai-corpus-builder/0.1 (research prototype)"
 MIN_INTERVAL_S = 3.0
 
 _OAI = "{http://www.openarchives.org/OAI/2.0/}"
 _RAW = "{http://arxiv.org/OAI/arXivRaw/}"
+_ATOM = "{http://www.w3.org/2005/Atom}"
+_VERSION_SUFFIX = re.compile(r"v\d+$")
 
 
 class RateLimiter:
@@ -99,52 +103,82 @@ def parse_record(raw: Element) -> ArxivRecord:
     )
 
 
-def parse_list_records(xml_bytes: bytes) -> tuple[list[ArxivRecord], str | None]:
-    """Return the records on one OAI page and the resumption token, if any."""
+def parse_get_record(xml_bytes: bytes) -> ArxivRecord | None:
+    """Parse an OAI GetRecord response. Returns None for a record that does not exist or was deleted."""
     root = SafeET.fromstring(xml_bytes)
     error = root.find(f"{_OAI}error")
     if error is not None:
-        if error.attrib.get("code") == "noRecordsMatch":
-            return [], None
+        if error.attrib.get("code") == "idDoesNotExist":
+            return None
         raise RuntimeError(f"OAI-PMH error {error.attrib.get('code')}: {error.text}")
-    list_records = root.find(f"{_OAI}ListRecords")
-    if list_records is None:
-        raise RuntimeError("OAI-PMH response has no ListRecords element")
-    records: list[ArxivRecord] = []
-    for record in list_records.findall(f"{_OAI}record"):
-        header = record.find(f"{_OAI}header")
-        if header is not None and header.attrib.get("status") == "deleted":
-            continue
-        metadata = record.find(f"{_OAI}metadata")
-        raw = metadata.find(f"{_RAW}arXivRaw") if metadata is not None else None
-        if raw is not None:
-            records.append(parse_record(raw))
-    token_element = list_records.find(f"{_OAI}resumptionToken")
-    token = (token_element.text or "").strip() if token_element is not None else ""
-    return records, token or None
+    record = root.find(f"{_OAI}GetRecord/{_OAI}record")
+    if record is None:
+        raise RuntimeError("OAI-PMH response has no GetRecord element")
+    header = record.find(f"{_OAI}header")
+    if header is not None and header.attrib.get("status") == "deleted":
+        return None
+    raw = record.find(f"{_OAI}metadata/{_RAW}arXivRaw")
+    return parse_record(raw) if raw is not None else None
 
 
-def harvest(
-    set_spec: str, from_date: date, client: httpx.Client, limiter: RateLimiter | None = None
-) -> Iterator[ArxivRecord]:
-    """Yield every record in an OAI set updated since `from_date`, one rate-limited page at a time."""
-    limiter = limiter or RateLimiter()
-    params: dict[str, str] = {
-        "verb": "ListRecords",
-        "metadataPrefix": "arXivRaw",
-        "set": set_spec,
-        "from": from_date.isoformat(),
-    }
-    while True:
+def parse_search_ids(xml_bytes: bytes) -> list[str]:
+    """Extract versionless arXiv ids from an arXiv API Atom feed."""
+    root = SafeET.fromstring(xml_bytes)
+    ids: list[str] = []
+    for entry in root.findall(f"{_ATOM}entry"):
+        element = entry.find(f"{_ATOM}id")
+        if element is not None and element.text:
+            ids.append(_VERSION_SUFFIX.sub("", element.text.rsplit("/abs/", 1)[-1].strip()))
+    return ids
+
+
+def _get(client: httpx.Client, limiter: RateLimiter, url: str, params: dict[str, str]) -> httpx.Response:
+    """One polite request, retrying transient arXiv failures (it returns 503 and timeouts under load)."""
+    for attempt in range(4):
         limiter.wait()
-        response = client.get(OAI_BASE_URL, params=params, timeout=120.0)
-        if response.status_code == 503:
-            retry_after = int(response.headers.get("Retry-After", "30"))
-            time.sleep(min(retry_after, 300))
+        try:
+            response = client.get(url, params=params, timeout=60.0)
+        except httpx.TransportError:
+            if attempt == 3:
+                raise
+            continue
+        if response.status_code in (429, 500, 502, 503, 504) and attempt < 3:
+            time.sleep(min(int(response.headers.get("Retry-After", "20")), 120))
             continue
         response.raise_for_status()
-        records, token = parse_list_records(response.content)
-        yield from records
-        if token is None:
+        return response
+    raise RuntimeError("unreachable")
+
+
+def search_ids(
+    query: str, client: httpx.Client, limiter: RateLimiter, *, max_results: int, page_size: int = 200
+) -> Iterator[str]:
+    """Yield candidate ids from the arXiv search API, newest first."""
+    for start in range(0, max_results, page_size):
+        response = _get(
+            client,
+            limiter,
+            API_BASE_URL,
+            {
+                "search_query": query,
+                "start": str(start),
+                "max_results": str(page_size),
+                "sortBy": "submittedDate",
+                "sortOrder": "descending",
+            },
+        )
+        ids = parse_search_ids(response.content)
+        if not ids:
             return
-        params = {"verb": "ListRecords", "resumptionToken": token}
+        yield from ids
+
+
+def fetch_record(arxiv_id: str, client: httpx.Client, limiter: RateLimiter) -> ArxivRecord | None:
+    """OAI ListRecords times out at arXiv (HTTP 503 after about 120 s), so records are fetched one by one."""
+    response = _get(
+        client,
+        limiter,
+        OAI_BASE_URL,
+        {"verb": "GetRecord", "identifier": f"oai:arXiv.org:{arxiv_id}", "metadataPrefix": "arXivRaw"},
+    )
+    return parse_get_record(response.content)

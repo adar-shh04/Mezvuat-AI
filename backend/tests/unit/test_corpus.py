@@ -7,15 +7,14 @@ from pathlib import Path
 import pytest
 
 from mezvuat.ingestion.corpus.manifest import ALLOWED_LICENSES, is_eligible, load_allowlist, select_papers
-from mezvuat.ingestion.corpus.oai import ArxivRecord, ArxivVersion, RateLimiter, parse_list_records
+from mezvuat.ingestion.corpus.oai import ArxivRecord, ArxivVersion, RateLimiter, parse_get_record, parse_search_ids
 
 CC_BY = "http://creativecommons.org/licenses/by/4.0/"
 NON_EXCLUSIVE = "http://arxiv.org/licenses/nonexclusive-distrib/1.0/"
 
-PAGE = f"""<?xml version="1.0" encoding="UTF-8"?>
+RECORD = f"""<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">
-<ListRecords>
-<record><header><identifier>oai:arXiv.org:2401.00001</identifier></header>
+<GetRecord><record><header><identifier>oai:arXiv.org:2401.00001</identifier></header>
 <metadata><arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/">
 <id>2401.00001</id>
 <version version="v2"><date>Tue, 6 Feb 2024 10:00:00 GMT</date><size>100kb</size></version>
@@ -23,18 +22,15 @@ PAGE = f"""<?xml version="1.0" encoding="UTF-8"?>
 <title>Hybrid  retrieval
  for RAG</title><authors>A. Author, B. Author</authors><categories>cs.IR cs.CL</categories>
 <license>{CC_BY}</license><abstract>  We study rerank models.  </abstract>
-</arXivRaw></metadata></record>
-<record><header status="deleted"><identifier>oai:arXiv.org:gone</identifier></header></record>
-<resumptionToken>tok123</resumptionToken>
-</ListRecords></OAI-PMH>
+</arXivRaw></metadata></record></GetRecord></OAI-PMH>
 """.encode()
 
+OAI_ROOT = b'<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">'
 
-def test_parse_page_extracts_versions_in_order_and_resumption_token() -> None:
-    records, token = parse_list_records(PAGE)
-    assert token == "tok123"
-    assert len(records) == 1
-    record = records[0]
+
+def test_parse_record_extracts_versions_in_order() -> None:
+    record = parse_get_record(RECORD)
+    assert record is not None
     assert record.arxiv_id == "2401.00001"
     assert record.title == "Hybrid retrieval for RAG"
     assert record.license == CC_BY
@@ -45,20 +41,29 @@ def test_parse_page_extracts_versions_in_order_and_resumption_token() -> None:
     ]
 
 
-def test_oai_error_raises_but_no_records_is_empty() -> None:
-    empty = b'<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"><error code="noRecordsMatch"/></OAI-PMH>'
-    assert parse_list_records(empty) == ([], None)
-    bad = b'<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"><error code="badArgument">no</error></OAI-PMH>'
+def test_missing_record_is_none_but_other_errors_raise() -> None:
+    assert parse_get_record(OAI_ROOT + b'<error code="idDoesNotExist"/></OAI-PMH>') is None
     with pytest.raises(RuntimeError):
-        parse_list_records(bad)
+        parse_get_record(OAI_ROOT + b'<error code="badArgument">no</error></OAI-PMH>')
+
+
+def test_deleted_record_is_none() -> None:
+    body = b'<GetRecord><record><header status="deleted"/></record></GetRecord></OAI-PMH>'
+    assert parse_get_record(OAI_ROOT + body) is None
 
 
 def test_xml_entity_expansion_is_refused() -> None:
     from defusedxml import EntitiesForbidden
 
-    bomb = b'<!DOCTYPE x [<!ENTITY a "aaaa">]><x>&a;</x>'
     with pytest.raises(EntitiesForbidden):
-        parse_list_records(bomb)
+        parse_get_record(b'<!DOCTYPE x [<!ENTITY a "aaaa">]><x>&a;</x>')
+
+
+def test_search_feed_ids_lose_their_version_suffix() -> None:
+    feed = b"""<feed xmlns="http://www.w3.org/2005/Atom"><id>https://arxiv.org/api/x</id>
+    <entry><id>http://arxiv.org/abs/2611.07928v1</id></entry>
+    <entry><id>http://arxiv.org/abs/2401.00001v12</id></entry></feed>"""
+    assert parse_search_ids(feed) == ["2611.07928", "2401.00001"]
 
 
 def test_rate_limiter_keeps_three_seconds_between_requests() -> None:

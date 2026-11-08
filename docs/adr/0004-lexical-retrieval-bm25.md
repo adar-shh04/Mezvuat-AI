@@ -1,6 +1,6 @@
 # 0004. Lexical retrieval: BM25 engine
 
-Proposed · 2026-11-08 · Spec §1.3B, §1.3C, §8 item 3
+Accepted with evidence · 2026-11-09 (proposed 2026-11-08) · Spec §1.3B, §1.3C, §8 item 3
 
 ## Context
 
@@ -44,6 +44,33 @@ The spec names **BM25** as the lexical method and lists "Postgres FTS initially 
    - **Adoption rule:** if nDCG@10 differs by less than 0.005 with overlapping 95% bootstrap CIs, and p95 latency is ≤ 50 ms, and per-workspace statistics are confirmed, we switch to Qdrant native BM25. That removes the file-index lifecycle.
    - Otherwise bm25s stays.
    - The result is recorded as an amendment to this ADR.
+
+## Amendment, 2026-11-09: decided with evidence (decisions D6 and D7)
+
+D6 allows AGPL dependencies but requires this choice to be made with evidence and to keep the simpler option unless the difference is measurable. All numbers are from `experiments/spikes/bm25_engines.py`, on the SciFact dev split (161 queries carved from train; the test split was not touched). Raw results and CIs: `docs/eval/bm25_engines.json`.
+
+| Engine | nDCG@10 (95% CI) | Recall@100 | MRR@10 | Index build | Query p50 / p95 |
+|---|---|---|---|---|---|
+| **bm25s** 0.3.16 (Lucene variant) | 0.7466 (0.689, 0.804) | 0.941 | 0.7206 | 1.17 s | 1.43 / 2.59 ms |
+| ParadeDB pg_search 0.26.6 | 0.7442 (0.686, 0.802) | 0.941 | 0.7177 | 0.48 s | 3.53 / 5.38 ms |
+| Qdrant 1.20 native BM25 | 0.7569 (0.701, 0.812) | 0.941 | 0.7287 | 1.08 s | 5.09 / 25.72 ms |
+
+Paired against bm25s (bootstrap over queries, 10,000 resamples):
+
+| Pair | Delta nDCG@10 | 95% CI | Randomisation p |
+|---|---|---|---|
+| ParadeDB - bm25s | -0.0024 | (-0.0055, 0.0000) | 0.107 |
+| Qdrant native - bm25s | +0.0103 | (-0.0048, +0.0273) | 0.219 |
+
+Neither difference is significant. Recall@100 was identical for all three.
+
+**Operational cost.** ParadeDB needs its own 1.53 GB Postgres image in place of the stock `postgres:17-alpine`, and it would make the AGPL extension part of the database. Its build is faster here, which does not matter at this corpus size.
+
+**Decision: keep bm25s.** ParadeDB shows no measurable gain for a heavier, non-standard database image. Qdrant native BM25 does not meet the adoption rule in point 6 (absolute delta under 0.005, per-workspace statistics confirmed): the delta is 0.0103, with a CI that includes zero, and per-workspace IDF behaviour was not tested. It remains the most likely future replacement, since it would remove the file-index lifecycle. Worth re-testing on the domain dataset.
+
+**Metadata filters** use bm25s `weight_mask`, so filtering happens before top-k and the over-fetch fallback in point 4 was not needed.
+
+**Limitations.** One public dataset of short abstracts, 161 queries; differences smaller than about 0.02 would not be detectable here. Tokenisers differ slightly between engines.
 
 ## Consequences
 

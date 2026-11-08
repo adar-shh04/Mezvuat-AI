@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main, phase-2]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mezvuat
+          POSTGRES_USER: mezvuat
+          POSTGRES_PASSWORD: mezvuat-dev-only
+        ports:
+          - 15433:5432
+        options: >-
+          --health-cmd "pg_isready -U mezvuat -d mezvuat"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+      qdrant:
+        image: qdrant/qdrant:v1.20.0
+        ports:
+          - 16333:6333
+    env:
+      HF_HOME: ${{ github.workspace }}/.cache/hf
+      ML_DEVICE: cpu
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.7"
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --frozen --group ml --group eval --group dev
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync ruff format --check .
+      - run: uv run --no-sync mypy
+      - run: uv run --no-sync lint-imports
+      - run: uv run --no-sync python ../scripts/check_licenses.py
+      - uses: actions/cache@v4
+        with:
+          path: .cache/hf
+          key: hf-${{ hashFiles('backend/src/mezvuat/ml/registry.py') }}
+      - run: uv run --no-sync pytest -q
+
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f backend/Dockerfile -t mezvuat-backend:ci .
+      - name: Evaluation dependencies stay out of the API image
+        run: |
+          docker run --rm mezvuat-backend:ci python -c "
+          import importlib.util as u, sys
+          for name in ('ragas', 'mlflow'):
+              if u.find_spec(name):
+                  sys.exit(f'{name} must not be in the API image')
+          "

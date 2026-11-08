@@ -1,0 +1,37 @@
+name: scifact-dev-embedders
+mlflow_experiment: retrieval-baselines
+dataset: scifact
+split: dev
+configs:
+- name: bm25
+  mode: bm25
+- name: dense__all-MiniLM-L6-v2
+  mode: dense
+  embedder: sentence-transformers/all-MiniLM-L6-v2
+- name: hybrid__all-MiniLM-L6-v2
+  mode: hybrid_rrf
+  embedder: sentence-transformers/all-MiniLM-L6-v2
+- name: dense__bge-small-en-v1.5
+  mode: dense
+  embedder: BAAI/bge-small-en-v1.5
+- name: hybrid__bge-small-en-v1.5
+  mode: hybrid_rrf
+  embedder: BAAI/bge-small-en-v1.5
+- name: dense__e5-small-v2
+  mode: dense
+  embedder: intfloat/e5-small-v2
+- name: hybrid__e5-small-v2
+  mode: hybrid_rrf
+  embedder: intfloat/e5-small-v2
+- name: dense__snowflake-arctic-embed-s
+  mode: dense
+  embedder: Snowflake/snowflake-arctic-embed-s
+- name: hybrid__snowflake-arctic-embed-s
+  mode: hybrid_rrf
+  embedder: Snowflake/snowflake-arctic-embed-s
+- name: dense__bge-base-en-v1.5
+  mode: dense
+  embedder: BAAI/bge-base-en-v1.5
+- name: hybrid__bge-base-en-v1.5
+  mode: hybrid_rrf
+  embedder: BAAI/bge-base-en-v1.5

@@ -15,7 +15,9 @@ dependencies = [
     "psycopg[binary]>=3.3",
     "pydantic>=2.14",
     "pydantic-settings>=2.8",
-    "pymupdf>=2.1",
+    # Below 2.0 on purpose: 2.x adds onnxruntime and empty pymupdf4llm/pymupdf-layout placeholder packages with no
+    # licence metadata, for layout code we do not use. See ADR-0003.
+    "pymupdf>=1.28.2,<2",
     "pypdf>=7.0",
     "PyStemmer>=2.2",
     "python-multipart>=0.0.20",

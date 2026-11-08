@@ -1,4 +1,4 @@
-> **Mirror — do not edit here.** Canonical copy lives in the ModelMesh repo (`modelmesh/docs/contract/`). Synced by the coordinator 2026-11-08 at 1.0-rc2. Raise change requests in `CHANGE_REQUESTS.md`.
+> **Mirror — do not edit here.** Canonical copy lives in the ModelMesh repo (`modelmesh/docs/contract/`). Synced by the coordinator 2026-11-08 at 1.0. Raise change requests in `CHANGE_REQUESTS.md`.
 
 # Resolution of Mezvuat change requests against Contract v1
 
@@ -50,6 +50,8 @@ Four sub-items inside accepted CRs were rejected: CR-03.2, CR-03.4, CR-06.1 and 
 10. For judge calls, pin an explicit model with `fallback: "none"`.
 
 ## Items for the product owner
+
+Status: answered by `docs/DECISIONS.md` D4 (2026-11-08). Clients choose `data_policy` per request. The contract was frozen at 1.0 after these resolutions.
 
 - **`data_policy` vs the current provider pool.** Mezvuat will send `no_training_providers` by default for document content. Under the current attestations, that leaves **only local Ollama models eligible**:
   - Gemini free tier is `may_train`.

@@ -154,6 +154,8 @@ def chunk_document(
         for group in _pack(units, config):
             start, end = group[0].start, group[-1].end
             body = text[start:end]
+            if section.path and " ".join(body.split()) == section.path[-1]:
+                continue  # a heading alone is not evidence; its title is carried in the children section paths
             tokens = counter.count(body)
             drafts.append(
                 ChunkDraft(

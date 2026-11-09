@@ -99,6 +99,22 @@ def test_section_kind_is_carried_to_chunks() -> None:
     assert chunk_document(doc(text, sections=sections), WordCounter(), CONFIG)[0].section_kind == "references"
 
 
+def test_a_section_holding_only_its_heading_produces_no_chunk() -> None:
+    text = "3
+Factor Analysis
+
+3.1 Details
+
+The factors are described in full here."
+    boundary = text.index("3.1")
+    sections = [
+        Section(path=("3 Factor Analysis",), char_start=0, char_end=boundary),
+        Section(path=("3 Factor Analysis", "3.1 Details"), char_start=boundary, char_end=len(text)),
+    ]
+    drafts = chunk_document(doc(text, sections=sections), WordCounter(), CONFIG)
+    assert [d.section_path for d in drafts] == [("3 Factor Analysis", "3.1 Details")]
+
+
 def test_chunk_ids_are_deterministic_and_distinct() -> None:
     assert chunk_id_for("ver_1", "v1", 0) == chunk_id_for("ver_1", "v1", 0)
     assert chunk_id_for("ver_1", "v1", 0) != chunk_id_for("ver_1", "v1", 1)

@@ -21,6 +21,13 @@ router = APIRouter(
 )
 
 
+class _LazyEmbedder:
+    """Loads the embedding model on first use, so lexical-only searches never pay for it."""
+
+    def embed_query(self, query: str) -> list[float]:
+        return get_embedder().embed_query(query)
+
+
 @router.post("/search", response_model=SearchResponse)
 def search(workspace_id: str, body: SearchRequest, session: SessionDep) -> SearchResponse:
     get_workspace(session, workspace_id)
@@ -28,7 +35,7 @@ def search(workspace_id: str, body: SearchRequest, session: SessionDep) -> Searc
     pipeline = RetrievalPipeline(
         lexical=get_lexical_store(),
         dense=get_dense_index(),
-        embedder=get_embedder(),
+        embedder=_LazyEmbedder(),
         store=PostgresChunkStore(session),
         reranker=reranker,
     )

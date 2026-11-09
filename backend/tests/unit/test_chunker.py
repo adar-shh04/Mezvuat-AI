@@ -100,12 +100,7 @@ def test_section_kind_is_carried_to_chunks() -> None:
 
 
 def test_a_section_holding_only_its_heading_produces_no_chunk() -> None:
-    text = "3
-Factor Analysis
-
-3.1 Details
-
-The factors are described in full here."
+    text = "3\nFactor Analysis\n\n3.1 Details\n\nThe factors are described in full here."
     boundary = text.index("3.1")
     sections = [
         Section(path=("3 Factor Analysis",), char_start=0, char_end=boundary),

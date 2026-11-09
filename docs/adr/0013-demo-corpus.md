@@ -41,6 +41,10 @@ The architecture stays domain-independent.
   - No effective dates (unknown).
   - Journal publication date is unknown unless the user enters it.
 
+## Amendment, 2026-11-09: metadata source
+
+The OAI-PMH plan could not be used: both `ListRecords` and `GetRecord` on `oaipmh.arxiv.org` timed out during the build (HTTP 503 after about 120 s, 000 after 25 s). Candidates now come from the arXiv search API (titles, authors, categories, abstracts), and licence and version history from each paper abstract page, at one request every 3 s on one connection. Parsed in `mezvuat.ingestion.corpus.oai`. The selection rules and the D1 allowlist are unchanged: the allowlist is keyed by the SHA-256 of downloaded bytes, so the metadata source cannot make a document public.
+
 ## Consequences
 
 - Real versioning comes free, and every temporal claim can be checked against arXiv metadata.

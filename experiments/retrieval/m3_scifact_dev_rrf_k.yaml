@@ -1,0 +1,21 @@
+name: scifact-dev-rrf-k
+mlflow_experiment: retrieval-baselines
+dataset: scifact
+split: dev
+configs:
+- name: hybrid_rrf_k10
+  mode: hybrid_rrf
+  embedder: BAAI/bge-small-en-v1.5
+  rrf_k: 10
+- name: hybrid_rrf_k30
+  mode: hybrid_rrf
+  embedder: BAAI/bge-small-en-v1.5
+  rrf_k: 30
+- name: hybrid_rrf_k60
+  mode: hybrid_rrf
+  embedder: BAAI/bge-small-en-v1.5
+  rrf_k: 60
+- name: hybrid_rrf_k100
+  mode: hybrid_rrf
+  embedder: BAAI/bge-small-en-v1.5
+  rrf_k: 100

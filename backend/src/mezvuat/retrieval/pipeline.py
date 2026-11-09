@@ -28,7 +28,7 @@ from mezvuat.retrieval.types import (
 
 @dataclass(frozen=True)
 class RetrievalConfig:
-    mode: RetrievalMode = "hybrid_rrf_rerank"
+    mode: RetrievalMode = "hybrid_rrf"
     candidate_depth: int = 100
     rerank_depth: int = 50
     rrf_k: int = DEFAULT_RRF_K

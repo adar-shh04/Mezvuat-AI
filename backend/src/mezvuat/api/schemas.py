@@ -94,7 +94,7 @@ class SearchRequest(BaseModel):
 
     query: str = Field(min_length=1, max_length=4000)
     k: int = Field(default=10, ge=1, le=100)
-    mode: Literal["dense", "bm25", "hybrid_rrf", "hybrid_rrf_rerank"] = "hybrid_rrf_rerank"
+    mode: Literal["dense", "bm25", "hybrid_rrf", "hybrid_rrf_rerank"] = "hybrid_rrf"
     candidate_depth: int = Field(default=100, ge=1, le=1000)
     rerank_depth: int = Field(default=50, ge=1, le=200)
     filters: SearchFilters = Field(default_factory=SearchFilters)

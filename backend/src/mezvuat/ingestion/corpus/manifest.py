@@ -85,7 +85,7 @@ def select_papers(
 
 
 def manifest_from_records(records: Iterable[ArxivRecord]) -> dict[str, Any]:
-    return {"schema": 1, "source": "arXiv OAI-PMH arXivRaw", "papers": [r.to_json() for r in records]}
+    return {"schema": 1, "source": "arXiv API and abstract pages", "papers": [r.to_json() for r in records]}
 
 
 def load_allowlist(path: Path) -> dict[str, ManifestVersion]:

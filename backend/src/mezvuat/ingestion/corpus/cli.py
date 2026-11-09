@@ -25,7 +25,7 @@ from mezvuat.ingestion.corpus.oai import (
     ArxivVersion,
     RateLimiter,
     fetch_record,
-    search_ids,
+    search_entries,
 )
 from mezvuat.ingestion.corpus.splits import Family, build_splits
 from mezvuat.ingestion.parsers.pdf import PdfParser
@@ -70,12 +70,14 @@ def cmd_harvest(args: argparse.Namespace) -> None:
         httpx.Client(headers={"User-Agent": USER_AGENT}, follow_redirects=True) as client,
         out.open("a", encoding="utf-8") as handle,
     ):
-        candidates = list(dict.fromkeys(search_ids(args.query, client, limiter, max_results=args.max_candidates)))
+        candidates = {
+            e.arxiv_id: e for e in search_entries(args.query, client, limiter, max_results=args.max_candidates)
+        }
         log.info("candidates found", extra={"candidates": len(candidates), "already_done": len(done)})
-        for number, arxiv_id in enumerate(candidates, start=1):
+        for number, (arxiv_id, entry) in enumerate(candidates.items(), start=1):
             if arxiv_id in done:
                 continue
-            record = fetch_record(arxiv_id, client, limiter)
+            record = fetch_record(entry, client, limiter)
             if record is not None:
                 handle.write(json.dumps(record.to_json()) + "\n")
                 handle.flush()

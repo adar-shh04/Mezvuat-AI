@@ -1,4 +1,9 @@
-"""arXiv OAI-PMH harvesting (metadata only). arXiv's terms: one request every three seconds, one connection."""
+"""arXiv corpus metadata.
+
+The search API supplies titles, authors, categories and abstracts; the abstract page supplies licence and version
+history, because arXiv OAI-PMH timed out on both ListRecords and GetRecord when this was built (HTTP 503 after about
+120 s). arXiv terms: at most one request every three seconds, on one connection.
+"""
 
 from __future__ import annotations
 
@@ -9,20 +14,24 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 from email.utils import parsedate_to_datetime
 from typing import Any
-from xml.etree.ElementTree import Element
 
 import defusedxml.ElementTree as SafeET
 import httpx
 
-OAI_BASE_URL = "https://oaipmh.arxiv.org/oai"
 API_BASE_URL = "https://export.arxiv.org/api/query"
+ABS_BASE_URL = "https://arxiv.org/abs"
 USER_AGENT = "mezvuat-ai-corpus-builder/0.1 (research prototype)"
 MIN_INTERVAL_S = 3.0
 
-_OAI = "{http://www.openarchives.org/OAI/2.0/}"
-_RAW = "{http://arxiv.org/OAI/arXivRaw/}"
 _ATOM = "{http://www.w3.org/2005/Atom}"
+_ARXIV = "{http://arxiv.org/schemas/atom}"
 _VERSION_SUFFIX = re.compile(r"v\d+$")
+_LICENSE_LINK = re.compile(r'class="abs-license">\s*<a href="([^"]+)"')
+_VERSION_ROW = re.compile(
+    r"\[v(\d+)\](?:\s*</(?:a|strong)>)+\s*([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4} [\d:]{8} [A-Z]{3})"
+)
+    r"\[v(\d+)\]\s*</(?:a|strong)>\s*([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4} [\d:]{8} [A-Z]{3})"
+)
 
 
 class RateLimiter:
@@ -73,11 +82,6 @@ class ArxivRecord:
         return data
 
 
-def _text(element: Element, tag: str) -> str:
-    found = element.find(f"{_RAW}{tag}")
-    return " ".join((found.text or "").split()) if found is not None else ""
-
-
 def _parse_date(value: str) -> date:
     parsed = parsedate_to_datetime(value)
     if parsed.tzinfo is None:
@@ -85,55 +89,59 @@ def _parse_date(value: str) -> date:
     return datetime.fromtimestamp(parsed.timestamp(), UTC).date()
 
 
-def parse_record(raw: Element) -> ArxivRecord:
-    versions: list[ArxivVersion] = []
-    for version in raw.findall(f"{_RAW}version"):
-        label = version.attrib["version"]
-        date_text = _text(version, "date")
-        versions.append(ArxivVersion(label=label, ordinal=int(label.lstrip("v")), submitted=_parse_date(date_text)))
-    versions.sort(key=lambda v: v.ordinal)
-    return ArxivRecord(
-        arxiv_id=_text(raw, "id"),
-        title=_text(raw, "title"),
-        authors=_text(raw, "authors"),
-        categories=tuple(_text(raw, "categories").split()),
-        license=_text(raw, "license") or None,
-        abstract=_text(raw, "abstract"),
-        versions=tuple(versions),
-    )
+def _clean(element: Any) -> str:
+    return " ".join((element.text or "").split()) if element is not None else ""
 
 
-def parse_get_record(xml_bytes: bytes) -> ArxivRecord | None:
-    """Parse an OAI GetRecord response. Returns None for a record that does not exist or was deleted."""
+@dataclass(frozen=True)
+class SearchEntry:
+    arxiv_id: str
+    title: str
+    authors: str
+    categories: tuple[str, ...]
+    abstract: str
+
+
+def parse_search_entries(xml_bytes: bytes) -> list[SearchEntry]:
+    """Extract paper metadata from an arXiv API Atom feed."""
     root = SafeET.fromstring(xml_bytes)
-    error = root.find(f"{_OAI}error")
-    if error is not None:
-        if error.attrib.get("code") == "idDoesNotExist":
-            return None
-        raise RuntimeError(f"OAI-PMH error {error.attrib.get('code')}: {error.text}")
-    record = root.find(f"{_OAI}GetRecord/{_OAI}record")
-    if record is None:
-        raise RuntimeError("OAI-PMH response has no GetRecord element")
-    header = record.find(f"{_OAI}header")
-    if header is not None and header.attrib.get("status") == "deleted":
-        return None
-    raw = record.find(f"{_OAI}metadata/{_RAW}arXivRaw")
-    return parse_record(raw) if raw is not None else None
-
-
-def parse_search_ids(xml_bytes: bytes) -> list[str]:
-    """Extract versionless arXiv ids from an arXiv API Atom feed."""
-    root = SafeET.fromstring(xml_bytes)
-    ids: list[str] = []
+    entries: list[SearchEntry] = []
     for entry in root.findall(f"{_ATOM}entry"):
-        element = entry.find(f"{_ATOM}id")
-        if element is not None and element.text:
-            ids.append(_VERSION_SUFFIX.sub("", element.text.rsplit("/abs/", 1)[-1].strip()))
-    return ids
+        identifier = _clean(entry.find(f"{_ATOM}id"))
+        if "/abs/" not in identifier:
+            continue
+        primary = entry.find(f"{_ARXIV}primary_category")
+        others = [c.attrib.get("term", "") for c in entry.findall(f"{_ATOM}category")]
+        first = primary.attrib.get("term", "") if primary is not None else ""
+        categories = tuple(dict.fromkeys([first, *others]) if first else dict.fromkeys(others))
+        entries.append(
+            SearchEntry(
+                arxiv_id=_VERSION_SUFFIX.sub("", identifier.rsplit("/abs/", 1)[-1]),
+                title=_clean(entry.find(f"{_ATOM}title")),
+                authors=", ".join(_clean(a.find(f"{_ATOM}name")) for a in entry.findall(f"{_ATOM}author")),
+                categories=tuple(c for c in categories if c),
+                abstract=_clean(entry.find(f"{_ATOM}summary")),
+            )
+        )
+    return entries
 
 
-def _get(client: httpx.Client, limiter: RateLimiter, url: str, params: dict[str, str]) -> httpx.Response:
-    """One polite request, retrying transient arXiv failures (it returns 503 and timeouts under load)."""
+def parse_abs_page(html: str) -> tuple[str | None, tuple[ArxivVersion, ...]]:
+    """Licence URL (None means the default non-exclusive licence) and version history from an abstract page."""
+    match = _LICENSE_LINK.search(html)
+    license_url = match.group(1) if match else None
+    versions = sorted(
+        (
+            ArxivVersion(label=f"v{number}", ordinal=int(number), submitted=_parse_date(stamp))
+            for number, stamp in _VERSION_ROW.findall(html)
+        ),
+        key=lambda v: v.ordinal,
+    )
+    return license_url, tuple(versions)
+
+
+def _get(client: httpx.Client, limiter: RateLimiter, url: str, params: dict[str, str] | None = None) -> httpx.Response:
+    """One polite request, retrying transient arXiv failures."""
     for attempt in range(4):
         limiter.wait()
         try:
@@ -150,10 +158,10 @@ def _get(client: httpx.Client, limiter: RateLimiter, url: str, params: dict[str,
     raise RuntimeError("unreachable")
 
 
-def search_ids(
+def search_entries(
     query: str, client: httpx.Client, limiter: RateLimiter, *, max_results: int, page_size: int = 200
-) -> Iterator[str]:
-    """Yield candidate ids from the arXiv search API, newest first."""
+) -> Iterator[SearchEntry]:
+    """Yield candidates from the arXiv search API, newest first."""
     for start in range(0, max_results, page_size):
         response = _get(
             client,
@@ -167,18 +175,24 @@ def search_ids(
                 "sortOrder": "descending",
             },
         )
-        ids = parse_search_ids(response.content)
-        if not ids:
+        entries = parse_search_entries(response.content)
+        if not entries:
             return
-        yield from ids
+        yield from entries
 
 
-def fetch_record(arxiv_id: str, client: httpx.Client, limiter: RateLimiter) -> ArxivRecord | None:
-    """OAI ListRecords times out at arXiv (HTTP 503 after about 120 s), so records are fetched one by one."""
-    response = _get(
-        client,
-        limiter,
-        OAI_BASE_URL,
-        {"verb": "GetRecord", "identifier": f"oai:arXiv.org:{arxiv_id}", "metadataPrefix": "arXivRaw"},
+def fetch_record(entry: SearchEntry, client: httpx.Client, limiter: RateLimiter) -> ArxivRecord | None:
+    """Complete a search entry with its licence and versions. None when no version history can be read."""
+    response = _get(client, limiter, f"{ABS_BASE_URL}/{entry.arxiv_id}")
+    license_url, versions = parse_abs_page(response.text)
+    if not versions:
+        return None
+    return ArxivRecord(
+        arxiv_id=entry.arxiv_id,
+        title=entry.title,
+        authors=entry.authors,
+        categories=entry.categories,
+        license=license_url,
+        abstract=entry.abstract,
+        versions=versions,
     )
-    return parse_get_record(response.content)

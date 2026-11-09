@@ -41,7 +41,7 @@ The machine has only Python 3.14.3 and no uv (see ENVIRONMENT.md). The stack nee
 | Env and lock | **uv 0.13.x**, committed `uv.lock`, dependency groups `ml`, `eval`, `dev` | Reproducibility, which spec §5.2 requires for ML experiments. |
 | PyTorch | **torch 2.15.x**. Windows/Linux GPU builds come from the `https://download.pytorch.org/whl/cu132` index, declared as `[[tool.uv.index]] explicit = true` and pinned through `tool.uv.sources`. The Docker image uses the CPU index. | cu126 and cu130 are no longer built for 2.15. Ampere is still supported. |
 | Web framework | **FastAPI 0.16x**, **Pydantic 2.14**, **pydantic-settings** | Named by the spec. Gives typed, validated contracts. |
-| DB access | **SQLAlchemy 2.1** (async) + **psycopg 3.3** + **Alembic** | Spec §5.2 requires migrations. psycopg 3 is also what `langgraph-checkpoint-postgres` uses. |
+| DB access | **SQLAlchemy 2.1** (sync, amended in Phase 2) + **psycopg 3.3** + **Alembic** | Spec §5.2 requires migrations. psycopg 3 is also what `langgraph-checkpoint-postgres` uses. Async was dropped: psycopg async cannot run on the Windows ProactorEventLoop, and embedding and reranking block a thread anyway. FastAPI runs sync routes in its threadpool. |
 | HTTP client | **httpx** | Used by the ModelMesh and Groq clients (ADR-0011) and in tests. |
 | Lint/format | **ruff 0.17.x** (lint + format) | One tool, fast. |
 | Types | **mypy 2.x** with the pydantic plugin, `strict` on `core`, `inference`, `citations` and `retrieval` | Stable and pydantic-aware. ty can run later as a non-blocking job. |
@@ -51,6 +51,12 @@ The machine has only Python 3.14.3 and no uv (see ENVIRONMENT.md). The stack nee
 | Frontend extras | Tailwind CSS. Generated API types via `openapi-typescript` from FastAPI's OpenAPI. No state library at the start. | Keeps the backend and frontend contracts typed end to end. |
 
 Each dependency is justified when it is added. "Popular" is not a justification (spec §8).
+
+## Phase 2 notes (2026-11-09)
+
+- Python is CPython 3.13.18 through uv; CUDA works with torch 2.15.0+cu132 (see `docs/ENVIRONMENT.md`).
+- `ruff` line length is 120.
+- Dependency groups are `ml`, `eval` and `dev` (PEP 735). The API image installs only `ml`.
 
 ## Consequences
 

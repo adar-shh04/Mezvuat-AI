@@ -7,63 +7,54 @@ from pathlib import Path
 import pytest
 
 from mezvuat.ingestion.corpus.manifest import ALLOWED_LICENSES, is_eligible, load_allowlist, select_papers
-from mezvuat.ingestion.corpus.oai import ArxivRecord, ArxivVersion, RateLimiter, parse_get_record, parse_search_ids
+from mezvuat.ingestion.corpus.oai import ArxivRecord, ArxivVersion, RateLimiter, parse_abs_page, parse_search_entries
 
 CC_BY = "http://creativecommons.org/licenses/by/4.0/"
 NON_EXCLUSIVE = "http://arxiv.org/licenses/nonexclusive-distrib/1.0/"
 
-RECORD = f"""<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">
-<GetRecord><record><header><identifier>oai:arXiv.org:2401.00001</identifier></header>
-<metadata><arXivRaw xmlns="http://arxiv.org/OAI/arXivRaw/">
-<id>2401.00001</id>
-<version version="v2"><date>Tue, 6 Feb 2024 10:00:00 GMT</date><size>100kb</size></version>
-<version version="v1"><date>Mon, 1 Jan 2024 09:00:00 GMT</date><size>90kb</size></version>
-<title>Hybrid  retrieval
- for RAG</title><authors>A. Author, B. Author</authors><categories>cs.IR cs.CL</categories>
-<license>{CC_BY}</license><abstract>  We study rerank models.  </abstract>
-</arXivRaw></metadata></record></GetRecord></OAI-PMH>
-""".encode()
+ABS_PAGE = f"""
+<div class="submission-history"><h2>Submission history</h2>From: A Author
+<strong><a href="/abs/2401.00001v1">[v1]</a></strong> Mon, 1 Jan 2024 09:00:00 UTC (90 KB)<br/>
+<strong>[v2]</strong> Tue, 6 Feb 2024 10:00:00 UTC (100 KB)<br/></div>
+<div class="abs-license"><a href="{CC_BY}" title="Rights to this article" class="has_license">view</a></div>
+"""
 
-OAI_ROOT = b'<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/">'
+FEED = b"""<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">
+<id>https://arxiv.org/api/x</id>
+<entry><id>http://arxiv.org/abs/2401.00001v2</id><title>Hybrid  retrieval
+ for RAG</title><summary> We study rerank models. </summary>
+<author><name>A. Author</name></author><author><name>B. Author</name></author>
+<arxiv:primary_category term="cs.IR"/><category term="cs.IR"/><category term="cs.CL"/></entry>
+</feed>"""
 
 
-def test_parse_record_extracts_versions_in_order() -> None:
-    record = parse_get_record(RECORD)
-    assert record is not None
-    assert record.arxiv_id == "2401.00001"
-    assert record.title == "Hybrid retrieval for RAG"
-    assert record.license == CC_BY
-    assert record.categories == ("cs.IR", "cs.CL")
-    assert [(v.label, v.submitted) for v in record.versions] == [
+def test_search_feed_is_parsed_without_version_suffix() -> None:
+    entry = parse_search_entries(FEED)[0]
+    assert entry.arxiv_id == "2401.00001"
+    assert entry.title == "Hybrid retrieval for RAG"
+    assert entry.authors == "A. Author, B. Author"
+    assert entry.categories == ("cs.IR", "cs.CL")
+
+
+def test_abs_page_gives_licence_and_ordered_versions() -> None:
+    license_url, versions = parse_abs_page(ABS_PAGE)
+    assert license_url == CC_BY
+    assert [(v.label, v.submitted) for v in versions] == [
         ("v1", date(2024, 1, 1)),
         ("v2", date(2024, 2, 6)),
     ]
 
 
-def test_missing_record_is_none_but_other_errors_raise() -> None:
-    assert parse_get_record(OAI_ROOT + b'<error code="idDoesNotExist"/></OAI-PMH>') is None
-    with pytest.raises(RuntimeError):
-        parse_get_record(OAI_ROOT + b'<error code="badArgument">no</error></OAI-PMH>')
-
-
-def test_deleted_record_is_none() -> None:
-    body = b'<GetRecord><record><header status="deleted"/></record></GetRecord></OAI-PMH>'
-    assert parse_get_record(OAI_ROOT + body) is None
+def test_abs_page_without_a_licence_link_means_not_cc() -> None:
+    license_url, _ = parse_abs_page("<strong>[v1]</strong> Mon, 1 Jan 2024 09:00:00 UTC (1 KB)")
+    assert license_url is None
 
 
 def test_xml_entity_expansion_is_refused() -> None:
     from defusedxml import EntitiesForbidden
 
     with pytest.raises(EntitiesForbidden):
-        parse_get_record(b'<!DOCTYPE x [<!ENTITY a "aaaa">]><x>&a;</x>')
-
-
-def test_search_feed_ids_lose_their_version_suffix() -> None:
-    feed = b"""<feed xmlns="http://www.w3.org/2005/Atom"><id>https://arxiv.org/api/x</id>
-    <entry><id>http://arxiv.org/abs/2611.07928v1</id></entry>
-    <entry><id>http://arxiv.org/abs/2401.00001v12</id></entry></feed>"""
-    assert parse_search_ids(feed) == ["2611.07928", "2401.00001"]
+        parse_search_entries(b'<!DOCTYPE x [<!ENTITY a "aaaa">]><x>&a;</x>')
 
 
 def test_rate_limiter_keeps_three_seconds_between_requests() -> None:

@@ -52,7 +52,7 @@ def _apply_corpus_metadata(session: Session, version: DocumentVersion, entry: Ma
         precision="day",
         source="source_metadata",
         confidence="high",
-        evidence="arXiv OAI-PMH arXivRaw: v1 submission date",
+        evidence="arXiv version history: v1 submission date",
     )
     if entry.ordinal > 1:
         add_temporal_fact(
@@ -63,7 +63,7 @@ def _apply_corpus_metadata(session: Session, version: DocumentVersion, entry: Ma
             precision="day",
             source="source_metadata",
             confidence="high",
-            evidence=f"arXiv OAI-PMH arXivRaw: {entry.label} submission date",
+            evidence=f"arXiv version history: {entry.label} submission date",
         )
 
 

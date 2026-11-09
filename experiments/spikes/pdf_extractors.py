@@ -92,11 +92,27 @@ def pdfplumber_columns(raw: bytes) -> list[str]:
     return output
 
 
+def pdfplumber_tuned(raw: bytes) -> list[str]:
+    """Columns plus a tighter x_tolerance: LaTeX PDFs often have small inter-word gaps that the default merges."""
+    output: list[str] = []
+    with pdfplumber.open(io.BytesIO(raw)) as pdf:
+        for page in pdf.pages:
+            split = _column_split(page)
+            if split is None:
+                output.append(page.extract_text(x_tolerance=1) or "")
+                continue
+            left = page.crop((0, 0, split, page.height)).extract_text(x_tolerance=1) or ""
+            right = page.crop((split, 0, page.width, page.height)).extract_text(x_tolerance=1) or ""
+            output.append(f"{left}\n\n{right}")
+    return output
+
+
 EXTRACTORS: dict[str, Callable[[bytes], list[str]]] = {
     "pymupdf_text": pymupdf_native,
     "pymupdf_blocks": pymupdf_blocks,
     "pdfplumber_default": pdfplumber_default,
     "pdfplumber_columns": pdfplumber_columns,
+    "pdfplumber_tuned": pdfplumber_tuned,
 }
 
 
@@ -168,8 +184,8 @@ def main() -> None:
             values = [float(r[name][metric]) for r in results]  # type: ignore[index]
             low, high = bootstrap_ci(values)
             summary[f"{name}.{metric}"] = {"mean": float(np.mean(values)), "ci95": [low, high]}
-    baseline = "pdfplumber_columns"
-    for name in ("pymupdf_text", "pymupdf_blocks", "pdfplumber_default"):
+    baseline = "pdfplumber_tuned"
+    for name in ("pymupdf_text", "pymupdf_blocks", "pdfplumber_default", "pdfplumber_columns"):
         for metric in ("reference_5gram_recall", "extracted_5gram_precision"):
             diffs = [float(r[name][metric]) - float(r[baseline][metric]) for r in results]  # type: ignore[index]
             low, high = bootstrap_ci(diffs)

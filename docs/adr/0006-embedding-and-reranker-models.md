@@ -84,6 +84,25 @@ Excluded rerankers:
 
   If a hosted embedding API is ever compared, its tokens and the provider's list price are recorded and labelled as estimates.
 
+## Amendment, 2026-11-09: choices made on the SciFact dev split
+
+All selection used the **dev split only** (161 queries carved from SciFact train). Test splits were evaluated once, after the choices below were fixed. Full tables with confidence intervals and MLflow run ids: `docs/eval/retrieval_report.md`, generated from `docs/eval/runs/`.
+
+- **Embedder: `BAAI/bge-small-en-v1.5`.** Hybrid nDCG@10 on dev was 0.8025 (CI 0.754, 0.852), against 0.8034 for `bge-base-en-v1.5`, which embeds 2.5 times more slowly (272 vs 111 chunks/s on the laptop GPU) and peaked at twice the VRAM. The other small models were lower.
+- **RRF k = 60 kept.** k in {10, 30, 60, 100} gave 0.8021, 0.8026, 0.8025 and 0.7995, with no measurable difference.
+- **Reranker: `bge-reranker-base` at depth 50, in the rerank configuration.** On dev, every reranker failed to beat plain hybrid:
+
+  | Reranker (depth) | nDCG@10 vs hybrid | 95% CI of the difference |
+  |---|---|---|
+  | ms-marco-MiniLM-L6-v2 (20) | -0.0517 | (-0.0775, -0.0254) |
+  | ms-marco-MiniLM-L6-v2 (50) | -0.0572 | (-0.0860, -0.0290) |
+  | ms-marco-MiniLM-L6-v2 (100) | -0.0640 | (-0.0945, -0.0341) |
+  | bge-reranker-base (50) | -0.0229 | (-0.0573, +0.0102) |
+  | gte-reranker-modernbert-base (50) | -0.0196 | (-0.0552, +0.0169) |
+
+  `bge-reranker-base` and `gte-reranker-modernbert-base` are indistinguishable on dev, and the former is about 1.8 times faster (rerank p50 493 ms vs 869 ms), so it is the one carried into the rerank configuration.
+- **The API default is now `hybrid_rrf`, not rerank.** This is a deviation from the original plan to rerank by default. Reranking did not help on either public benchmark and made SCIDOCS significantly worse. SciFact claims and SCIDOCS title-to-citation pairs are unlike the question-to-passage task these rerankers were trained on, so the domain dataset may behave differently; reranking stays available per request and is re-evaluated in M3 and M9. The compose image still uses MiniLM-L6 as its reranker because `bge-reranker-base` does not fit the container memory budget on this machine.
+
 ## Consequences
 
 - Small models keep the system usable on CPU in Docker. The GPU speeds up experiments and training.

@@ -1,0 +1,1223 @@
+{
+ "summary": {
+  "n_papers": 30,
+  "pymupdf_text.seconds_per_page": {
+   "mean": 0.004440460569235283,
+   "ci95": [
+    0.0031980738765696776,
+    0.0065135874518559
+   ]
+  },
+  "pymupdf_text.abstract_5gram_recall": {
+   "mean": 0.9060884400548954,
+   "ci95": [
+    0.8567426664909544,
+    0.9436171199912575
+   ]
+  },
+  "pymupdf_text.reference_5gram_recall": {
+   "mean": 0.8380934904130782,
+   "ci95": [
+    0.8160930942905239,
+    0.8591150327874042
+   ]
+  },
+  "pymupdf_text.extracted_5gram_precision": {
+   "mean": 0.6536824721094746,
+   "ci95": [
+    0.6190859933099122,
+    0.6874372586298471
+   ]
+  },
+  "pymupdf_blocks.seconds_per_page": {
+   "mean": 0.004311371392594357,
+   "ci95": [
+    0.0030941051276238704,
+    0.0064134665843892874
+   ]
+  },
+  "pymupdf_blocks.abstract_5gram_recall": {
+   "mean": 0.9060884400548954,
+   "ci95": [
+    0.8567426664909544,
+    0.9436171199912575
+   ]
+  },
+  "pymupdf_blocks.reference_5gram_recall": {
+   "mean": 0.8380934904130782,
+   "ci95": [
+    0.8160930942905239,
+    0.8591150327874042
+   ]
+  },
+  "pymupdf_blocks.extracted_5gram_precision": {
+   "mean": 0.6536824721094746,
+   "ci95": [
+    0.6190859933099122,
+    0.6874372586298471
+   ]
+  },
+  "pdfplumber_default.seconds_per_page": {
+   "mean": 0.18101407318322768,
+   "ci95": [
+    0.11797321034322833,
+    0.2946782913923653
+   ]
+  },
+  "pdfplumber_default.abstract_5gram_recall": {
+   "mean": 0.1855075883896514,
+   "ci95": [
+    0.13084665109086355,
+    0.24527192108072016
+   ]
+  },
+  "pdfplumber_default.reference_5gram_recall": {
+   "mean": 0.18037699500850313,
+   "ci95": [
+    0.13102161794172462,
+    0.23777584511110428
+   ]
+  },
+  "pdfplumber_default.extracted_5gram_precision": {
+   "mean": 0.19747411601803783,
+   "ci95": [
+    0.15088771161424536,
+    0.2504935965021782
+   ]
+  },
+  "pdfplumber_columns.seconds_per_page": {
+   "mean": 0.19255560179313053,
+   "ci95": [
+    0.1262296888693959,
+    0.31057756361094485
+   ]
+  },
+  "pdfplumber_columns.abstract_5gram_recall": {
+   "mean": 0.19595178470408772,
+   "ci95": [
+    0.14025773883740417,
+    0.25649421377010984
+   ]
+  },
+  "pdfplumber_columns.reference_5gram_recall": {
+   "mean": 0.2306071481732738,
+   "ci95": [
+    0.17335343632536326,
+    0.29421132196239674
+   ]
+  },
+  "pdfplumber_columns.extracted_5gram_precision": {
+   "mean": 0.2533603217779348,
+   "ci95": [
+    0.19921682115046802,
+    0.31259531227755794
+   ]
+  },
+  "pdfplumber_tuned.seconds_per_page": {
+   "mean": 0.19484837251692386,
+   "ci95": [
+    0.1286395760119293,
+    0.3132876135284322
+   ]
+  },
+  "pdfplumber_tuned.abstract_5gram_recall": {
+   "mean": 0.6011505676795981,
+   "ci95": [
+    0.5208839036829989,
+    0.6862943134715142
+   ]
+  },
+  "pdfplumber_tuned.reference_5gram_recall": {
+   "mean": 0.754056569133542,
+   "ci95": [
+    0.7226828016915958,
+    0.7849639990964773
+   ]
+  },
+  "pdfplumber_tuned.extracted_5gram_precision": {
+   "mean": 0.5801171262486466,
+   "ci95": [
+    0.5393498235637247,
+    0.6201852454576144
+   ]
+  },
+  "delta.pymupdf_text-pdfplumber_tuned.reference_5gram_recall": {
+   "mean": 0.08403692127953628,
+   "ci95": [
+    0.06408087779510543,
+    0.10535360664426797
+   ]
+  },
+  "delta.pymupdf_text-pdfplumber_tuned.extracted_5gram_precision": {
+   "mean": 0.073565345860828,
+   "ci95": [
+    0.05809055881747054,
+    0.08977831666314638
+   ]
+  },
+  "delta.pymupdf_blocks-pdfplumber_tuned.reference_5gram_recall": {
+   "mean": 0.08403692127953628,
+   "ci95": [
+    0.06408087779510543,
+    0.10535360664426797
+   ]
+  },
+  "delta.pymupdf_blocks-pdfplumber_tuned.extracted_5gram_precision": {
+   "mean": 0.073565345860828,
+   "ci95": [
+    0.05809055881747054,
+    0.08977831666314638
+   ]
+  },
+  "delta.pdfplumber_default-pdfplumber_tuned.reference_5gram_recall": {
+   "mean": -0.573679574125039,
+   "ci95": [
+    -0.6178583915027932,
+    -0.5285901831192528
+   ]
+  },
+  "delta.pdfplumber_default-pdfplumber_tuned.extracted_5gram_precision": {
+   "mean": -0.38264301023060887,
+   "ci95": [
+    -0.4254679521305637,
+    -0.3399115628516628
+   ]
+  },
+  "delta.pdfplumber_columns-pdfplumber_tuned.reference_5gram_recall": {
+   "mean": -0.5234494209602683,
+   "ci95": [
+    -0.5771473617401028,
+    -0.4697519645312397
+   ]
+  },
+  "delta.pdfplumber_columns-pdfplumber_tuned.extracted_5gram_precision": {
+   "mean": -0.32675680447071187,
+   "ci95": [
+    -0.376427670796328,
+    -0.2787320624561446
+   ]
+  }
+ },
+ "papers": [
+  {
+   "arxiv_id": "2606.05693",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.003001124998263549,
+    "abstract_5gram_recall": 0.5048076923076923,
+    "reference_5gram_recall": 0.8686162026024905,
+    "extracted_5gram_precision": 0.6997294860234445
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0033702000000630505,
+    "abstract_5gram_recall": 0.5048076923076923,
+    "reference_5gram_recall": 0.8686162026024905,
+    "extracted_5gram_precision": 0.6997294860234445
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11620355625200318,
+    "abstract_5gram_recall": 0.0673076923076923,
+    "reference_5gram_recall": 0.14411641248076115,
+    "extracted_5gram_precision": 0.15643985419198056
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13517993749701418,
+    "abstract_5gram_recall": 0.0673076923076923,
+    "reference_5gram_recall": 0.22666853225129424,
+    "extracted_5gram_precision": 0.25612648221343876
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.11717887499980861,
+    "abstract_5gram_recall": 0.3317307692307692,
+    "reference_5gram_recall": 0.8104099622219113,
+    "extracted_5gram_precision": 0.6295652173913043
+   }
+  },
+  {
+   "arxiv_id": "2606.06474",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0034948933326328794,
+    "abstract_5gram_recall": 0.9689922480620154,
+    "reference_5gram_recall": 0.8317878639986985,
+    "extracted_5gram_precision": 0.5726285138313361
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0036793999994794526,
+    "abstract_5gram_recall": 0.9689922480620154,
+    "reference_5gram_recall": 0.8317878639986985,
+    "extracted_5gram_precision": 0.5726285138313361
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.1281619133350129,
+    "abstract_5gram_recall": 0.2558139534883721,
+    "reference_5gram_recall": 0.1264031234748658,
+    "extracted_5gram_precision": 0.13892365456821026
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13726608000385265,
+    "abstract_5gram_recall": 0.37209302325581395,
+    "reference_5gram_recall": 0.14803969415975274,
+    "extracted_5gram_precision": 0.16340456096247083
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.1513799999995778,
+    "abstract_5gram_recall": 0.9689922480620154,
+    "reference_5gram_recall": 0.7543517162843664,
+    "extracted_5gram_precision": 0.5070530344450519
+   }
+  },
+  {
+   "arxiv_id": "2606.10381",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0014556041666461776,
+    "abstract_5gram_recall": 0.9414225941422594,
+    "reference_5gram_recall": 0.8241128157446149,
+    "extracted_5gram_precision": 0.6913676547061882
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.001461929166301464,
+    "abstract_5gram_recall": 0.9414225941422594,
+    "reference_5gram_recall": 0.8241128157446149,
+    "extracted_5gram_precision": 0.6913676547061882
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.05478785416441193,
+    "abstract_5gram_recall": 0.08368200836820083,
+    "reference_5gram_recall": 0.13001704633503797,
+    "extracted_5gram_precision": 0.2215473989965672
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.0642768666681756,
+    "abstract_5gram_recall": 0.08368200836820083,
+    "reference_5gram_recall": 0.13001704633503797,
+    "extracted_5gram_precision": 0.2215473989965672
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.06038933749853944,
+    "abstract_5gram_recall": 0.9414225941422594,
+    "reference_5gram_recall": 0.8231830156516349,
+    "extracted_5gram_precision": 0.6886180969665543
+   }
+  },
+  {
+   "arxiv_id": "2606.10388",
+   "label": "v4",
+   "pymupdf_text": {
+    "seconds_per_page": 0.003729033332395678,
+    "abstract_5gram_recall": 0.9762845849802372,
+    "reference_5gram_recall": 0.8799460431654677,
+    "extracted_5gram_precision": 0.7157355764834964
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0035827666676292815,
+    "abstract_5gram_recall": 0.9762845849802372,
+    "reference_5gram_recall": 0.8799460431654677,
+    "extracted_5gram_precision": 0.7157355764834964
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.13454630833196765,
+    "abstract_5gram_recall": 0.043478260869565216,
+    "reference_5gram_recall": 0.025966726618705038,
+    "extracted_5gram_precision": 0.048982188295165395
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.15269375833061835,
+    "abstract_5gram_recall": 0.043478260869565216,
+    "reference_5gram_recall": 0.028552158273381294,
+    "extracted_5gram_precision": 0.05476498490728762
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.16556248333654366,
+    "abstract_5gram_recall": 0.9762845849802372,
+    "reference_5gram_recall": 0.8213803956834532,
+    "extracted_5gram_precision": 0.6658465463823583
+   }
+  },
+  {
+   "arxiv_id": "2606.10621",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0045772812445648015,
+    "abstract_5gram_recall": 0.9705882352941176,
+    "reference_5gram_recall": 0.7767902922577338,
+    "extracted_5gram_precision": 0.40934882464198863
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0035679937500390224,
+    "abstract_5gram_recall": 0.9705882352941176,
+    "reference_5gram_recall": 0.7767902922577338,
+    "extracted_5gram_precision": 0.40934882464198863
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11228171874972759,
+    "abstract_5gram_recall": 0.2107843137254902,
+    "reference_5gram_recall": 0.1580926337378226,
+    "extracted_5gram_precision": 0.10754563422857807
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.11149057500006165,
+    "abstract_5gram_recall": 0.2107843137254902,
+    "reference_5gram_recall": 0.2283370364040335,
+    "extracted_5gram_precision": 0.15682591853503933
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.11918456874991534,
+    "abstract_5gram_recall": 0.46078431372549017,
+    "reference_5gram_recall": 0.6631345069218937,
+    "extracted_5gram_precision": 0.3463667202285306
+   }
+  },
+  {
+   "arxiv_id": "2606.10921",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.005542266661197775,
+    "abstract_5gram_recall": 0.9247311827956989,
+    "reference_5gram_recall": 0.6976545112138333,
+    "extracted_5gram_precision": 0.5999705535924618
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.005429688892844651,
+    "abstract_5gram_recall": 0.9247311827956989,
+    "reference_5gram_recall": 0.6976545112138333,
+    "extracted_5gram_precision": 0.5999705535924618
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.2036638777806527,
+    "abstract_5gram_recall": 0.3763440860215054,
+    "reference_5gram_recall": 0.16521143639787708,
+    "extracted_5gram_precision": 0.19766489143793528
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.2418239888890336,
+    "abstract_5gram_recall": 0.3870967741935484,
+    "reference_5gram_recall": 0.20356103406950865,
+    "extracted_5gram_precision": 0.24601696668735776
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.23414245555694732,
+    "abstract_5gram_recall": 0.6505376344086021,
+    "reference_5gram_recall": 0.6295154939222736,
+    "extracted_5gram_precision": 0.5179602760952247
+   }
+  },
+  {
+   "arxiv_id": "2606.11257",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.002888244447401828,
+    "abstract_5gram_recall": 0.8659003831417624,
+    "reference_5gram_recall": 0.9160478860433399,
+    "extracted_5gram_precision": 0.8404003892673433
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.003294988884590566,
+    "abstract_5gram_recall": 0.8659003831417624,
+    "reference_5gram_recall": 0.9160478860433399,
+    "extracted_5gram_precision": 0.8404003892673433
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.13149622222408652,
+    "abstract_5gram_recall": 0.29118773946360155,
+    "reference_5gram_recall": 0.4268828610395514,
+    "extracted_5gram_precision": 0.44643423137876387
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.1330500777759072,
+    "abstract_5gram_recall": 0.32950191570881227,
+    "reference_5gram_recall": 0.6504015759963631,
+    "extracted_5gram_precision": 0.6873798846893018
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.14140266666395795,
+    "abstract_5gram_recall": 0.5938697318007663,
+    "reference_5gram_recall": 0.8763449007425368,
+    "extracted_5gram_precision": 0.8026370575988897
+   }
+  },
+  {
+   "arxiv_id": "2606.11350",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.002942594736324329,
+    "abstract_5gram_recall": 0.9411764705882353,
+    "reference_5gram_recall": 0.8514517218095882,
+    "extracted_5gram_precision": 0.6148220380302292
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0026269210502505302,
+    "abstract_5gram_recall": 0.9411764705882353,
+    "reference_5gram_recall": 0.8514517218095882,
+    "extracted_5gram_precision": 0.6148220380302292
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11359224736837573,
+    "abstract_5gram_recall": 0.30392156862745096,
+    "reference_5gram_recall": 0.3062120189061445,
+    "extracted_5gram_precision": 0.2568677428490513
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13016333684055625,
+    "abstract_5gram_recall": 0.30392156862745096,
+    "reference_5gram_recall": 0.4972991222147198,
+    "extracted_5gram_precision": 0.4213386727688787
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.12572153157701618,
+    "abstract_5gram_recall": 0.4117647058823529,
+    "reference_5gram_recall": 0.7895566058969165,
+    "extracted_5gram_precision": 0.5621344443554203
+   }
+  },
+  {
+   "arxiv_id": "2606.11945",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.003267966663568384,
+    "abstract_5gram_recall": 0.9069767441860465,
+    "reference_5gram_recall": 0.8028992878942014,
+    "extracted_5gram_precision": 0.6249010292953285
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.002972555553747548,
+    "abstract_5gram_recall": 0.9069767441860465,
+    "reference_5gram_recall": 0.8028992878942014,
+    "extracted_5gram_precision": 0.6249010292953285
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.10893036665705343,
+    "abstract_5gram_recall": 0.12403100775193798,
+    "reference_5gram_recall": 0.14547304170905392,
+    "extracted_5gram_precision": 0.17519142419601838
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.11512363333410273,
+    "abstract_5gram_recall": 0.12403100775193798,
+    "reference_5gram_recall": 0.18311291963377416,
+    "extracted_5gram_precision": 0.22263450834879406
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.12972248888884982,
+    "abstract_5gram_recall": 0.34108527131782945,
+    "reference_5gram_recall": 0.6813326551373347,
+    "extracted_5gram_precision": 0.5276738231238921
+   }
+  },
+  {
+   "arxiv_id": "2606.12789",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.007384933337258796,
+    "abstract_5gram_recall": 0.96875,
+    "reference_5gram_recall": 0.7849631966351209,
+    "extracted_5gram_precision": 0.6219537596334097
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.006080350004291783,
+    "abstract_5gram_recall": 0.96875,
+    "reference_5gram_recall": 0.7849631966351209,
+    "extracted_5gram_precision": 0.6219537596334097
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.17151808333195126,
+    "abstract_5gram_recall": 0.005208333333333333,
+    "reference_5gram_recall": 0.02365930599369085,
+    "extracted_5gram_precision": 0.032246506628448586
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.19957660000848895,
+    "abstract_5gram_recall": 0.010416666666666666,
+    "reference_5gram_recall": 0.030231335436382754,
+    "extracted_5gram_precision": 0.04130747126436782
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.2015446666822148,
+    "abstract_5gram_recall": 0.5520833333333334,
+    "reference_5gram_recall": 0.655099894847529,
+    "extracted_5gram_precision": 0.47867844794467923
+   }
+  },
+  {
+   "arxiv_id": "2606.12903",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0016113272656432607,
+    "abstract_5gram_recall": 0.926829268292683,
+    "reference_5gram_recall": 0.9002520705797623,
+    "extracted_5gram_precision": 0.7229612492770388
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0016035363607277925,
+    "abstract_5gram_recall": 0.926829268292683,
+    "reference_5gram_recall": 0.9002520705797623,
+    "extracted_5gram_precision": 0.7229612492770388
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.06370737273457715,
+    "abstract_5gram_recall": 0.3861788617886179,
+    "reference_5gram_recall": 0.6247749369823551,
+    "extracted_5gram_precision": 0.5941780821917808
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.05635584544771435,
+    "abstract_5gram_recall": 0.3861788617886179,
+    "reference_5gram_recall": 0.6247749369823551,
+    "extracted_5gram_precision": 0.5941780821917808
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.056615181817588484,
+    "abstract_5gram_recall": 0.926829268292683,
+    "reference_5gram_recall": 0.9002520705797623,
+    "extracted_5gram_precision": 0.7231703789412786
+   }
+  },
+  {
+   "arxiv_id": "2606.12993",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0028019666723493072,
+    "abstract_5gram_recall": 0.432258064516129,
+    "reference_5gram_recall": 0.8089139860845014,
+    "extracted_5gram_precision": 0.6936446173800259
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0029412222211249173,
+    "abstract_5gram_recall": 0.432258064516129,
+    "reference_5gram_recall": 0.8089139860845014,
+    "extracted_5gram_precision": 0.6936446173800259
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11015281110950229,
+    "abstract_5gram_recall": 0.1032258064516129,
+    "reference_5gram_recall": 0.18513663406272057,
+    "extracted_5gram_precision": 0.21846739647786767
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.1167554555577226,
+    "abstract_5gram_recall": 0.10967741935483871,
+    "reference_5gram_recall": 0.2692346475748714,
+    "extracted_5gram_precision": 0.32277562862669246
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.13023159444047552,
+    "abstract_5gram_recall": 0.24838709677419354,
+    "reference_5gram_recall": 0.6678430977110014,
+    "extracted_5gram_precision": 0.5615091140313693
+   }
+  },
+  {
+   "arxiv_id": "2606.13550",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0023476624992326833,
+    "abstract_5gram_recall": 0.9792746113989638,
+    "reference_5gram_recall": 0.89486282452587,
+    "extracted_5gram_precision": 0.5828735907891581
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0023953437557793222,
+    "abstract_5gram_recall": 0.9792746113989638,
+    "reference_5gram_recall": 0.89486282452587,
+    "extracted_5gram_precision": 0.5828735907891581
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.10215555000468157,
+    "abstract_5gram_recall": 0.15544041450777202,
+    "reference_5gram_recall": 0.13717547412999448,
+    "extracted_5gram_precision": 0.12535756352010768
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.10353285625024,
+    "abstract_5gram_recall": 0.15544041450777202,
+    "reference_5gram_recall": 0.18891548517768367,
+    "extracted_5gram_precision": 0.17389830508474577
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.11153455625026254,
+    "abstract_5gram_recall": 0.43005181347150256,
+    "reference_5gram_recall": 0.7260173080464003,
+    "extracted_5gram_precision": 0.46263052915640035
+   }
+  },
+  {
+   "arxiv_id": "2606.13814",
+   "label": "v3",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0024326649960130452,
+    "abstract_5gram_recall": 0.928082191780822,
+    "reference_5gram_recall": 0.8721015021146273,
+    "extracted_5gram_precision": 0.679391047489207
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0022745350026525555,
+    "abstract_5gram_recall": 0.928082191780822,
+    "reference_5gram_recall": 0.8721015021146273,
+    "extracted_5gram_precision": 0.679391047489207
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.08163141999975779,
+    "abstract_5gram_recall": 0.7157534246575342,
+    "reference_5gram_recall": 0.6241796704098002,
+    "extracted_5gram_precision": 0.5501992544028795
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.08740552000235766,
+    "abstract_5gram_recall": 0.7157534246575342,
+    "reference_5gram_recall": 0.6241796704098002,
+    "extracted_5gram_precision": 0.5501992544028795
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.09096181499771774,
+    "abstract_5gram_recall": 0.928082191780822,
+    "reference_5gram_recall": 0.8718098293714452,
+    "extracted_5gram_precision": 0.669578853046595
+   }
+  },
+  {
+   "arxiv_id": "2606.15734",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0026700699992943553,
+    "abstract_5gram_recall": 0.9215686274509803,
+    "reference_5gram_recall": 0.8391989689699614,
+    "extracted_5gram_precision": 0.6761182108626198
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.002831575000891462,
+    "abstract_5gram_recall": 0.9215686274509803,
+    "reference_5gram_recall": 0.8391989689699614,
+    "extracted_5gram_precision": 0.6761182108626198
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.1272640700044576,
+    "abstract_5gram_recall": 0.08496732026143791,
+    "reference_5gram_recall": 0.13076236740358876,
+    "extracted_5gram_precision": 0.16302064021752566
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13713467000052332,
+    "abstract_5gram_recall": 0.13725490196078433,
+    "reference_5gram_recall": 0.20293447011004262,
+    "extracted_5gram_precision": 0.26049885467039957
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.1342404750001151,
+    "abstract_5gram_recall": 0.45751633986928103,
+    "reference_5gram_recall": 0.7835828293843561,
+    "extracted_5gram_precision": 0.6254154138313024
+   }
+  },
+  {
+   "arxiv_id": "2606.15838",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0052560692330679065,
+    "abstract_5gram_recall": 0.9442231075697212,
+    "reference_5gram_recall": 0.9541975603922507,
+    "extracted_5gram_precision": 0.7225391650819524
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0048708076893280335,
+    "abstract_5gram_recall": 0.9442231075697212,
+    "reference_5gram_recall": 0.9541975603922507,
+    "extracted_5gram_precision": 0.7225391650819524
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.18395872307547295,
+    "abstract_5gram_recall": 0.01195219123505976,
+    "reference_5gram_recall": 0.026668261181535518,
+    "extracted_5gram_precision": 0.051477377654662974
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.19939266154184365,
+    "abstract_5gram_recall": 0.01593625498007968,
+    "reference_5gram_recall": 0.03169098301841665,
+    "extracted_5gram_precision": 0.06141367323290846
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.18792987692778787,
+    "abstract_5gram_recall": 0.649402390438247,
+    "reference_5gram_recall": 0.8326955273857929,
+    "extracted_5gram_precision": 0.6233103571748276
+   }
+  },
+  {
+   "arxiv_id": "2606.16494",
+   "label": "v4",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0032248149975202976,
+    "abstract_5gram_recall": 0.9602649006622517,
+    "reference_5gram_recall": 0.8921076454612789,
+    "extracted_5gram_precision": 0.7761151285172192
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0031130550021771343,
+    "abstract_5gram_recall": 0.9602649006622517,
+    "reference_5gram_recall": 0.8921076454612789,
+    "extracted_5gram_precision": 0.7761151285172192
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.10390822499757632,
+    "abstract_5gram_recall": 0.17880794701986755,
+    "reference_5gram_recall": 0.19232984939511152,
+    "extracted_5gram_precision": 0.24793125397835775
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13484755500103346,
+    "abstract_5gram_recall": 0.1986754966887417,
+    "reference_5gram_recall": 0.2766850464982306,
+    "extracted_5gram_precision": 0.3658722385460877
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.14052968000178226,
+    "abstract_5gram_recall": 0.5993377483443708,
+    "reference_5gram_recall": 0.848489836227471,
+    "extracted_5gram_precision": 0.7314650585313941
+   }
+  },
+  {
+   "arxiv_id": "2606.16661",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.004032839997671544,
+    "abstract_5gram_recall": 0.8952380952380953,
+    "reference_5gram_recall": 0.7830101569713758,
+    "extracted_5gram_precision": 0.6901790558871406
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.004011119995266199,
+    "abstract_5gram_recall": 0.8952380952380953,
+    "reference_5gram_recall": 0.7830101569713758,
+    "extracted_5gram_precision": 0.6901790558871406
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.14551464000251144,
+    "abstract_5gram_recall": 0.09523809523809523,
+    "reference_5gram_recall": 0.040627885503231764,
+    "extracted_5gram_precision": 0.0746606334841629
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.12708369998726993,
+    "abstract_5gram_recall": 0.09523809523809523,
+    "reference_5gram_recall": 0.04739919975377039,
+    "extracted_5gram_precision": 0.0875
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.14947810000739992,
+    "abstract_5gram_recall": 0.6047619047619047,
+    "reference_5gram_recall": 0.7134502923976608,
+    "extracted_5gram_precision": 0.6222818791946308
+   }
+  },
+  {
+   "arxiv_id": "2606.16970",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.03071654545651241,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.6948913350268134,
+    "extracted_5gram_precision": 0.6320924261874198
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.03153455454263498,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.6948913350268134,
+    "extracted_5gram_precision": 0.6320924261874198
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 1.713398636361076,
+    "abstract_5gram_recall": 0.03636363636363636,
+    "reference_5gram_recall": 0.014394580863674851,
+    "extracted_5gram_precision": 0.02372644801116539
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 1.7831005090847611,
+    "abstract_5gram_recall": 0.03636363636363636,
+    "reference_5gram_recall": 0.014959074230877787,
+    "extracted_5gram_precision": 0.03331238214959145
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 1.7919260181846435,
+    "abstract_5gram_recall": 0.5575757575757576,
+    "reference_5gram_recall": 0.6124753034151849,
+    "extracted_5gram_precision": 0.5418903733300038
+   }
+  },
+  {
+   "arxiv_id": "2606.18381",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.003294119999433557,
+    "abstract_5gram_recall": 0.92,
+    "reference_5gram_recall": 0.8186000657246139,
+    "extracted_5gram_precision": 0.5397616468039004
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0031258999990920228,
+    "abstract_5gram_recall": 0.92,
+    "reference_5gram_recall": 0.8186000657246139,
+    "extracted_5gram_precision": 0.5397616468039004
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.16301574000002195,
+    "abstract_5gram_recall": 0.065,
+    "reference_5gram_recall": 0.12914886625041078,
+    "extracted_5gram_precision": 0.11541850220264317
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13674585999300082,
+    "abstract_5gram_recall": 0.09,
+    "reference_5gram_recall": 0.19323036477160696,
+    "extracted_5gram_precision": 0.17665615141955837
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.1442778666658948,
+    "abstract_5gram_recall": 0.38,
+    "reference_5gram_recall": 0.7119618797239566,
+    "extracted_5gram_precision": 0.44785529715762273
+   }
+  },
+  {
+   "arxiv_id": "2606.18508",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0033818739162677007,
+    "abstract_5gram_recall": 0.9184782608695652,
+    "reference_5gram_recall": 0.8276680694939031,
+    "extracted_5gram_precision": 0.5505311513063451
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0033792652159362383,
+    "abstract_5gram_recall": 0.9184782608695652,
+    "reference_5gram_recall": 0.8276680694939031,
+    "extracted_5gram_precision": 0.5505311513063451
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11861311304180519,
+    "abstract_5gram_recall": 0.11956521739130435,
+    "reference_5gram_recall": 0.12042732275817417,
+    "extracted_5gram_precision": 0.11501597444089456
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.1222456173930803,
+    "abstract_5gram_recall": 0.11956521739130435,
+    "reference_5gram_recall": 0.15128952195964174,
+    "extracted_5gram_precision": 0.14671410632063625
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.1325121956533226,
+    "abstract_5gram_recall": 0.358695652173913,
+    "reference_5gram_recall": 0.558325240099277,
+    "extracted_5gram_precision": 0.36265507815237963
+   }
+  },
+  {
+   "arxiv_id": "2606.18801",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0043049347840006585,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.8106554659002985,
+    "extracted_5gram_precision": 0.5167700112739572
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.00411940000080706,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.8106554659002985,
+    "extracted_5gram_precision": 0.5167700112739572
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.21356799130570953,
+    "abstract_5gram_recall": 0.26380368098159507,
+    "reference_5gram_recall": 0.13031944290925168,
+    "extracted_5gram_precision": 0.12503977091950366
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.24042751739287507,
+    "abstract_5gram_recall": 0.26380368098159507,
+    "reference_5gram_recall": 0.17939648502265945,
+    "extracted_5gram_precision": 0.17538361789496434
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.2429998739136626,
+    "abstract_5gram_recall": 0.8957055214723927,
+    "reference_5gram_recall": 0.6886260638885818,
+    "extracted_5gram_precision": 0.4319190238491403
+   }
+  },
+  {
+   "arxiv_id": "2606.19037",
+   "label": "v3",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0025385999974484245,
+    "abstract_5gram_recall": 0.9047619047619048,
+    "reference_5gram_recall": 0.7701443449661977,
+    "extracted_5gram_precision": 0.4842044801838024
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0024787199993928275,
+    "abstract_5gram_recall": 0.9047619047619048,
+    "reference_5gram_recall": 0.7701443449661977,
+    "extracted_5gram_precision": 0.4842044801838024
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.1393422666626672,
+    "abstract_5gram_recall": 0.3761904761904762,
+    "reference_5gram_recall": 0.2382605517997442,
+    "extracted_5gram_precision": 0.17271523178807946
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13672650000080466,
+    "abstract_5gram_recall": 0.38095238095238093,
+    "reference_5gram_recall": 0.39576100858761193,
+    "extracted_5gram_precision": 0.2904263877715205
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.14786380666773766,
+    "abstract_5gram_recall": 0.4857142857142857,
+    "reference_5gram_recall": 0.6959619952494062,
+    "extracted_5gram_precision": 0.4313214811459631
+   }
+  },
+  {
+   "arxiv_id": "2606.20113",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.004420600003666348,
+    "abstract_5gram_recall": 0.9497716894977168,
+    "reference_5gram_recall": 0.8085106382978723,
+    "extracted_5gram_precision": 0.7860374919198448
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.003293766665996777,
+    "abstract_5gram_recall": 0.9497716894977168,
+    "reference_5gram_recall": 0.8085106382978723,
+    "extracted_5gram_precision": 0.7860374919198448
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.14013960000334513,
+    "abstract_5gram_recall": 0.1187214611872146,
+    "reference_5gram_recall": 0.18334441489361702,
+    "extracted_5gram_precision": 0.27403726708074533
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.14327512222290453,
+    "abstract_5gram_recall": 0.1187214611872146,
+    "reference_5gram_recall": 0.2566489361702128,
+    "extracted_5gram_precision": 0.38852541519879213
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.1489375999921726,
+    "abstract_5gram_recall": 0.4794520547945205,
+    "reference_5gram_recall": 0.7405252659574468,
+    "extracted_5gram_precision": 0.7124580201503279
+   }
+  },
+  {
+   "arxiv_id": "2606.21553",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.004023537505418062,
+    "abstract_5gram_recall": 0.898876404494382,
+    "reference_5gram_recall": 0.8897546897546897,
+    "extracted_5gram_precision": 0.7186480186480186
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0038833375001559034,
+    "abstract_5gram_recall": 0.898876404494382,
+    "reference_5gram_recall": 0.8897546897546897,
+    "extracted_5gram_precision": 0.7186480186480186
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.10856826249801088,
+    "abstract_5gram_recall": 0.07865168539325842,
+    "reference_5gram_recall": 0.16161616161616163,
+    "extracted_5gram_precision": 0.21292775665399238
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.11509555000520777,
+    "abstract_5gram_recall": 0.10486891385767791,
+    "reference_5gram_recall": 0.21673881673881673,
+    "extracted_5gram_precision": 0.28718929254302106
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.10249168750306126,
+    "abstract_5gram_recall": 0.46441947565543074,
+    "reference_5gram_recall": 0.7272727272727273,
+    "extracted_5gram_precision": 0.5798435342843995
+   }
+  },
+  {
+   "arxiv_id": "2606.21807",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0026538695623774242,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.9295188304772969,
+    "extracted_5gram_precision": 0.751840250587314
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.0032210999988424387,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.9295188304772969,
+    "extracted_5gram_precision": 0.751840250587314
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.08763315652132682,
+    "abstract_5gram_recall": 0.5161290322580645,
+    "reference_5gram_recall": 0.3479523671216962,
+    "extracted_5gram_precision": 0.44645962732919253
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.10034970869816354,
+    "abstract_5gram_recall": 0.5161290322580645,
+    "reference_5gram_recall": 0.3479523671216962,
+    "extracted_5gram_precision": 0.44645962732919253
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.09245493912907399,
+    "abstract_5gram_recall": 1.0,
+    "reference_5gram_recall": 0.9284538677509924,
+    "extracted_5gram_precision": 0.7485754429786902
+   }
+  },
+  {
+   "arxiv_id": "2606.22681",
+   "label": "v2",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0032327260882796154,
+    "abstract_5gram_recall": 0.9629629629629629,
+    "reference_5gram_recall": 0.8422681688745821,
+    "extracted_5gram_precision": 0.5775042444821732
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.002123404349929289,
+    "abstract_5gram_recall": 0.9629629629629629,
+    "reference_5gram_recall": 0.8422681688745821,
+    "extracted_5gram_precision": 0.5775042444821732
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.11034032174021653,
+    "abstract_5gram_recall": 0.17901234567901234,
+    "reference_5gram_recall": 0.145722421691222,
+    "extracted_5gram_precision": 0.16945004319032536
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.12416256521322319,
+    "abstract_5gram_recall": 0.17901234567901234,
+    "reference_5gram_recall": 0.145722421691222,
+    "extracted_5gram_precision": 0.16945004319032536
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.13479741304383977,
+    "abstract_5gram_recall": 0.9629629629629629,
+    "reference_5gram_recall": 0.8302587594403863,
+    "extracted_5gram_precision": 0.5590662776156732
+   }
+  },
+  {
+   "arxiv_id": "2606.23881",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.004483499999256118,
+    "abstract_5gram_recall": 0.9243697478991597,
+    "reference_5gram_recall": 0.8464598249801114,
+    "extracted_5gram_precision": 0.6192218157632191
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.004161147363974075,
+    "abstract_5gram_recall": 0.9243697478991597,
+    "reference_5gram_recall": 0.8464598249801114,
+    "extracted_5gram_precision": 0.6192218157632191
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.12014552104703494,
+    "abstract_5gram_recall": 0.19747899159663865,
+    "reference_5gram_recall": 0.15490396635981363,
+    "extracted_5gram_precision": 0.17250980888495127
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.1524278368420997,
+    "abstract_5gram_recall": 0.20168067226890757,
+    "reference_5gram_recall": 0.21672917376974657,
+    "extracted_5gram_precision": 0.24533642094429436
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.13383713684436915,
+    "abstract_5gram_recall": 0.47058823529411764,
+    "reference_5gram_recall": 0.7495169905671099,
+    "extracted_5gram_precision": 0.5239949149849039
+   }
+  },
+  {
+   "arxiv_id": "2606.24976",
+   "label": "v3",
+   "pymupdf_text": {
+    "seconds_per_page": 0.0021756083297077566,
+    "abstract_5gram_recall": 0.8418079096045198,
+    "reference_5gram_recall": 0.8899778106508875,
+    "extracted_5gram_precision": 0.7379638147807421
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.002893400000175461,
+    "abstract_5gram_recall": 0.8418079096045198,
+    "reference_5gram_recall": 0.8899778106508875,
+    "extracted_5gram_precision": 0.7379638147807421
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.12040008332890768,
+    "abstract_5gram_recall": 0.06779661016949153,
+    "reference_5gram_recall": 0.10613905325443787,
+    "extracted_5gram_precision": 0.15917914586799778
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.13671749166678637,
+    "abstract_5gram_recall": 0.06779661016949153,
+    "reference_5gram_recall": 0.12721893491124261,
+    "extracted_5gram_precision": 0.19228619340413639
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.13616084165793532,
+    "abstract_5gram_recall": 0.3107344632768362,
+    "reference_5gram_recall": 0.7616494082840237,
+    "extracted_5gram_precision": 0.6223934723481415
+   }
+  },
+  {
+   "arxiv_id": "2606.25249",
+   "label": "v1",
+   "pymupdf_text": {
+    "seconds_per_page": 0.005326542853643852,
+    "abstract_5gram_recall": 0.9042553191489362,
+    "reference_5gram_recall": 0.835440931780366,
+    "extracted_5gram_precision": 0.7612189205579138
+   },
+   "pymupdf_blocks": {
+    "seconds_per_page": 0.005019157143708851,
+    "abstract_5gram_recall": 0.9042553191489362,
+    "reference_5gram_recall": 0.835440931780366,
+    "extracted_5gram_precision": 0.7612189205579138
+   },
+   "pdfplumber_default": {
+    "seconds_per_page": 0.2017825428629294,
+    "abstract_5gram_recall": 0.05319148936170213,
+    "reference_5gram_recall": 0.0653910149750416,
+    "extracted_5gram_precision": 0.13060817547357925
+   },
+   "pdfplumber_columns": {
+    "seconds_per_page": 0.20224065714449221,
+    "abstract_5gram_recall": 0.05319148936170213,
+    "reference_5gram_recall": 0.0805324459234609,
+    "extracted_5gram_precision": 0.16138712904301433
+   },
+   "pdfplumber_tuned": {
+    "seconds_per_page": 0.18944144285550074,
+    "abstract_5gram_recall": 0.5957446808510638,
+    "reference_5gram_recall": 0.7682196339434276,
+    "extracted_5gram_precision": 0.6956456230224499
+   }
+  }
+ ]
+}

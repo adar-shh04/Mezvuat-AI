@@ -11,7 +11,6 @@ dependencies = [
     "fastapi>=0.162",
     "httpx>=0.28",
     "numpy>=2.3",
-    "pdfplumber>=0.11.10",
     "psycopg[binary]>=3.3",
     "pydantic>=2.14",
     "pydantic-settings>=2.8",
@@ -38,6 +37,7 @@ eval = [
     "mlflow>=3.18",
 ]
 dev = [
+    "pdfplumber>=0.11.10",
     "import-linter>=2.3",
     "mypy>=2.4",
     "pytest>=9.0",

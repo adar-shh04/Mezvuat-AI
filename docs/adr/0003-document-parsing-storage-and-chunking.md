@@ -1,6 +1,6 @@
 # 0003. Document parsing, storage, dedupe and chunking
 
-Proposed · 2026-11-08 · Spec §1.3A, §5.3, §8 item 9
+Accepted with evidence · 2026-11-09 (proposed 2026-11-08) · Spec §1.3A, §5.3, §8 item 9
 
 ## Context
 
@@ -92,6 +92,25 @@ All entries checked 2026-11-08.
    - `text_sha256`.
    - `chunker_version`.
 5. **References and bibliography sections** are tagged `section_kind=references` and excluded from retrieval by default. They are noisy for both BM25 and dense retrieval. This is configurable.
+
+## Amendment, 2026-11-09: PDF extractor decided with evidence (decisions D6 and D7)
+
+D6 allows AGPL and asks for this choice to be measured, keeping the simpler option unless the difference is measurable. **PyMuPDF replaces pdfplumber as the extractor.** Measured by `experiments/spikes/pdf_extractors.py` on the latest version of 30 papers from the demo corpus, against arXiv-rendered HTML of the same version as an independent reference. Raw per-paper results and CIs: `docs/eval/pdf_extractors.json`.
+
+| Extractor | Reference 5-gram recall (95% CI) | Extracted 5-gram precision (95% CI) | Seconds per page |
+|---|---|---|---|
+| **PyMuPDF 1.28** | **0.838** (0.816, 0.859) | **0.654** (0.619, 0.687) | 0.004 |
+| pdfplumber, tuned (column cropping, `x_tolerance=1`) | 0.754 (0.723, 0.785) | 0.580 (0.539, 0.620) | 0.195 |
+| pdfplumber, column cropping only | 0.231 (0.173, 0.294) | 0.253 (0.199, 0.313) | 0.238 |
+| pdfplumber, default | 0.180 (0.131, 0.238) | 0.198 (0.151, 0.251) | 0.181 |
+
+The paired difference against the best pdfplumber arm is +0.084 recall (CI 0.064, 0.105) and +0.074 precision (CI 0.058, 0.090). PyMuPDF is also about 40 times faster, and it reads two-column papers correctly without a column-cropping heuristic. Default-configuration pdfplumber glues words together on these LaTeX PDFs, so the tuned arm is the fair comparison.
+
+**Version.** `pymupdf>=1.28.2,<2`. PyMuPDF 2.x pulls in onnxruntime, and placeholder `pymupdf4llm` and `pymupdf-layout` packages whose metadata carries no licence, for layout code Mezvuat does not use. The earlier 1.x `pymupdf-layout` was listed as PolyForm Noncommercial, which is incompatible with this repository (secondary sources; not confirmed from a licence file). PyMuPDF itself is AGPL-3.0, which matches the repository licence (D7).
+
+**Limitations.** 30 papers, one domain. Precision is capped well below 1 because the reference omits figures, footers and references that PDF extraction keeps. Trafilatura extraction of the reference may itself lose text. Heading detection is a font-size and weight heuristic: it was checked on generated PDFs and one real PDF, not measured across the corpus.
+
+`pdfplumber` is now a development-only dependency used by this spike.
 
 ## Consequences
 

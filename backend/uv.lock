@@ -1285,7 +1285,6 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "numpy" },
-    { name = "pdfplumber" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -1305,6 +1304,7 @@ dependencies = [
 dev = [
     { name = "import-linter" },
     { name = "mypy" },
+    { name = "pdfplumber" },
     { name = "pytest" },
     { name = "ranx" },
     { name = "respx" },
@@ -1329,7 +1329,6 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.162" },
     { name = "httpx", specifier = ">=0.28" },
     { name = "numpy", specifier = ">=2.3" },
-    { name = "pdfplumber", specifier = ">=0.11.10" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3" },
     { name = "pydantic", specifier = ">=2.14" },
     { name = "pydantic-settings", specifier = ">=2.8" },
@@ -1349,6 +1348,7 @@ requires-dist = [
 dev = [
     { name = "import-linter", specifier = ">=2.3" },
     { name = "mypy", specifier = ">=2.4" },
+    { name = "pdfplumber", specifier = ">=0.11.10" },
     { name = "pytest", specifier = ">=9.0" },
     { name = "ranx", specifier = ">=0.3.20" },
     { name = "respx", specifier = ">=0.22" },

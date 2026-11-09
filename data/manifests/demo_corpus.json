@@ -42,12 +42,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-04"
+     "submitted": "2026-06-04",
+     "raw_sha256": "58f03995f6bd8f1fe19b114867af5afdece5aec57081a86c21f57c36d6dd22cf"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-29"
+     "submitted": "2026-10-29",
+     "raw_sha256": "15ca968b78937d4cade433f8c92d7ce7ba00619084016800fdcb6f1d4c01cac8"
     }
    ]
   },
@@ -68,12 +70,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "69d46c4d70208106223a8d6945832ebb31475cd47f52d648fcdd563b42b03bc4"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-28"
+     "submitted": "2026-09-28",
+     "raw_sha256": "1ae9ab1f26b94eb0da8bdb6d1b2d4a16147300a319e2eff21c424ea1e60008ff"
     }
    ]
   },
@@ -91,22 +95,26 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "2b6dc17f3e14f9d3f0cc524cafa6545057a192e36b76d98c819bc05ecafa6214"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-20"
+     "submitted": "2026-08-20",
+     "raw_sha256": "3b83522b625e5b055ba87f83268655967bd4325416220eb06e32bc3689e1c0ef"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-11"
+     "submitted": "2026-09-11",
+     "raw_sha256": "36392eec9984bb70604ed9b01e14631867b9092ff9d7a9a6da3fa509a4caecf4"
     },
     {
      "label": "v4",
      "ordinal": 4,
-     "submitted": "2026-10-08"
+     "submitted": "2026-10-08",
+     "raw_sha256": "8612797b7ac89b5987fe7285ffb32b92a5fed185527bd6e6913eb48f1498bfb2"
     }
    ]
   },
@@ -124,12 +132,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "8c69b8c5bcdd0d2a34592de62b97ee71b43e39beb634f0367d1bc1f59869227b"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-26"
+     "submitted": "2026-08-26",
+     "raw_sha256": "629d45391327dd579b25b40ef620cfd42ee3212d7a0a02bb9c3fdff8241670be"
     }
    ]
   },
@@ -146,12 +156,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "ce14ef703c63cff50fbcb361fb2c07621a75886e9fa414174f4953084c56d82c"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-06"
+     "submitted": "2026-08-06",
+     "raw_sha256": "224e8c1d291889af8e264cb1defb3b141295de74dd1e737bca442f953a8ef451"
     }
    ]
   },
@@ -170,7 +182,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "b5b71d7bf01b94e154926ef1312162280811f946728e5db851ab4774bd33505c"
     }
    ]
   },
@@ -188,12 +201,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "8fc7a06696c013aa1239ec0b329ff6507a23e7430f807dad5332615b600f6714"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-14"
+     "submitted": "2026-10-14",
+     "raw_sha256": "837ab6e43d1c42146765fe7fb97a7d2962909773e80c69c12f7f96691174c354"
     }
    ]
   },
@@ -211,7 +226,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-10"
+     "submitted": "2026-06-10",
+     "raw_sha256": "e777e7de2cfc455172c57462f35f6ed478993c097162550dcf6bd6669b516c0e"
     }
    ]
   },
@@ -229,7 +245,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-11"
+     "submitted": "2026-06-11",
+     "raw_sha256": "16654268387d9ea2e16afbda320eaa71d8fac2053077d7a1e5b69cfaac92f6d0"
     }
    ]
   },
@@ -246,7 +263,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-11"
+     "submitted": "2026-06-11",
+     "raw_sha256": "c680ae0ad4a73770341dafcca07009d54acb7882207ebfc8e4a86789f6c919b2"
     }
    ]
   },
@@ -263,12 +281,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-11"
+     "submitted": "2026-06-11",
+     "raw_sha256": "28a6f0b6533f1b5eb1821c519f161f1cb8410d679f625ac10e881bbb105219ad"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-15"
+     "submitted": "2026-06-15",
+     "raw_sha256": "9d057730e8fab351e2a2986eab32e1f2aed6f01723a2573783bb7a17efe9f3ce"
     }
    ]
   },
@@ -286,7 +306,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-11"
+     "submitted": "2026-06-11",
+     "raw_sha256": "985188f9a2424dcf411333aa4ed8e49463fa77398c3433fe4118874262cfae27"
     }
    ]
   },
@@ -303,17 +324,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-11"
+     "submitted": "2026-06-11",
+     "raw_sha256": "46626df281f3bdb592357bfd1c1983117a16e05ccc068ea899f300d6d8a38340"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-20"
+     "submitted": "2026-06-20",
+     "raw_sha256": "b724f9be0ef1ffbd1d086d09c700235dd855985afd4afe4813c03c4e9176056c"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-06-23"
+     "submitted": "2026-06-23",
+     "raw_sha256": "bce206050f3125a5f50ec26271b5a6d45968c942c05a19f9ec919535fb655511"
     }
    ]
   },
@@ -333,12 +357,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-14"
+     "submitted": "2026-06-14",
+     "raw_sha256": "9e1f59b8cda57af060d7bd3b7c44e52f7ba1500976f8706907b16a5a1921ee57"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-11"
+     "submitted": "2026-10-11",
+     "raw_sha256": "7ffb54b31f7010dff299d264ef77fe36750f27f6cd23d76807a979073061b20e"
     }
    ]
   },
@@ -355,7 +381,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-14"
+     "submitted": "2026-06-14",
+     "raw_sha256": "8830914df443f29dffe256b8fffaae7293547267c5bff577d0fc928603f18f00"
     }
    ]
   },
@@ -374,22 +401,26 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-15"
+     "submitted": "2026-06-15",
+     "raw_sha256": "89ab2bee82f8b5f35be880e197a700fa0d4dea89e104a7ae3e433cc12b9df17d"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-26"
+     "submitted": "2026-06-26",
+     "raw_sha256": "1ae37a4fdcab5506e17b781b0699273f75df2f45b987c90443707536a284c0cd"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-07-04"
+     "submitted": "2026-07-04",
+     "raw_sha256": "90f7ef23988c0b53e24ac4e58d7678414597caf3ca83c9f427bdc5b043c39662"
     },
     {
      "label": "v4",
      "ordinal": 4,
-     "submitted": "2026-09-15"
+     "submitted": "2026-09-15",
+     "raw_sha256": "5b3329bf45a6eec505711428662dec4cc23c47d93cb70cd8271ef877251cad4a"
     }
    ]
   },
@@ -407,12 +438,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-15"
+     "submitted": "2026-06-15",
+     "raw_sha256": "b988752a4bb0ae793144229cb14d4c45318813a087088057322c238f3d521eb9"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-22"
+     "submitted": "2026-08-22",
+     "raw_sha256": "4ec5dfa2d6ad6ab1030c217bf58b1936a44c42498203d23a7c13ee5822a33bec"
     }
    ]
   },
@@ -429,12 +462,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-15"
+     "submitted": "2026-06-15",
+     "raw_sha256": "ae6c85547247d86e9eca3f7877f6d699c795af99fcb26c1f60374087f1bdd9a7"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-04"
+     "submitted": "2026-08-04",
+     "raw_sha256": "f68ffbd4ddb39b5d20418e2f12829fe39143795968bd1a533d943953059768e8"
     }
    ]
   },
@@ -452,7 +487,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-16"
+     "submitted": "2026-06-16",
+     "raw_sha256": "bba8e1c1123dcd580ff8a7d54a239a8a590433ba02463dedcdb177ae3d22df2e"
     }
    ]
   },
@@ -470,7 +506,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-16"
+     "submitted": "2026-06-16",
+     "raw_sha256": "6aac204574a941171386b511ad94f93c2ef4907bbb81b4622e6c2f3d51357790"
     }
    ]
   },
@@ -488,12 +525,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-17"
+     "submitted": "2026-06-17",
+     "raw_sha256": "387bb46d1ae0657728093e6ccb9061783ef69bc949a4c551d080355e0439eb80"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-27"
+     "submitted": "2026-08-27",
+     "raw_sha256": "524c92de4539a2ac159ec2eeae82b1b7cb38644c7c6bf9d8a5e15de811c53610"
     }
    ]
   },
@@ -510,17 +549,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-17"
+     "submitted": "2026-06-17",
+     "raw_sha256": "c74b90103bbe3c8f14c957a8545f971b19580be3a7aa119a02eb47ca730faa1f"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-29"
+     "submitted": "2026-08-29",
+     "raw_sha256": "a4fc3eaa2a6858f96962be1cd9f60cea65c31d3850d83164b1e5a7ca96be6ccb"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-05"
+     "submitted": "2026-09-05",
+     "raw_sha256": "6a67cc08959b3dbd8339ea88869681498ec54d2b35e591b4578c9725bdbb51b1"
     }
    ]
   },
@@ -538,12 +580,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-18"
+     "submitted": "2026-06-18",
+     "raw_sha256": "bf267b7aa7280103908f0a4f499e8d31748fc9005b69d025be068c362e5fee2b"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-19"
+     "submitted": "2026-06-19",
+     "raw_sha256": "a81cf429cace9b962fdb14474e2fb9eb23d78d47078d40510d40012657b95cc6"
     }
    ]
   },
@@ -561,7 +605,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-19"
+     "submitted": "2026-06-19",
+     "raw_sha256": "062a32d484810ea010b7476a26e625350097179ada47e530d0a08c10b5c14fe7"
     }
    ]
   },
@@ -578,12 +623,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-20"
+     "submitted": "2026-06-20",
+     "raw_sha256": "1f6847fca83ebab51ba2c863df24a239501cf793106658f1e7291d233cf533c4"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-02"
+     "submitted": "2026-10-02",
+     "raw_sha256": "6783e67184200cbae1e8f7ec9dbcf0142c9a52b1842b82007b7b8f744f4a8b9c"
     }
    ]
   },
@@ -601,12 +648,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-21"
+     "submitted": "2026-06-21",
+     "raw_sha256": "5acc7eb2bca46368b5c131a60cba252c1b0d2d05e751348ca3c3c28889b7f98f"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-27"
+     "submitted": "2026-09-27",
+     "raw_sha256": "b904d4e77a1195ff5e5c73ab441b2cd75ee5d091e05f86de71e96e11fb7430ba"
     }
    ]
   },
@@ -625,7 +674,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-22"
+     "submitted": "2026-06-22",
+     "raw_sha256": "a3fd2be15bd8307df2b348ff45574ca98ccf5f7a1dbbbc178cf6aa3ed0999645"
     }
    ]
   },
@@ -644,17 +694,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-23"
+     "submitted": "2026-06-23",
+     "raw_sha256": "63de6234453caf262ad40ff41df5a52e16fbafba5758c4d0dc119a18f23e4975"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-30"
+     "submitted": "2026-06-30",
+     "raw_sha256": "8ed6e1dd17e4f2e8d9db01ef2ef264f893106429b9608fda578fdadde437fcb8"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-07-04"
+     "submitted": "2026-07-04",
+     "raw_sha256": "cc2760fca0b0d287c32e00a34fa1e80a05dca737c7b074ece7847c14dd154bd1"
     }
    ]
   },
@@ -671,7 +724,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-24"
+     "submitted": "2026-06-24",
+     "raw_sha256": "647a1e3a0d29cf61e4b6f3a37fe08edd5a43964f4ef29cb9a99f7b7f77d4ac2e"
     }
    ]
   },
@@ -690,22 +744,26 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-24"
+     "submitted": "2026-06-24",
+     "raw_sha256": "f039f8cf8511ccd1645d91c263f685ab2f5b2caf5fb50593354f1ac8150c961f"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-28"
+     "submitted": "2026-06-28",
+     "raw_sha256": "6bae104810983427e9acd773ea867a1c3cd80ecee68886c0f4c1591bc786290e"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-07-06"
+     "submitted": "2026-07-06",
+     "raw_sha256": "8ba3d8f8e26d9de07178a6b804690b6cff629d70c035c5703403305e8fabf200"
     },
     {
      "label": "v4",
      "ordinal": 4,
-     "submitted": "2026-07-14"
+     "submitted": "2026-07-14",
+     "raw_sha256": "7b8b29e8410582d519c121d310c74ec46138695c32438dd46f042b317d5e5112"
     }
    ]
   },
@@ -723,12 +781,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-26"
+     "submitted": "2026-06-26",
+     "raw_sha256": "ac9949319c8a20cc61ef3a16f4378f801682e6378c511945c16375f8d265ebfa"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-13"
+     "submitted": "2026-10-13",
+     "raw_sha256": "04d1bc3a2bc5e6b2e8cb83d87beb9ce329266799472e89296dadb58dec6c3e23"
     }
    ]
   },
@@ -747,17 +807,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-26"
+     "submitted": "2026-06-26",
+     "raw_sha256": "da047e7340c1a0b65ae5fb0a8a470d0948ae46b499ac66bf416850061776c35c"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-06-30"
+     "submitted": "2026-06-30",
+     "raw_sha256": "5ba66c4f5516857d96a3478ad95867f2f224d3b15d63499e1ca9ee9fbe5eb872"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-07-14"
+     "submitted": "2026-07-14",
+     "raw_sha256": "456ad9728640b6334d995486d40f96ee008242e5b45be6721f754fb15c40a59b"
     }
    ]
   },
@@ -776,12 +839,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-09"
+     "submitted": "2026-06-09",
+     "raw_sha256": "5e759025e767684ced3b5b8778fe3daa35460f8f4ebb9bd7d400cf237db90f65"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-19"
+     "submitted": "2026-09-19",
+     "raw_sha256": "ebb872a2c95309dbb40f90a5de8727943456aa8b8effcbe2b64f89ae89ac14d1"
     }
    ]
   },
@@ -799,7 +864,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-23"
+     "submitted": "2026-06-23",
+     "raw_sha256": "87bbd48ceabc16cd28f081f6f5f160b20da383a66826c469277f8bb180bcbb14"
     }
    ]
   },
@@ -817,7 +883,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-28"
+     "submitted": "2026-06-28",
+     "raw_sha256": "fbd668605fa2a8692fc5d1b03c7ab53ae66df6d3d0d7afa5f54f25a58f5037f4"
     }
    ]
   },
@@ -837,12 +904,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-29"
+     "submitted": "2026-06-29",
+     "raw_sha256": "084609d66840ea9e56ac63f0741792d53961bc5a221a11d1adb10e2fdb30a7c1"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-02"
+     "submitted": "2026-09-02",
+     "raw_sha256": "c587e1ba266fc8ab645bcfdabfbeaa4dc16ca2d0ef62e9d25ed5d786ee83e21c"
     }
    ]
   },
@@ -860,7 +929,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-29"
+     "submitted": "2026-06-29",
+     "raw_sha256": "c52ebd6e51227b4fc207775912b099a365f7dcb366b42d79a8f4e2cca601134f"
     }
    ]
   },
@@ -878,17 +948,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-30"
+     "submitted": "2026-06-30",
+     "raw_sha256": "1d2ff1d99fdb6a46d3954d36ce6c1aabc49f82acb40dba02902f1340514890fd"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-01"
+     "submitted": "2026-07-01",
+     "raw_sha256": "a9db217b61a4f0e5f6aecfc4f9cc2d0b5f7e9148af2bec9a4957ea800ff575b2"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-08-10"
+     "submitted": "2026-08-10",
+     "raw_sha256": "75e12399197b9176d9f057245a4e87a5adc2e4446a1b5e456401a84101746aa0"
     }
    ]
   },
@@ -905,12 +978,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-01"
+     "submitted": "2026-07-01",
+     "raw_sha256": "5a60f81e3855201780ca9bff0695bccb63e98b43bcc320eb5c84917c86b18c46"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-02"
+     "submitted": "2026-07-02",
+     "raw_sha256": "6ebd47e162ed58dd8a6a80c911f73f887cea78235424fc01ebf49897dd508008"
     }
    ]
   },
@@ -928,12 +1003,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-01"
+     "submitted": "2026-07-01",
+     "raw_sha256": "310dc3973dd75ac6acb5e5223749d743ae3f3584777cf8ad530f57b597087139"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-05"
+     "submitted": "2026-08-05",
+     "raw_sha256": "327a4ac0e86331fc607c037f3ce2179039a4dc4a45b446bcb2f6ad3fc1b13e8e"
     }
    ]
   },
@@ -950,12 +1027,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-01"
+     "submitted": "2026-07-01",
+     "raw_sha256": "c38fbbab9941e4e3e11ca7771695b7a61ec6fa8fb2f8aa84bbe1f083649927a5"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-04"
+     "submitted": "2026-07-04",
+     "raw_sha256": "ba80096ab08056c2710c7c4d8f740daaa9f4af01f45d52673f62f103d63b41da"
     }
    ]
   },
@@ -974,12 +1053,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-02"
+     "submitted": "2026-07-02",
+     "raw_sha256": "5d373bb4870a84181d9602f48506b4fb16f5717dcd7d02c9e7d2465fa02d5d5c"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-24"
+     "submitted": "2026-09-24",
+     "raw_sha256": "1039053b41d62081097596e16b6eaf46c7427dd74f4a0e6c0370201efabca445"
     }
    ]
   },
@@ -996,12 +1077,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-03"
+     "submitted": "2026-07-03",
+     "raw_sha256": "86acede2164e943e89c678da47b08d3a7d1c71e2ff1c111c10b4cf14f54f97cc"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-09"
+     "submitted": "2026-07-09",
+     "raw_sha256": "dcafbd4ae7d5c2518570f3279130d53379d6e5e4f58165e242963eb2c25b32b8"
     }
    ]
   },
@@ -1019,7 +1102,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-04"
+     "submitted": "2026-07-04",
+     "raw_sha256": "dfb3f3af3be7cbe5d901f5591f975ede22ada8252f7f2d6f8765b6ee1f1b6727"
     }
    ]
   },
@@ -1038,12 +1122,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-05"
+     "submitted": "2026-07-05",
+     "raw_sha256": "a68198efa8b1978f5533eaf9baa3961770786dbe53a846baab8b5e415efcc6a6"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-18"
+     "submitted": "2026-07-18",
+     "raw_sha256": "8f18834164e1b1f5ba10469f57c0ad91f60fb189a411399829ee0490db46aa57"
     }
    ]
   },
@@ -1061,7 +1147,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-05"
+     "submitted": "2026-07-05",
+     "raw_sha256": "da6593faa79ca9ca91123edb98a2cb7b0c1800fead9803ac6e0caa06a5262a4b"
     }
    ]
   },
@@ -1080,12 +1167,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-05"
+     "submitted": "2026-07-05",
+     "raw_sha256": "1a76a49d62a0d4307b3a6537b2846acf6e54fd61901c09d3b0c6e5317d456300"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-02"
+     "submitted": "2026-10-02",
+     "raw_sha256": "7f2c2ba49a986d65d89e0b58730cf581aeee24e4563d42eab4b10aab83b7aa9a"
     }
    ]
   },
@@ -1104,12 +1193,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-06"
+     "submitted": "2026-07-06",
+     "raw_sha256": "356dba25863b9d1b163c36087074da49d5eaec90a22806cbc0ed120092b12ad4"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-07"
+     "submitted": "2026-07-07",
+     "raw_sha256": "dd56d339254564bdc63ff7c24b7a6106ac76c90379c1f62fd9a19aab0f61df90"
     }
    ]
   },
@@ -1126,12 +1217,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-07"
+     "submitted": "2026-07-07",
+     "raw_sha256": "a88433a9a5b00597f1d2eee08447de72838bf783dffa1c17239a3e70b0f501e7"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-28"
+     "submitted": "2026-09-28",
+     "raw_sha256": "8e8ed78301d9d26768c4a8794e8d254e9d88bc5b2db4417a9683556d13f46a69"
     }
    ]
   },
@@ -1149,12 +1242,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-07"
+     "submitted": "2026-07-07",
+     "raw_sha256": "7e36ffe239f1066d90285441c843291ae5d75d381d960de5d9d8128b574ca90b"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-22"
+     "submitted": "2026-08-22",
+     "raw_sha256": "d2f70a48e8eaa6d53e2594e1ba5d7449e9230830026805e8e72302bc7cceebfa"
     }
    ]
   },
@@ -1173,7 +1268,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-07"
+     "submitted": "2026-07-07",
+     "raw_sha256": "81c02c82b45adb1784d4bec7cb6bcee67ca6c21420967e120fe9b6a8483566d3"
     }
    ]
   },
@@ -1190,7 +1286,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-11"
+     "submitted": "2026-07-11",
+     "raw_sha256": "84fb658b08844451824c129c7ee3a444624986d689d50da04a33ac5285901eca"
     }
    ]
   },
@@ -1207,7 +1304,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-13"
+     "submitted": "2026-07-13",
+     "raw_sha256": "e007852caf0ab95cb51da9ce7c69f1efd19a4c17b7f90d016b4574e87650a1da"
     }
    ]
   },
@@ -1226,7 +1324,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-11"
+     "submitted": "2026-07-11",
+     "raw_sha256": "aa33f8060929b97168e4bcd5e69368f15027c80fe9b12c946cb246dee18a9323"
     }
    ]
   },
@@ -1244,12 +1343,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-15"
+     "submitted": "2026-07-15",
+     "raw_sha256": "6604eb77011376be993e52ffc8eaa4c7a75cc861c6ccd4aaa4b13de9fea6a771"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-19"
+     "submitted": "2026-07-19",
+     "raw_sha256": "1d3db4d4aa3b73dcb97cb62b88791056e6dd6d855481acff8e44e383597dec25"
     }
    ]
   },
@@ -1268,12 +1369,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-16"
+     "submitted": "2026-07-16",
+     "raw_sha256": "a852af0a7d72069e9450f655ee03bb5e6f2ca50038d789d043b5d899540cfa96"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-17"
+     "submitted": "2026-07-17",
+     "raw_sha256": "14aae3d77f2690bfd12ca87b2e044cd2520b765c50ac3363dd118f4d6fb585de"
     }
    ]
   },
@@ -1291,17 +1394,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-19"
+     "submitted": "2026-07-19",
+     "raw_sha256": "894d335202df5f84e4b0bfb61c5b5707e812f9d95b8e90f2408c4d0b522c4c65"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-21"
+     "submitted": "2026-07-21",
+     "raw_sha256": "06bb0c2cc7038ede60badfbc32c80988ab88bf0324919f0af9949d5bd6e0380b"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-08-02"
+     "submitted": "2026-08-02",
+     "raw_sha256": "3bb0b8dc3973182c0883ea2c3a57eb072bcfdd0194c876838a892a48dfecd826"
     }
    ]
   },
@@ -1318,7 +1424,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-20"
+     "submitted": "2026-07-20",
+     "raw_sha256": "a18cfac45987f79dd69b3807b933b30240db55365f54b6b6173d5f5408ac88be"
     }
    ]
   },
@@ -1335,12 +1442,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-24"
+     "submitted": "2026-07-24",
+     "raw_sha256": "ccacad56fedee39b5f008eb515ca48c1cb628ea95c74adc17a8e932d5efb0902"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-28"
+     "submitted": "2026-07-28",
+     "raw_sha256": "e244782187c42784d0f86497d37dbd25af5c2606b9903eb566a07dbb8564b4a3"
     }
    ]
   },
@@ -1358,7 +1467,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-08"
+     "submitted": "2026-06-08",
+     "raw_sha256": "95a6800970ad1de485ebb10240205e5ddcb4fb0645c830a8c1637b66b666f90b"
     }
    ]
   },
@@ -1377,7 +1487,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-25"
+     "submitted": "2026-07-25",
+     "raw_sha256": "1feed6e20b7d61204962b5c432cb6d958fbeb31a7fb177191f7593989b1b503c"
     }
    ]
   },
@@ -1395,7 +1506,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-26"
+     "submitted": "2026-07-26",
+     "raw_sha256": "53fa4fa332d26f9b2189a2026f720cdf8d9df19fa7d325f176942e5881b9ad98"
     }
    ]
   },
@@ -1415,12 +1527,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-26"
+     "submitted": "2026-07-26",
+     "raw_sha256": "3e4d863de0de048a939c332bef57c693cb62f512e24b07bd79c98d18ed84b8ac"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-26"
+     "submitted": "2026-08-26",
+     "raw_sha256": "2a84854411250f2af433d399be0c94f0aec9d0a689c9366021140d0a097ee5cf"
     }
    ]
   },
@@ -1438,12 +1552,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-27"
+     "submitted": "2026-07-27",
+     "raw_sha256": "2a7d66b080a95bde362b2124f57f2d89d2d75aacf748f39b8dff14c5f2a39c22"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-30"
+     "submitted": "2026-08-30",
+     "raw_sha256": "4304c7d30f0d6482d5ae6dac59ad54a16302f9cabfe44c9ba9bf03fbd7a432df"
     }
    ]
   },
@@ -1460,7 +1576,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-27"
+     "submitted": "2026-07-27",
+     "raw_sha256": "5bff517052736a8000e13c73ad2ea5cb20ca0c7ce68c6b3294a2061b2c30a61e"
     }
    ]
   },
@@ -1479,7 +1596,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-27"
+     "submitted": "2026-07-27",
+     "raw_sha256": "eea9e7fa8917ca11c62802765865265aa4961c959579cd34633d8622f88ede5c"
     }
    ]
   },
@@ -1497,12 +1615,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-06"
+     "submitted": "2026-07-06",
+     "raw_sha256": "12e940f9deee02721253b0140ce75da16506e0136517a51b37d56645a7ba1559"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-29"
+     "submitted": "2026-07-29",
+     "raw_sha256": "12b3f40ee4048cfdd5280701a3fb197372054451ede99d7934f66f5d122cf1ce"
     }
    ]
   },
@@ -1522,12 +1642,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-27"
+     "submitted": "2026-07-27",
+     "raw_sha256": "cc3bcd250c047712449c15790ec258acaa07b3873fc8e9e07821975bd0c628d3"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-07-29"
+     "submitted": "2026-07-29",
+     "raw_sha256": "88a363348cfda86f0a2c3767a1e270ba770659e699064c31c7a5eda32157fe20"
     }
    ]
   },
@@ -1546,12 +1668,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-28"
+     "submitted": "2026-07-28",
+     "raw_sha256": "d1394ac74a4ff37ec9718ca4df605600b2ce640c72c493dd79cb6e362c9493ab"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-16"
+     "submitted": "2026-10-16",
+     "raw_sha256": "b88a75b4f68d34e5fc50fc4e36e2954c65ca29c477bf7a91ab242ff9c8a7f87d"
     }
    ]
   },
@@ -1571,12 +1695,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-29"
+     "submitted": "2026-07-29",
+     "raw_sha256": "b6e4e66f37de5d343c0e5f138fe85e6116d7fb8e63a28969ce728c027937de62"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-31"
+     "submitted": "2026-10-31",
+     "raw_sha256": "f45b37a62e941e5fa0867a79032a95e4345fc6eb513933501191976aa78daaa1"
     }
    ]
   },
@@ -1594,7 +1720,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-07-29"
+     "submitted": "2026-07-29",
+     "raw_sha256": "3082fe496b344ac75a778bbe8e1063962a299ece19151727dbf5ee6f36e15f58"
     }
    ]
   },
@@ -1612,7 +1739,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-01"
+     "submitted": "2026-08-01",
+     "raw_sha256": "b4900bca5aa002347283e31f77f18e0b31ccaa5b0f2d9e7642f24ae080d922ab"
     }
    ]
   },
@@ -1630,7 +1758,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-02"
+     "submitted": "2026-08-02",
+     "raw_sha256": "587f5732b04fdafd115ea0d5d760db166da00a6da0cc438ac954103d15384823"
     }
    ]
   },
@@ -1649,12 +1778,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-02"
+     "submitted": "2026-08-02",
+     "raw_sha256": "b4887e3f64c2b4df6d6a313ccd26fabc70455fce0857e57aaa8d385267452cf4"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-05"
+     "submitted": "2026-08-05",
+     "raw_sha256": "5e7e2adc599835251ed355b4e5136431915d82405d61bdd1fd3e75ff2856b5fa"
     }
    ]
   },
@@ -1671,7 +1802,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-02"
+     "submitted": "2026-08-02",
+     "raw_sha256": "3529ab6b8889c776a1a0c6e7aa3e90b64eeb71593b5b3a9487584857421a5446"
     }
    ]
   },
@@ -1689,7 +1821,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-03"
+     "submitted": "2026-08-03",
+     "raw_sha256": "ead3db3e04dddd7701f2dc8da5e90acd1aa11d3cef1ea460cd08123264993a30"
     }
    ]
   },
@@ -1708,12 +1841,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-03"
+     "submitted": "2026-08-03",
+     "raw_sha256": "f846b10da5e8390fb80909b85c31aa5188bdb8698eb86cd0386652ce31df3569"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-06"
+     "submitted": "2026-08-06",
+     "raw_sha256": "3b52a7088f400aa30360da9047e7c0f0ca0019b4ae3587f754642700767dc6f8"
     }
    ]
   },
@@ -1730,7 +1865,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-03"
+     "submitted": "2026-08-03",
+     "raw_sha256": "e7221d1a72e686ac4f7e59a2e33ac3729fb72beacd109b365f8262c0a06c42a3"
     }
    ]
   },
@@ -1747,7 +1883,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-04"
+     "submitted": "2026-08-04",
+     "raw_sha256": "e87668b400092666b350e38fd76022e85162517999811c8bc048b6766e3b8863"
     }
    ]
   },
@@ -1766,7 +1903,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-04"
+     "submitted": "2026-08-04",
+     "raw_sha256": "9ffc151edaf5e8a8228f66e5703548db12f3079944d8e14c2059ea382ff448e9"
     }
    ]
   },
@@ -1786,7 +1924,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-04"
+     "submitted": "2026-08-04",
+     "raw_sha256": "6a9d0dd365c5db9b22d56c2735f6859011ca3000576c0e63b6b7b0b8fab764bf"
     }
    ]
   },
@@ -1803,7 +1942,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-07"
+     "submitted": "2026-08-07",
+     "raw_sha256": "8ad69b5c7878591bc79ca4761bc9e5b6dbff4fe9a744dbe73f5ab3f6c041fdd0"
     }
    ]
   },
@@ -1821,7 +1961,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-10"
+     "submitted": "2026-08-10",
+     "raw_sha256": "75c0e3390edb947a569e5b92007be236a819b9c5790b19644dc2d59ebcdde9b6"
     }
    ]
   },
@@ -1839,17 +1980,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-11"
+     "submitted": "2026-08-11",
+     "raw_sha256": "fd6960b10becfba439a39d922e8aac782be4c515dbde837c2b8cf6e4563a8b81"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-12"
+     "submitted": "2026-08-12",
+     "raw_sha256": "7b07f254de63ea061fd9af0fb84ce24cec87618317a26b3b826d70f983a49826"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-08-15"
+     "submitted": "2026-08-15",
+     "raw_sha256": "c95bfe537d8a23c22ece082337ade75c1d7434ce278bb55115535229c85e1d93"
     }
    ]
   },
@@ -1866,12 +2010,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-13"
+     "submitted": "2026-08-13",
+     "raw_sha256": "91439f206466577b76399b1a68a7043879606ea029296708e30b889def48b4fe"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-16"
+     "submitted": "2026-08-16",
+     "raw_sha256": "a94658175d3ceb0c4790bdadd3955aa9acee367bddb5723a2b7306af58a9545c"
     }
    ]
   },
@@ -1889,17 +2035,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-13"
+     "submitted": "2026-08-13",
+     "raw_sha256": "a78e1ceb4fc549c56f2090be5232ad078ffe72d3f5d36fa5e9d093af4e251b41"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-18"
+     "submitted": "2026-08-18",
+     "raw_sha256": "ba65fec104206f486c1e4ba6e5260f083a1ad0ecba6f1c1e41ff67d459b5fae5"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-07"
+     "submitted": "2026-09-07",
+     "raw_sha256": "6ba5bb6003a9faa3cdd0caedc76660f43d4f952670ab3bf4500ee087ee811b11"
     }
    ]
   },
@@ -1916,12 +2065,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-17"
+     "submitted": "2026-08-17",
+     "raw_sha256": "c7e93a6925f4887a72d65badbab922835c6e39ba9e12e77a563b32e2ad311a5e"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-11-04"
+     "submitted": "2026-11-04",
+     "raw_sha256": "85b9e0e9e78f3ac7938c46055ec14e54203a2048cab9b7e7875294c25a3cfd53"
     }
    ]
   },
@@ -1939,17 +2090,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-19"
+     "submitted": "2026-08-19",
+     "raw_sha256": "e887988974d744f27684897c47b194d2799ca70855ddf37de5068147364b846a"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-20"
+     "submitted": "2026-08-20",
+     "raw_sha256": "c452a51171631ee1cd6abce4f75f822087932719b576287e6fe6fbfe21597f37"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-22"
+     "submitted": "2026-09-22",
+     "raw_sha256": "727ca821333cb6f893d2ff0a152bfac4a849af6f0dadd9221501abc89f42aeb6"
     }
    ]
   },
@@ -1966,7 +2120,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-20"
+     "submitted": "2026-08-20",
+     "raw_sha256": "1b3c4344719c032f11afa15a539cdf77125adbe394e4342f366b26bb51f04c39"
     }
    ]
   },
@@ -1984,7 +2139,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-15"
+     "submitted": "2026-06-15",
+     "raw_sha256": "2f6bb1c517c68dc93ef7adf80cf1e52155e195cc14c40fb66bdd0b48a3b75b72"
     }
    ]
   },
@@ -2001,7 +2157,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-22"
+     "submitted": "2026-08-22",
+     "raw_sha256": "0a86995ba9c8050c8d1a05fb68f42c899293289395c3093cb12d567f7d902ddc"
     }
    ]
   },
@@ -2019,12 +2176,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-23"
+     "submitted": "2026-08-23",
+     "raw_sha256": "896f371198f152610d47db8f3e23bb5d6beb5c5ecdfcc98375842cc6ef69cd20"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-30"
+     "submitted": "2026-08-30",
+     "raw_sha256": "8873ddcf9b26321c7d08e4df540a83dea91b957258df3f8236133c09d61cad23"
     }
    ]
   },
@@ -2042,17 +2201,20 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-24"
+     "submitted": "2026-08-24",
+     "raw_sha256": "fd367fa164f97f1336c6569aaa7b7a43ef860a02945ab12d067d2073cc2b9284"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-16"
+     "submitted": "2026-09-16",
+     "raw_sha256": "be7c94f7de7eb017c9eb30f95a7ae48f4fc0af93f31adc64a56e1ca8b4b8b23b"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-26"
+     "submitted": "2026-09-26",
+     "raw_sha256": "5313e3f7dd90aafc89729020e256dbb023b731b0056fd7108ba0418bd74c9342"
     }
    ]
   },
@@ -2070,12 +2232,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-24"
+     "submitted": "2026-08-24",
+     "raw_sha256": "252fe57bbb0f367899436d0a359a0b98a2352abffa912407e6c6a0eac7f2cd06"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-25"
+     "submitted": "2026-08-25",
+     "raw_sha256": "f1f2e143feb600453be798b5235c15dc638be7f5ca8ee2d707389cba03c4cd4b"
     }
    ]
   },
@@ -2092,12 +2256,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-24"
+     "submitted": "2026-08-24",
+     "raw_sha256": "c3b9a72da4284f0d61ff15626fa5d89a68e9dafb79004e70bb4cd36a9dfd158a"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-08"
+     "submitted": "2026-09-08",
+     "raw_sha256": "8bf1bd7c89fcc704bf9ea4f69b7ccae9df302cf89bbf86badb15ed2f379dc322"
     }
    ]
   },
@@ -2116,12 +2282,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-25"
+     "submitted": "2026-08-25",
+     "raw_sha256": "6c9fb88e3eb2a39a13815f7e3fc08d61638eba400350c2c578416e73257280f8"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-08-27"
+     "submitted": "2026-08-27",
+     "raw_sha256": "6fb4331e074454ba124ca456149f4e0c2aada0c836b8f70751298c53a76b009e"
     }
    ]
   },
@@ -2140,22 +2308,26 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-26"
+     "submitted": "2026-08-26",
+     "raw_sha256": "1c161c49d82594ee69f9c81bc6a45614ed1022aca2e2614c79db5ffd5cf8d195"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-02"
+     "submitted": "2026-09-02",
+     "raw_sha256": "53ff71cffc091becc50737ee4b92a1e80769617584bfff18656dbbd04b3d969e"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-07"
+     "submitted": "2026-09-07",
+     "raw_sha256": "b870aa131c3db83b19efe1a9f2548bda5cb9a9828529dcf2f35a23d287834a7e"
     },
     {
      "label": "v4",
      "ordinal": 4,
-     "submitted": "2026-10-29"
+     "submitted": "2026-10-29",
+     "raw_sha256": "d8472367cff7071041533ba2a7c28e67746b1579f20efa4782467d74ccfd1e65"
     }
    ]
   },
@@ -2172,12 +2344,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-31"
+     "submitted": "2026-08-31",
+     "raw_sha256": "3a2d8760f9975daa8db31e2697f7b37f509bfaa557f734b02a0184a2c5379fbf"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-07"
+     "submitted": "2026-09-07",
+     "raw_sha256": "dbfaf521187a5fac1d11c7787637da1d4ff8d8b5d3c56b8522928d75882ddc21"
     }
    ]
   },
@@ -2195,7 +2369,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-31"
+     "submitted": "2026-08-31",
+     "raw_sha256": "8ca23f4329f24e60d61c0a7b6e11423decd2a7796b0dccf69c26a2b9c346fc8d"
     }
    ]
   },
@@ -2212,22 +2387,26 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-01"
+     "submitted": "2026-09-01",
+     "raw_sha256": "7fd9705118f1fe49a5233fba41d7dac5686c79e088f5e43336e3b160de6996ac"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-02"
+     "submitted": "2026-09-02",
+     "raw_sha256": "e74fb606db9fcc452bf24a8a3bd5176985f2d207e9635f868bee0857b84a7731"
     },
     {
      "label": "v3",
      "ordinal": 3,
-     "submitted": "2026-09-10"
+     "submitted": "2026-09-10",
+     "raw_sha256": "b31ddbf0cf3004aa3d3dc5355e014e15d58442d244431b3f75eaa55508f873d7"
     },
     {
      "label": "v4",
      "ordinal": 4,
-     "submitted": "2026-09-29"
+     "submitted": "2026-09-29",
+     "raw_sha256": "012078c48ac38ee2f5846ff22d3611d01173057dda130367081c90e45bd0aefc"
     }
    ]
   },
@@ -2246,7 +2425,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-06-30"
+     "submitted": "2026-06-30",
+     "raw_sha256": "67017d68c94e6b55e02bfcf57cd906034dbef57b980c717b4c98e8028b57e32f"
     }
    ]
   },
@@ -2264,7 +2444,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-03"
+     "submitted": "2026-09-03",
+     "raw_sha256": "a69c8ca0d127798127658191100fd31637b271d366982a94ba2af8072e246602"
     }
    ]
   },
@@ -2284,7 +2465,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-03"
+     "submitted": "2026-09-03",
+     "raw_sha256": "b473ca8329163ec39fc077ed50149f13df6cc799fd1f7cfc2c63358ad0878311"
     }
    ]
   },
@@ -2302,12 +2484,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-04"
+     "submitted": "2026-09-04",
+     "raw_sha256": "bc415163df11aed81256f97d333622dc35cea8a6add114f2e21f25e9b5839b65"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-07"
+     "submitted": "2026-09-07",
+     "raw_sha256": "ed7d45b042261f5895e1f4bba33006e690a4121070a0da0f51cb6c8bfd6e3c17"
     }
    ]
   },
@@ -2324,12 +2508,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-04"
+     "submitted": "2026-09-04",
+     "raw_sha256": "c3eb91669ae3c3573c2894e709b443148416f3a18cd604aaf8a93000a67ba943"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-28"
+     "submitted": "2026-09-28",
+     "raw_sha256": "8c56fb26f323a4fb02b8bd37de4176909b8cbd9bdbabe87cb0330bbbef84367d"
     }
    ]
   },
@@ -2348,12 +2534,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-08"
+     "submitted": "2026-09-08",
+     "raw_sha256": "41434100783ac559e8a4ea5d4de2c79b3cf895bd6c17d4d36bea11313b4337dc"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-26"
+     "submitted": "2026-09-26",
+     "raw_sha256": "6915f70e7d95d9acce5f1726b3c61a6378c1b477ee60f23316d4019db0745732"
     }
    ]
   },
@@ -2370,12 +2558,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-09"
+     "submitted": "2026-09-09",
+     "raw_sha256": "2923b70170f809ea1c915fcba430821de0eea6dca6e9f883fe63203540d23053"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-11"
+     "submitted": "2026-09-11",
+     "raw_sha256": "db6c2ce4bd6f9c3e1e3453bdc9ade8dcbf3e376b693e1ea9be388990a0082dd0"
     }
    ]
   },
@@ -2393,7 +2583,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-10"
+     "submitted": "2026-09-10",
+     "raw_sha256": "0eb8c0582d538136e2ac32fd51bffab170bac16f9173309c9f68870808bdb490"
     }
    ]
   },
@@ -2410,12 +2601,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-11"
+     "submitted": "2026-09-11",
+     "raw_sha256": "588b4aaa29cc673ef62055a8e09d4fa63adf65b178967c45459083b0d832b35a"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-16"
+     "submitted": "2026-09-16",
+     "raw_sha256": "8d8b0913af6ed10a5d0a77dd1cf7a583e2411519efe12c4eafde8d9545e61f7a"
     }
    ]
   },
@@ -2432,7 +2625,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-12"
+     "submitted": "2026-09-12",
+     "raw_sha256": "32b9352e4358aa06173948076a3113a72072b4f64581ffb31b214d624b839479"
     }
    ]
   },
@@ -2452,7 +2646,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-13"
+     "submitted": "2026-09-13",
+     "raw_sha256": "f685092c2f2d2b953362e66e4d6b20242fd552fced9551018aef06e270a5ac3f"
     }
    ]
   },
@@ -2470,7 +2665,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-15"
+     "submitted": "2026-09-15",
+     "raw_sha256": "61063174cf91491f648b945a0376117eb5b601554e1b120bd582c7305536be32"
     }
    ]
   },
@@ -2488,12 +2684,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-16"
+     "submitted": "2026-09-16",
+     "raw_sha256": "6878baf802dac42e005f8d282f66ef27293beafab35daeeb6d5eaf7e8324999c"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-18"
+     "submitted": "2026-09-18",
+     "raw_sha256": "8777cc832b73e5536819093e8572f1665f9b16292979708917246dbe40bdd8a8"
     }
    ]
   },
@@ -2512,7 +2710,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-17"
+     "submitted": "2026-09-17",
+     "raw_sha256": "23167421c2c19c9b711ee5b324d55d721b7b0a0b0f3f73ddb040f3a9ed9921e2"
     }
    ]
   },
@@ -2529,12 +2728,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-17"
+     "submitted": "2026-09-17",
+     "raw_sha256": "84456dca81dee6263a2fcfd269b46a22ea0ffe84156db7d111d270d241fac0fb"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-26"
+     "submitted": "2026-10-26",
+     "raw_sha256": "a597ddef6da14f9931b5b38895cc1e1e9139e26378d7031ec5989f0724a3dd4b"
     }
    ]
   },
@@ -2552,7 +2753,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-17"
+     "submitted": "2026-09-17",
+     "raw_sha256": "a7cdec1a6d10b8304dce84bae69fb16d8d95d2e3b175288d348c180badfbe760"
     }
    ]
   },
@@ -2570,7 +2772,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-18"
+     "submitted": "2026-09-18",
+     "raw_sha256": "c3228defcf030a003d166f8d3bbbc80ba441e53c8d7b5e80f034cce42267dd74"
     }
    ]
   },
@@ -2588,7 +2791,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-20"
+     "submitted": "2026-08-20",
+     "raw_sha256": "955c42acb4f37f102cd8b2dfa74fc04118aba92fb8a5cfec46e8bf674d1003eb"
     }
    ]
   },
@@ -2606,7 +2810,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-20"
+     "submitted": "2026-09-20",
+     "raw_sha256": "9ade3b7f187e29c4722352749b59c50e2a4565c6047ba23a29479c845da40e47"
     }
    ]
   },
@@ -2623,12 +2828,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-21"
+     "submitted": "2026-09-21",
+     "raw_sha256": "f5dbcbdd576354b9c133e4cd98c78bd03342ca35b3715d68728702cdda5d3a80"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-09-22"
+     "submitted": "2026-09-22",
+     "raw_sha256": "22301014ef44d609cae9bf40a2c591fa7739a3681eca383aad0c3dd455ae4b4a"
     }
    ]
   },
@@ -2646,7 +2853,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-08-27"
+     "submitted": "2026-08-27",
+     "raw_sha256": "852f281292e38f3d86a0d0c0b212f4713a635cc1ec07e8bc15828c1eb379c856"
     }
    ]
   },
@@ -2664,7 +2872,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-24"
+     "submitted": "2026-09-24",
+     "raw_sha256": "5ea18566d753c753a3c2fe101495ebb4d39d0c6f4832ec4ba446bb8f1701acd4"
     }
    ]
   },
@@ -2681,12 +2890,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-24"
+     "submitted": "2026-09-24",
+     "raw_sha256": "696c34a9bd2f0cded63c85cfc4307916f725b68ac0361a3110756fb18a22dbf0"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-04"
+     "submitted": "2026-10-04",
+     "raw_sha256": "6775f2959698d63a0c8c9cc4d595e4b4d3ff3dde8404d55fcb99cb3181ffcbc9"
     }
    ]
   },
@@ -2703,7 +2914,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-25"
+     "submitted": "2026-09-25",
+     "raw_sha256": "7308fa920639d7cd356426621b4996bf122ca0497a6b2f1ff9a5da9fc2ad2da6"
     }
    ]
   },
@@ -2720,7 +2932,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-28"
+     "submitted": "2026-09-28",
+     "raw_sha256": "02e300c8e5c281cc3ba077ef262c635fda6dfd164fda265dbf025a3fd2697b3c"
     }
    ]
   },
@@ -2737,7 +2950,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-28"
+     "submitted": "2026-09-28",
+     "raw_sha256": "a29c57c3d14d5c2aa382b265df787b08d59b9580ba293787fd8f61868d4417d4"
     }
    ]
   },
@@ -2754,7 +2968,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-23"
+     "submitted": "2026-09-23",
+     "raw_sha256": "1fb8359405285856de52f3dd3b5f7838410d56f4107dc1868b64e48d6c76f529"
     }
    ]
   },
@@ -2772,12 +2987,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-29"
+     "submitted": "2026-09-29",
+     "raw_sha256": "89cfc905e1850fbf93d26067ef5ee98dfb5d4c91a53b1dc5790306922e641cb6"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-01"
+     "submitted": "2026-10-01",
+     "raw_sha256": "677f2e609b052b18505948e44da7d2632b4270a4a85b5a2f99433f4a269bfcdf"
     }
    ]
   },
@@ -2796,7 +3013,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-09-29"
+     "submitted": "2026-09-29",
+     "raw_sha256": "78307b348c36059b1de58971110b789c94387e407da74bb3282a03336c7947a3"
     }
    ]
   },
@@ -2814,7 +3032,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-01"
+     "submitted": "2026-10-01",
+     "raw_sha256": "fe53950687bc49339900de6d741fb7017bf71867d7b054c151878313788d2827"
     }
    ]
   },
@@ -2832,7 +3051,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-01"
+     "submitted": "2026-10-01",
+     "raw_sha256": "512cd99d62a9df642bdef5f6853f632bbdc4046813e90ac8e63dd99f93ddde09"
     }
    ]
   },
@@ -2849,12 +3069,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-04"
+     "submitted": "2026-10-04",
+     "raw_sha256": "e51131429d3f8e406bf4dc23ceff97945b8af269104798eac81a8b7cd6058234"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-06"
+     "submitted": "2026-10-06",
+     "raw_sha256": "4712ed8c425349b948271332d2433826e794b47d1b6b63cd898380bd38f969d3"
     }
    ]
   },
@@ -2871,7 +3093,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-08"
+     "submitted": "2026-10-08",
+     "raw_sha256": "142912dbbc56dba0ab0f4c86c56441f8e1c5812f4034b1bfac0258887fd5361c"
     }
    ]
   },
@@ -2889,12 +3112,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-08"
+     "submitted": "2026-10-08",
+     "raw_sha256": "9a7adecdd53a743c6b48958c3b0b3f8a59be29522634d29b49342669d842c337"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-16"
+     "submitted": "2026-10-16",
+     "raw_sha256": "8f875c2f37e0ed6747c588aacf065a5e9f7cf8be60bdcf2ab56896b0af83a437"
     }
    ]
   },
@@ -2912,7 +3137,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-11"
+     "submitted": "2026-10-11",
+     "raw_sha256": "813943b35ef16821f8a00910dff224a94eb26ed1df8df69d14afda1b7ba35929"
     }
    ]
   },
@@ -2931,12 +3157,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-13"
+     "submitted": "2026-10-13",
+     "raw_sha256": "f4ccf45a45dbe45c655c7f17f15c5866d047683d426bb74eff2a2a08711bbfca"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-11-04"
+     "submitted": "2026-11-04",
+     "raw_sha256": "e5ee73f8f198abb12f07030e1571c4c708ad5632d6cb84a92232b9430a08e786"
     }
    ]
   },
@@ -2954,12 +3182,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-15"
+     "submitted": "2026-10-15",
+     "raw_sha256": "028040bfd66194e18bdf0eaae985086ea1ec81b9f766d5285f3d7430933b6026"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-19"
+     "submitted": "2026-10-19",
+     "raw_sha256": "83da7ca082caf43a4c517158932271c1f62d2ebc248014dad255617dfd599962"
     }
    ]
   },
@@ -2976,7 +3206,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-16"
+     "submitted": "2026-10-16",
+     "raw_sha256": "f299dc350f9d3dce58a03023afab1d8d29739e62144dddd288ae7827026e7c58"
     }
    ]
   },
@@ -2993,12 +3224,14 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-17"
+     "submitted": "2026-10-17",
+     "raw_sha256": "79fcc7386a40ce2f73e0dbf090ba080eac61aeb0bdb7b0af4241b5adc303e55c"
     },
     {
      "label": "v2",
      "ordinal": 2,
-     "submitted": "2026-10-22"
+     "submitted": "2026-10-22",
+     "raw_sha256": "845a3f1de3d9fa1212c2e087eb28001b21dce3fa3370b466f76f573d3e9b7218"
     }
    ]
   },
@@ -3015,7 +3248,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-20"
+     "submitted": "2026-10-20",
+     "raw_sha256": "a44712eb97b2e1ef1640cfc821d203629f33ac37da28e501069b99eb2aaa88bd"
     }
    ]
   },
@@ -3033,7 +3267,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-21"
+     "submitted": "2026-10-21",
+     "raw_sha256": "d0f1acd39464ceec649584b7f95c3df17298b70b512f9f0e2b18835e5c5882d3"
     }
    ]
   },
@@ -3052,7 +3287,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-21"
+     "submitted": "2026-10-21",
+     "raw_sha256": "a3d58c778fdfaaa06075f53def6cea9430ca1bf495c65b57462e9d81d1dd437d"
     }
    ]
   },
@@ -3070,7 +3306,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-22"
+     "submitted": "2026-10-22",
+     "raw_sha256": "9518ccdbac3a4e4d89a431f87837b6ea67b976319d68a342108abb62b47e5993"
     }
    ]
   },
@@ -3089,7 +3326,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-22"
+     "submitted": "2026-10-22",
+     "raw_sha256": "897d95cc63aa6538e8514326bdf08af4522bf4b223f8403fa4a0b7f243298131"
     }
    ]
   },
@@ -3107,7 +3345,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-23"
+     "submitted": "2026-10-23",
+     "raw_sha256": "c3cf9e73b5dbb914874a7ab9e7602e639d94a048ff54f568b7201ad001c7443c"
     }
    ]
   },
@@ -3125,7 +3364,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-10-29"
+     "submitted": "2026-10-29",
+     "raw_sha256": "1ebf2b950d7f7bd0b76ac2f5a9b913283dc271ff216f7641882497a92dc0a2b0"
     }
    ]
   },
@@ -3143,7 +3383,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-11-02"
+     "submitted": "2026-11-02",
+     "raw_sha256": "92d8b363ebc5f8d0093b20b1593cc841291c268184613882c6080100d29001b8"
     }
    ]
   },
@@ -3161,7 +3402,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-11-02"
+     "submitted": "2026-11-02",
+     "raw_sha256": "1db0b927280a7e07e17fb62b12bc4857846d8b61d618e07bd00e8d87446e2d0b"
     }
    ]
   },
@@ -3181,7 +3423,8 @@
     {
      "label": "v1",
      "ordinal": 1,
-     "submitted": "2026-11-05"
+     "submitted": "2026-11-05",
+     "raw_sha256": "f0d6d4ccca22fafa5d8ed5e2874d2a599288cd1c238c1f0c5f9fcbbcf5d7da78"
     }
    ]
   }

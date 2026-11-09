@@ -30,8 +30,6 @@ _LICENSE_LINK = re.compile(r'class="abs-license">\s*<a href="([^"]+)"')
 _VERSION_ROW = re.compile(
     r"\[v(\d+)\](?:\s*</(?:a|strong)>)+\s*([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4} [\d:]{8} [A-Z]{3})"
 )
-    r"\[v(\d+)\]\s*</(?:a|strong)>\s*([A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4} [\d:]{8} [A-Z]{3})"
-)
 
 
 class RateLimiter:

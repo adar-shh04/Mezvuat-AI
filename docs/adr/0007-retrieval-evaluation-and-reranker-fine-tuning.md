@@ -124,6 +124,55 @@ Evaluation data must be separate from training data. This ADR fixes the datasets
 - **Power caveat.** With about 150 test queries the CI half-width will probably be around 0.03–0.05 nDCG (EST), so small gains are undetectable, and we report that rather than over-claim.
 - **If the rule fails,** we publish the negative result and keep the pretrained reranker.
 
+## Amendment, 2026-11-11: domain dataset v1 as built (decision D2)
+
+D2 changes how val and test labels are made, from a full human second pass to product-owner review of LLM pre-labels, and caps that review at about 6 to 8 hours. The dataset files are in `data/domain/v1/`, and all prompts, models, seeds and token counts are in `manifest.json`.
+
+**Corpus and splits.**
+- 150 CC-licensed papers. The latest version of each is chunked, giving 10,125 chunks.
+- The family split was committed before any query existed: 90 train, 30 val and 30 test families.
+
+**Queries.**
+- `openai/gpt-oss-20b` on Groq, one query per sampled passage, round-robin across families.
+- Settings: temperature 0.7, a recorded seed per query, reasoning effort low, strict JSON schema.
+- Rejection rules:
+  - more than 5 consecutive words copied from the passage;
+  - pointing at an unseen context ("this paper", "the authors").
+- One retry per passage, then the passage is dropped.
+- Near-duplicates (cosine at or above 0.95) were checked across all splits.
+- Result: **val 39, test 55** queries. 6 passages were rejected; there were no duplicates.
+
+**Pools.** Each query gets up to 8 passages:
+- the source passage;
+- then a round-robin by rank over the top 10 of bm25, dense, hybrid_rrf and hybrid_rrf_rerank.
+
+That makes 752 items, at a median of 177 words each.
+
+**Pre-labels.**
+- One call per query, with that query's pooled passages in a shuffled, recorded order.
+- Grades 0, 1 or 2 with a short reason; temperature 0.
+
+**Review.**
+- `mezvuat-dataset review` (guide: `docs/LABELLING_GUIDE.md`).
+- Pre-labels are hidden for a seeded 20% of questions, to measure anchoring.
+- Labels go to append-only files; nothing is overwritten.
+
+**What changes from the original plan.**
+
+| Planned | Built |
+|---|---|
+| test at least 150 queries, val at least 100 | test 55, val 39 |
+| a 20% second-annotator overlap with Cohen's kappa | not possible with one reviewer; the anchoring measure takes its place |
+| train silver labels | deferred to M9 to spare the shared Groq quota |
+
+**Power.** Using SciFact per-query variance as a stand-in, 55 test queries give a 95% CI half-width of about 0.05 nDCG@10 on a paired difference. The minimum effect detectable with 80% power is about 0.07 to 0.09. Smaller effects must be reported as inconclusive.
+
+**Known biases.** The rest of this ADR's limitations still apply. In addition:
+- One generator writes the queries and one model writes the pre-labels, and they are the same model.
+- The reviewer is one person.
+- Pooling depth is shallow (8 passages per query).
+- Passages outside the pool count as non-relevant, which favours the four pooled systems.
+
 ## Consequences
 
 - Human labelling effort is the main cost, and the main blocker for M3.

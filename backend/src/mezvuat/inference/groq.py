@@ -146,7 +146,9 @@ class GroqClient:
                 retry_after = response.headers.get("retry-after")
                 delay = float(retry_after) if retry_after and retry_after.replace(".", "").isdigit() else 2**attempt
                 if delay > 600:
-                    raise InferenceError("Groq rate limit requires a wait over 10 minutes", code="quota_exhausted")
+                    raise InferenceError(
+                        f"Groq rate limit asks for a {delay:.0f} s wait (quota)", code="quota_exhausted"
+                    )
                 self.usage.seconds_waiting += delay
                 self.sleep(delay)
                 continue

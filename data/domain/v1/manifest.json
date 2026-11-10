@@ -19,7 +19,16 @@
    "retries_429": 0,
    "seconds_waiting_for_rate_limits": 532.1,
    "wall_clock_seconds": 656.7
-  }
+  },
+  "prelabel_runs": [
+   {
+    "model": "openai/gpt-oss-20b",
+    "queries_completed": 31,
+    "estimated_total_tokens": 95124,
+    "source": "ESTIMATE from passage token counts plus fixed prompt and output overhead; this run stopped on a Groq quota 429 (retry-after over 600 s) before usage recording was added",
+    "stopped_reason": "quota_exhausted"
+   }
+  ]
  },
  "generation": {
   "prompt_version": "querygen-v2",
@@ -53,5 +62,6 @@
   "pool_size": 8,
   "rule": "source passage, then round-robin by rank across systems until the pool is full",
   "dense_search": "exact cosine over the corpus (offline pooling only)"
- }
+ },
+ "prelabel_status": "partial: 31 of 94 queries (all test); resume with `mezvuat-dataset prelabel` after the Groq quota resets"
 }

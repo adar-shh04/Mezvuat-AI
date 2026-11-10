@@ -297,62 +297,70 @@ def cmd_prelabel(args: argparse.Namespace) -> None:
     done = {row["query_id"] for row in existing}
     client = _groq_client()
     started = time.monotonic()
-    with out_path.open("a", encoding="utf-8", newline="\n") as handle:
-        for pool in domain.read_jsonl(DATASET_DIR / "pools.jsonl"):
-            if pool["query_id"] in done:
-                continue
-            query = queries[pool["query_id"]]
-            candidates = [c["chunk_id"] for c in pool["candidates"]]
-            # Shuffle so the source passage is not always first; the order is recorded.
-            order = list(candidates)
-            random.Random(f"order:{pool['query_id']}").shuffle(order)  # noqa: S311
-            pid_for = {chunk_id: f"P{n}" for n, chunk_id in enumerate(order, start=1)}
-            passage_ids = [pid_for[c] for c in order]
-            prompt = domain.label_prompt(query["text"], [(pid_for[c], chunks[c]) for c in order])
-            labels = None
-            for attempt in range(2):
-                result = client.structured(
-                    [{"role": "system", "content": domain.LABEL_SYSTEM}, {"role": "user", "content": prompt}],
-                    schema_name="relevance_labels",
-                    schema=domain.label_schema(passage_ids),
-                    temperature=0.0,
-                    seed=SEED + attempt,
-                    max_tokens=2500,
-                    estimated_prompt_tokens=sum(chunks[c].token_count for c in order) + 600,
-                )
-                labels = domain.validate_labels(result.data, passage_ids)
-                if labels is not None:
-                    break
-            meta_row = {
-                "model": result.model,
-                "prompt_version": domain.LABEL_PROMPT_VERSION,
-                "prompt_sha256": domain.sha256_text(domain.LABEL_SYSTEM + prompt),
-                "temperature": 0.0,
-                "seed": SEED + attempt,
-                "reasoning_effort": "low",
-                "presented_order": [pid_for[c] for c in order],
-                "provider_request_id": result.request_id,
-            }
-            for chunk_id in candidates:
-                label = labels[pid_for[chunk_id]] if labels else None
-                handle.write(
-                    json.dumps(
-                        {
-                            "query_id": pool["query_id"],
-                            "split": pool["split"],
-                            "chunk_id": chunk_id,
-                            "passage_id": pid_for[chunk_id],
-                            "grade": label["grade"] if label else None,
-                            "reason": label["reason"] if label else None,
-                            "labeller": meta_row,
-                        },
-                        ensure_ascii=False,
+    try:
+        with out_path.open("a", encoding="utf-8", newline="\n") as handle:
+            for pool in sorted(domain.read_jsonl(DATASET_DIR / "pools.jsonl"), key=_val_first):
+                if pool["query_id"] in done:
+                    continue
+                query = queries[pool["query_id"]]
+                candidates = [c["chunk_id"] for c in pool["candidates"]]
+                # Shuffle so the source passage is not always first; the order is recorded.
+                order = list(candidates)
+                random.Random(f"order:{pool['query_id']}").shuffle(order)  # noqa: S311
+                pid_for = {chunk_id: f"P{n}" for n, chunk_id in enumerate(order, start=1)}
+                passage_ids = [pid_for[c] for c in order]
+                prompt = domain.label_prompt(query["text"], [(pid_for[c], chunks[c]) for c in order])
+                labels = None
+                for attempt in range(2):
+                    result = client.structured(
+                        [{"role": "system", "content": domain.LABEL_SYSTEM}, {"role": "user", "content": prompt}],
+                        schema_name="relevance_labels",
+                        schema=domain.label_schema(passage_ids),
+                        temperature=0.0,
+                        seed=SEED + attempt,
+                        max_tokens=2500,
+                        estimated_prompt_tokens=sum(chunks[c].token_count for c in order) + 600,
                     )
-                    + "\n"
-                )
-            handle.flush()
+                    labels = domain.validate_labels(result.data, passage_ids)
+                    if labels is not None:
+                        break
+                meta_row = {
+                    "model": result.model,
+                    "prompt_version": domain.LABEL_PROMPT_VERSION,
+                    "prompt_sha256": domain.sha256_text(domain.LABEL_SYSTEM + prompt),
+                    "temperature": 0.0,
+                    "seed": SEED + attempt,
+                    "reasoning_effort": "low",
+                    "presented_order": [pid_for[c] for c in order],
+                    "provider_request_id": result.request_id,
+                }
+                for chunk_id in candidates:
+                    label = labels[pid_for[chunk_id]] if labels else None
+                    handle.write(
+                        json.dumps(
+                            {
+                                "query_id": pool["query_id"],
+                                "split": pool["split"],
+                                "chunk_id": chunk_id,
+                                "passage_id": pid_for[chunk_id],
+                                "grade": label["grade"] if label else None,
+                                "reason": label["reason"] if label else None,
+                                "labeller": meta_row,
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
+                handle.flush()
+    finally:
+        # Usage is recorded even when the run stops on a quota error, so token counts are never lost.
+        meta = read_manifest()
+        runs = meta.setdefault("usage", {}).setdefault("prelabel_runs", [])
+        scratch: dict[str, Any] = {}
+        _record_usage(scratch, "run", client, started)
+        runs.append({**scratch["usage"]["run"], "finished_at": _now()})
+        write_manifest(meta)
     meta = read_manifest()
-    _record_usage(meta, "prelabel", client, started)
     meta["prelabel"] = {
         "prompt_version": domain.LABEL_PROMPT_VERSION,
         "system_prompt": domain.LABEL_SYSTEM,
@@ -362,6 +370,10 @@ def cmd_prelabel(args: argparse.Namespace) -> None:
     }
     meta["review"] = {"blind_fraction": BLIND_FRACTION, "blind_seed": SEED, "blind_unit": "query"}
     write_manifest(meta)
+
+
+def _val_first(pool: dict[str, Any]) -> tuple[bool, str]:
+    return (pool["split"] != "val", pool["query_id"])
 
 
 def cmd_review(args: argparse.Namespace) -> None:

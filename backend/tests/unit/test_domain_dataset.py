@@ -28,6 +28,19 @@ def test_longest_shared_run_counts_consecutive_copied_words() -> None:
     assert domain.longest_shared_run("", passage) == 0
 
 
+@pytest.mark.parametrize(
+    ("question", "ok"),
+    [
+        ("How does the study describe soft compression?", False),
+        ("What dataset do the authors use?", False),
+        ("What does this paper propose for reranking?", False),
+        ("How does query-independent soft compression work in RAG?", True),
+    ],
+)
+def test_questions_must_be_self_contained(question: str, ok: bool) -> None:
+    assert domain.is_self_contained(question) is ok
+
+
 def test_sources_come_only_from_the_requested_split_and_eligible_chunks() -> None:
     chunks = [chunk(f"t{i}", f"ft{i % 3}", "test") for i in range(9)]
     chunks += [chunk(f"v{i}", "fv", "val") for i in range(5)]

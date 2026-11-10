@@ -143,7 +143,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
                     )
                     question = " ".join(str(result.data["question"]).split())
                     run = domain.longest_shared_run(question, chunk.text)
-                    if question and run <= domain.MAX_SHARED_RUN:
+                    if question and run <= domain.MAX_SHARED_RUN and domain.is_self_contained(question):
                         row = {
                             "split": split,
                             "text": question,
@@ -167,7 +167,11 @@ def cmd_generate(args: argparse.Namespace) -> None:
                         }
                         break
                 if row is None:
-                    row = {"split": split, "source_chunk_id": chunk.chunk_id, "rejected": "copied_too_much"}
+                    row = {
+                        "split": split,
+                        "source_chunk_id": chunk.chunk_id,
+                        "rejected": "copied_too_much_or_not_self_contained",
+                    }
                 progress.write(json.dumps(row, ensure_ascii=False) + "\n")
                 progress.flush()
                 done[chunk.chunk_id] = row

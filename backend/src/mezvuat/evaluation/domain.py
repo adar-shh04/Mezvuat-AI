@@ -33,7 +33,7 @@ QUERY_TYPES = ("factoid", "conceptual", "terminology", "method")
 MAX_SHARED_RUN = 5
 MIN_SOURCE_TOKENS = 80
 POOL_SIZE = 8
-GENERATION_PROMPT_VERSION = "querygen-v1"
+GENERATION_PROMPT_VERSION = "querygen-v2"
 LABEL_PROMPT_VERSION = "prelabel-v1"
 _WORD = re.compile(r"[a-z0-9]+")
 
@@ -155,6 +155,17 @@ def longest_shared_run(query: str, passage: str) -> int:
     return best
 
 
+_DEICTIC = re.compile(
+    r"\b(?:the|this) (?:passage|paper|study|article|work|text|section)\b|\bthe authors\b|\bthe proposed\b",
+    re.IGNORECASE,
+)
+
+
+def is_self_contained(question: str) -> bool:
+    """Rejects questions that point at an unseen context ("this paper", "the authors")."""
+    return _DEICTIC.search(question) is None
+
+
 def eligible_source(chunk: DomainChunk) -> bool:
     if chunk.section_kind not in ("body", "abstract") or chunk.token_count < MIN_SOURCE_TOKENS:
         return False
@@ -207,7 +218,8 @@ def generation_prompt(chunk: DomainChunk, query_type: str) -> str:
         f"asking about {_TYPE_HINTS[query_type]}, such that this passage answers it.\n"
         "Rules:\n"
         "- The question must make sense on its own to someone who has not seen the passage. Name the concept, "
-        "method or dataset; never say 'the passage', 'this paper', 'the authors' or 'the proposed method'.\n"
+        "method or dataset; never say 'the passage', 'this paper', 'the study', 'the authors' or 'the proposed "
+        "method'.\n"
         "- Do not copy more than four consecutive words from the passage. Paraphrase.\n"
         "- One sentence, at most 25 words.\n"
         "- answer_quote: a short verbatim quote (at most 25 words) from the passage that answers the question."

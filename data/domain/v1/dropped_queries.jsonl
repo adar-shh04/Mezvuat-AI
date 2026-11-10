@@ -1,0 +1,6 @@
+{"split": "test", "source_chunk_id": "2c5c85dd3057adaa7c180d09e89f0efdc482c882256fbdb045080f0e8dd1bc50", "rejected": "copied_too_much_or_not_self_contained"}
+{"split": "test", "source_chunk_id": "a0084a6960beaf3e69d245d763acd2232ead7fb7a7c1bef6b0469b198920977c", "rejected": "copied_too_much_or_not_self_contained"}
+{"split": "test", "source_chunk_id": "88f0ef7e96a92fea1d32eab637233c7e0651a4b29dcb5fb37755fded47371e2c", "rejected": "copied_too_much_or_not_self_contained"}
+{"split": "test", "source_chunk_id": "49564b6bd33d6c25c7764d51aaf5fb7f7d3be4c300ee4b5be301979dc9a82e7e", "rejected": "copied_too_much_or_not_self_contained"}
+{"split": "test", "source_chunk_id": "3d39d7e183e0c29b710f8f8f7c36e8224345cc138bbd80582ed227409ebb880f", "rejected": "copied_too_much_or_not_self_contained"}
+{"split": "val", "source_chunk_id": "1be9ff182fa652544a65c7fae038f187261604a584cd726c6fac9b00b21c9a75", "rejected": "copied_too_much_or_not_self_contained"}

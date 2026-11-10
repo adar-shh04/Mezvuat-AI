@@ -39,5 +39,19 @@
    "val": 40
   },
   "sampling": "round-robin across the split's families; eligible chunks are body or abstract, >= 80 tokens"
+ },
+ "pooling": {
+  "systems": {
+   "bm25": "RetrievalConfig(mode='bm25', candidate_depth=100, rerank_depth=50, rrf_k=60, collapse_duplicates=True)",
+   "dense": "RetrievalConfig(mode='dense', candidate_depth=100, rerank_depth=50, rrf_k=60, collapse_duplicates=True)",
+   "hybrid_rrf": "RetrievalConfig(mode='hybrid_rrf', candidate_depth=100, rerank_depth=50, rrf_k=60, collapse_duplicates=True)",
+   "hybrid_rrf_rerank": "RetrievalConfig(mode='hybrid_rrf_rerank', candidate_depth=100, rerank_depth=50, rrf_k=60, collapse_duplicates=True)"
+  },
+  "embedder": "BAAI/bge-small-en-v1.5",
+  "reranker": "BAAI/bge-reranker-base",
+  "per_system_depth": 10,
+  "pool_size": 8,
+  "rule": "source passage, then round-robin by rank across systems until the pool is full",
+  "dense_search": "exact cosine over the corpus (offline pooling only)"
  }
 }

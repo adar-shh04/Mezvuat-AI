@@ -51,6 +51,7 @@ dev = [
 mezvuat-worker = "mezvuat.worker.main:main"
 mezvuat-exp = "mezvuat.evaluation.cli:main"
 mezvuat-corpus = "mezvuat.ingestion.corpus.cli:main"
+mezvuat-dataset = "mezvuat.evaluation.dataset_cli:main"
 
 [build-system]
 requires = ["hatchling>=1.27"]

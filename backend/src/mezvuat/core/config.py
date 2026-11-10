@@ -11,7 +11,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Both locations so that commands work from the repo root and from backend/. Empty values in .env are ignored,
+    # so a blank `POSTGRES_PORT=` keeps the default instead of failing validation.
+    model_config = SettingsConfigDict(env_file=(".env", "../.env"), extra="ignore", env_ignore_empty=True)
 
     mezvuat_env: Literal["dev", "test", "prod"] = "dev"
     mezvuat_log_level: str = "INFO"
@@ -27,6 +29,10 @@ class Settings(BaseSettings):
 
     qdrant_url: str = "http://127.0.0.1:16333"
     qdrant_api_key: SecretStr | None = None
+
+    groq_api_key: SecretStr | None = None
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_model_small: str = "openai/gpt-oss-20b"
 
     embedding_model_id: str = "BAAI/bge-small-en-v1.5"
     reranker_model_id: str = "cross-encoder/ms-marco-MiniLM-L6-v2"

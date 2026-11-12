@@ -27,6 +27,17 @@
     "estimated_total_tokens": 95124,
     "source": "ESTIMATE from passage token counts plus fixed prompt and output overhead; this run stopped on a Groq quota 429 (retry-after over 600 s) before usage recording was added",
     "stopped_reason": "quota_exhausted"
+   },
+   {
+    "model": "openai/gpt-oss-20b",
+    "calls": 42,
+    "prompt_tokens": 117877,
+    "completion_tokens": 11428,
+    "total_tokens": 129305,
+    "retries_429": 6,
+    "seconds_waiting_for_rate_limits": 1791.6,
+    "wall_clock_seconds": 1841.7,
+    "finished_at": "2026-11-12T21:42:56.902987+00:00"
    }
   ]
  },

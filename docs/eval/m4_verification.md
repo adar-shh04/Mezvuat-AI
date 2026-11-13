@@ -54,11 +54,19 @@ Observed in two runs (about 60 s each):
 
 This shows that the safeguards work on a weak model. It says nothing about answer quality, which M6 measures.
 
+**One live Groq run.** It was run once, at the end of the session, after the pre-labelling job had finished. Same PDF and question, `--backend groq`, policy `any` (public corpus, decision D1):
+
+- The run completed in 7.4 s with 5 calls: `gpt-oss-20b` for analysis and assessment, `gpt-oss-120b` for synthesis (twice, because the first draft had a claim that failed verification) and for the response.
+- About 12,700 tokens in total. Every call returned `ok`, with no 429.
+- The final draft had 3 supported claims, and the model's answer kept only valid markers.
+- All 4 citation spans re-matched the PDF text exactly.
+
+The Sources section said "dates unknown", because the smoke script has no temporal source.
+
 ## Not verified
 
 - **Postgres paths.** These were not exercised because the compose Postgres was not running and this session did not start containers: migration `0002` against a live database (only rendered offline with `alembic upgrade 0001:0002 --sql`), `SqlRunStore`, `SqlCallRecorder`, `PostgresPageMap` and the `PostgresSaver` checkpointer. `tests/integration/test_runs_persistence.py` covers them and skips without the services.
 - **End-to-end `/runs`** against real Postgres, Qdrant and the embedding model.
-- **A live Groq run.** `scripts/smoke_run.py --backend groq` is the intended single smoke test.
 - **Checkpoint retention pruning** is not implemented.
 
 # M5 progress (parts 1 and 2), same session

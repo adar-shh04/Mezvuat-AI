@@ -17,6 +17,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any, Protocol
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -141,7 +142,14 @@ class RunService:
         self._clock = clock
 
     def start(
-        self, *, workspace_id: str, data_policy: DataPolicy, question: str, mode: RetrievalMode, filters: RunFilters
+        self,
+        *,
+        workspace_id: str,
+        data_policy: DataPolicy,
+        question: str,
+        mode: RetrievalMode,
+        filters: RunFilters,
+        as_of: date | None = None,
     ) -> str:
         run_id = new_id("run")
         self.store.create(
@@ -149,7 +157,7 @@ class RunService:
         )
         self.bus.open(run_id)
         self.bus.publish(run_id, "run_queued", {"run_id": run_id})
-        self._executor.submit(self._execute, run_id, workspace_id, data_policy, question, mode, filters)
+        self._executor.submit(self._execute, run_id, workspace_id, data_policy, question, mode, filters, as_of)
         return run_id
 
     def _execute(
@@ -160,6 +168,7 @@ class RunService:
         question: str,
         mode: RetrievalMode,
         filters: RunFilters,
+        as_of: date | None,
     ) -> None:
         try:
             self.store.mark_running(run_id)
@@ -170,6 +179,7 @@ class RunService:
                 question=question,
                 data_policy=data_policy,
                 filters=filters,
+                as_of=as_of,
                 # The deadline starts when the run starts, not when it was queued.
                 budget=Budget(
                     llm_calls_left=self._limits.max_llm_calls,
@@ -221,6 +231,7 @@ class RunService:
 def summarize(state: ResearchState) -> dict[str, Any]:
     providers = sorted({c.provider for c in state.llm_calls})
     return {
+        "as_of": state.as_of.isoformat() if state.as_of else None,
         "iterations": state.iteration,
         "resynthesized": state.resynth_count > 0,
         "evidence_items": len(state.evidence),

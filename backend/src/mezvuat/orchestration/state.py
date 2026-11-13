@@ -26,6 +26,7 @@ from mezvuat.orchestration.models import (
     Sufficiency,
     TemporalScope,
 )
+from mezvuat.temporal import AsOfResolution, DateFact, VersionDates
 
 # Bounds (ADR-0008 "Bounds"). Run-level budgets come from settings; these are structural.
 MAX_ITER = 2
@@ -44,6 +45,12 @@ def merge_evidence(left: dict[str, EvidenceItem], right: dict[str, EvidenceItem]
             raise ValueError(f"evidence id {key} is already bound to another chunk")
         merged.setdefault(key, value)
     return merged
+
+
+def merge_documents(
+    left: dict[str, list[VersionDates]], right: dict[str, list[VersionDates]]
+) -> dict[str, list[VersionDates]]:
+    return {**left, **right}
 
 
 class RunFilters(BaseModel):
@@ -124,6 +131,8 @@ class ResearchState(BaseModel):
     question: str
     data_policy: DataPolicy
     filters: RunFilters = Field(default_factory=RunFilters)
+    # An explicit "as of" date from the request; the query analysis may supply one too (ADR-0010).
+    as_of: date | None = None
     budget: Budget
     # Analysis
     analysis: QueryAnalysis | None = None
@@ -131,6 +140,8 @@ class ResearchState(BaseModel):
     # Evidence
     evidence: Annotated[dict[str, EvidenceItem], merge_evidence] = Field(default_factory=dict)
     retrieval_log: Annotated[list[RetrievalCall], operator.add] = Field(default_factory=list)
+    # Every version (with typed dates) of each document that evidence came from.
+    documents: Annotated[dict[str, list[VersionDates]], merge_documents] = Field(default_factory=dict)
     pending_queries: list[PendingQuery] = Field(default_factory=list)
     # Loop control
     iteration: int = 0
@@ -161,6 +172,9 @@ STATE_MODELS: tuple[type[BaseModel], ...] = (
     EvidenceItem,
     PageSpan,
     SpanRef,
+    DateFact,
+    VersionDates,
+    AsOfResolution,
     QueryAnalysis,
     TemporalScope,
     ResearchPlan,

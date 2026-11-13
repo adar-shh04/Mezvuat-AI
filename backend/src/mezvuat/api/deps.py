@@ -25,7 +25,13 @@ from mezvuat.persistence.db import get_session_factory
 from mezvuat.persistence.models import Workspace
 from mezvuat.persistence.qdrant import QdrantDenseIndex, collection_name
 from mezvuat.persistence.repositories import PostgresChunkStore
-from mezvuat.persistence.runs import PostgresPageMap, SqlCallRecorder, SqlRunStore, postgres_checkpointer
+from mezvuat.persistence.runs import (
+    PostgresPageMap,
+    PostgresTemporalSource,
+    SqlCallRecorder,
+    SqlRunStore,
+    postgres_checkpointer,
+)
 from mezvuat.retrieval.lexical import WorkspaceLexicalIndexStore
 from mezvuat.retrieval.pipeline import RetrievalConfig, RetrievalPipeline
 from mezvuat.retrieval.types import Filters, RankedEvidence, RetrievalMode
@@ -158,6 +164,7 @@ def production_workflow(run_id: str, workspace_id: str, mode: RetrievalMode) -> 
             llm=get_llm_client(),
             search=PipelineSearch(pipeline, RetrievalConfig(mode=mode)),
             pages=PostgresPageMap(sessions),
+            temporal=PostgresTemporalSource(sessions),
             recorder=SqlCallRecorder(sessions, workspace_id),
             max_call_timeout_s=min(60.0, settings.run_deadline_s),
         )

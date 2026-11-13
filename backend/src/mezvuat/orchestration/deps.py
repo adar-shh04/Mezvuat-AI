@@ -11,6 +11,7 @@ from mezvuat.citations import PageSpan
 from mezvuat.inference import LLMClient
 from mezvuat.orchestration.state import LLMCallRecord, RunFilters
 from mezvuat.retrieval.types import RankedEvidence
+from mezvuat.temporal import VersionDates
 
 
 class EvidenceSearch(Protocol):
@@ -23,10 +24,21 @@ class PageMapSource(Protocol):
     def page_spans(self, workspace_id: str, version_ids: Sequence[str]) -> dict[str, list[PageSpan]]: ...
 
 
+class TemporalSource(Protocol):
+    """Every version of each document, with its typed dates (ADR-0010). Missing dates are simply absent."""
+
+    def versions(self, workspace_id: str, document_ids: Sequence[str]) -> dict[str, list[VersionDates]]: ...
+
+
 class CallRecorder(Protocol):
     """Persists `llm_call` rows as they happen, so a crashed or failed run still accounts for every request."""
 
     def record(self, records: Sequence[LLMCallRecord]) -> None: ...
+
+
+class NoTemporalData:
+    def versions(self, workspace_id: str, document_ids: Sequence[str]) -> dict[str, list[VersionDates]]:
+        return {}
 
 
 class NoPageMap:
@@ -39,6 +51,7 @@ class WorkflowDeps:
     llm: LLMClient
     search: EvidenceSearch
     pages: PageMapSource = field(default_factory=NoPageMap)
+    temporal: TemporalSource = field(default_factory=NoTemporalData)
     recorder: CallRecorder | None = None
     clock: Callable[[], float] = time.time
     per_query_k: int = 8

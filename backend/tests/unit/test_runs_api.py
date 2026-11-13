@@ -185,6 +185,15 @@ def test_run_streams_progress_and_answer_then_persists_the_result(harness: dict[
     assert harness["modes"] == ["hybrid_rrf"]
 
 
+def test_as_of_is_passed_to_the_run(harness: dict[str, Any]) -> None:
+    client: TestClient = harness["client"]
+    body = client.post(
+        "/api/v1/workspaces/ws_1/runs", json={"question": "How does BM25 rank documents?", "as_of": "2024-06-01"}
+    ).json()
+    run = wait_done(client, body["run_url"])
+    assert run["summary"]["as_of"] == "2024-06-01"
+
+
 def test_reconnecting_with_last_event_id_resumes_after_it(harness: dict[str, Any]) -> None:
     client: TestClient = harness["client"]
     body = client.post("/api/v1/workspaces/ws_1/runs", json={"question": "How does BM25 rank documents?"}).json()

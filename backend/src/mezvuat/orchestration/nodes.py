@@ -10,8 +10,9 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Any, TypeVar
 
 from langgraph.config import get_stream_writer
@@ -61,6 +62,7 @@ from mezvuat.orchestration.state import (
     RunError,
 )
 from mezvuat.retrieval.types import RankedEvidence
+from mezvuat.temporal import DateFact, VersionDates, describe_dates, resolve_as_of
 
 log = logging.getLogger(__name__)
 M = TypeVar("M", bound=BaseModel)
@@ -313,9 +315,16 @@ class ResearchNodes:
                     latency_ms=(time.perf_counter() - started) * 1000.0,
                 )
             )
+        updates: Update = {"retrieval_log": log_rows, "pending_queries": []}
         if new:
             new = self._attach_pages(state.workspace_id, new)
-        return {"evidence": new, "retrieval_log": log_rows, "pending_queries": []}
+            unseen = sorted({i.document_id for i in new.values()} - set(state.documents))
+            if unseen:
+                try:
+                    updates["documents"] = self.deps.temporal.versions(state.workspace_id, unseen)
+                except MezvuatError:
+                    log.warning("temporal metadata unavailable; dates will show as unknown")
+        return {**updates, "evidence": new}
 
     @staticmethod
     def _item(evidence_id: str, ranked: RankedEvidence, round_: int, pending: PendingQuery) -> EvidenceItem:
@@ -376,7 +385,7 @@ class ResearchNodes:
         shown: list[EvidenceItem] = []
         for sub in subquestions:
             items = sorted(
-                (i for i in state.evidence.values() if i.subquestion_id == sub.id),
+                (i for i in self.eligible(state)[0] if i.subquestion_id == sub.id),
                 key=lambda i: (i.retrieval_round, i.rank),
             )
             shown.extend(items[: self.deps.assess_items_per_subquestion])
@@ -387,7 +396,9 @@ class ResearchNodes:
             "assess_evidence",
             {
                 "subquestions": "\n".join(f"{s.id}: {s.question}" for s in subquestions),
-                "evidence": evidence_section(shown, boundary, max_chars=self.deps.assess_item_chars),
+                "evidence": evidence_section(
+                    shown, boundary, max_chars=self.deps.assess_item_chars, dates=self.dates_label(state)
+                ),
             },
             Sufficiency,
             700,
@@ -472,7 +483,8 @@ class ResearchNodes:
     def select_for_synthesis(self, state: ResearchState) -> list[EvidenceItem]:
         """Round-robin over subquestions by rank, bounded by count and characters."""
         queues: dict[str, list[EvidenceItem]] = {}
-        for item in sorted(state.evidence.values(), key=lambda i: (i.retrieval_round, i.rank, int(i.evidence_id[1:]))):
+        eligible = self.eligible(state)[0]
+        for item in sorted(eligible, key=lambda i: (i.retrieval_round, i.rank, int(i.evidence_id[1:]))):
             queues.setdefault(item.subquestion_id, []).append(item)
         chosen: list[EvidenceItem] = []
         chars = 0
@@ -496,6 +508,8 @@ class ResearchNodes:
             updates["limitations"] = [
                 f"Evidence may be incomplete for: {questions.get(c.subquestion_id, c.subquestion_id)}" for c in gaps
             ]
+        if not resynthesis:
+            updates["limitations"] = [*updates.get("limitations", []), *self.eligible(state)[1]]
         chosen = self.select_for_synthesis(state)
         if not chosen:
             empty = Draft(claims=[], conflicts=[], gaps=["No evidence was retrieved for this question."])
@@ -512,7 +526,11 @@ class ResearchNodes:
             "synthesize",
             "evidence_synthesis",
             "synthesize",
-            {"question": state.question, "evidence": evidence_section(chosen, new_boundary()), "feedback": feedback},
+            {
+                "question": state.question,
+                "evidence": evidence_section(chosen, new_boundary(), dates=self.dates_label(state)),
+                "feedback": feedback,
+            },
             Draft,
             3000,
         )
@@ -570,6 +588,110 @@ class ResearchNodes:
             return "synthesize"
         return "respond"
 
+    # ----- temporal scoping (ADR-0010) ----------------------------------------------------------------------------
+
+    @staticmethod
+    def as_of(state: ResearchState) -> tuple[date | None, str | None]:
+        """The explicit request date wins; a date the analysis read from the question is used and disclosed."""
+        if state.as_of is not None:
+            return state.as_of, None
+        raw = state.analysis.temporal_scope.as_of if state.analysis else None
+        if raw:
+            try:
+                parsed = date.fromisoformat(raw.strip())
+            except ValueError:
+                return None, None
+            return parsed, f"The question was read as asking about the state on {parsed.isoformat()}."
+        return None, None
+
+    @staticmethod
+    def wants_latest(state: ResearchState) -> bool:
+        return state.filters.latest_only or bool(state.analysis and state.analysis.temporal_scope.wants_latest)
+
+    @staticmethod
+    def _version(state: ResearchState, item: EvidenceItem) -> VersionDates | None:
+        for version in state.documents.get(item.document_id, []):
+            if version.version_id == item.document_version_id:
+                return version
+        return None
+
+    def _latest_flag(self, state: ResearchState, item: EvidenceItem) -> bool | None:
+        version = self._version(state, item)
+        return version.is_latest_version if version is not None else item.is_latest_version
+
+    def version_facts(self, state: ResearchState, item: EvidenceItem) -> list[DateFact]:
+        version = self._version(state, item)
+        return list(version.facts) if version else []
+
+    def dates_label(self, state: ResearchState) -> Callable[[EvidenceItem], str]:
+        return lambda item: describe_dates(self.version_facts(state, item))
+
+    @staticmethod
+    def _doc_name(items: list[EvidenceItem]) -> str:
+        return items[0].document_title or items[0].document_id
+
+    def eligible(self, state: ResearchState) -> tuple[list[EvidenceItem], list[str]]:
+        """Evidence a temporal question may use, and the limitations that explain what was excluded."""
+        items = list(state.evidence.values())
+        as_of, read_as = self.as_of(state)
+        notes: list[str] = [read_as] if read_as else []
+        by_doc: dict[str, list[EvidenceItem]] = {}
+        for item in items:
+            by_doc.setdefault(item.document_id, []).append(item)
+        kept: list[EvidenceItem] = []
+        if as_of is not None:
+            for document_id, doc_items in by_doc.items():
+                name = self._doc_name(doc_items)
+                versions = state.documents.get(document_id, [])
+                if not versions:
+                    notes.append(f"{name}: no version dates are known, so it was not used for a claim about {as_of}.")
+                    continue
+                resolution = resolve_as_of(versions, as_of)
+                labels = {v.version_id: v.version_label or v.version_id for v in versions}
+                if resolution.unresolved:
+                    unresolved = ", ".join(labels[v] for v in resolution.unresolved)
+                    notes.append(
+                        f"{name}: the dates of version(s) {unresolved} are unknown or too coarse to tell whether they "
+                        f"applied on {as_of}; they were not used (temporally unresolved)."
+                    )
+                if resolution.applicable is None:
+                    notes.append(f"{name}: no version can be shown to have applied on {as_of}.")
+                    continue
+                chosen = [i for i in doc_items if i.document_version_id == resolution.applicable]
+                if not chosen:
+                    notes.append(
+                        f"{name}: version {labels[resolution.applicable]} applied on {as_of}, but none of its text "
+                        "was among the retrieved evidence."
+                    )
+                kept.extend(chosen)
+            return kept, notes
+        if self.wants_latest(state):
+            for doc_items in by_doc.values():
+                # The version table is authoritative; the chunk payload's copy of the flag is the fallback.
+                flags = {i.evidence_id: self._latest_flag(state, i) for i in doc_items}
+                if any(flag is True for flag in flags.values()):
+                    kept.extend(i for i in doc_items if flags[i.evidence_id] is True)
+                else:
+                    notes.append(f"{self._doc_name(doc_items)}: which version is the latest is unknown.")
+                    kept.extend(doc_items)
+            return kept, notes
+        return items, notes
+
+    @staticmethod
+    def _source_lines(citations: list[Citation]) -> list[str]:
+        lines: list[str] = []
+        seen: set[str] = set()
+        for citation in citations:
+            if citation.evidence_id in seen:
+                continue
+            seen.add(citation.evidence_id)
+            pages = sorted({c.page for c in citations if c.evidence_id == citation.evidence_id and c.page is not None})
+            where = f", p. {', '.join(str(p) for p in pages)}" if pages else ""
+            version = f" ({citation.version_label})" if citation.version_label else ""
+            title = citation.document_title or citation.document_id
+            lines.append(f"- [{citation.evidence_id}] {title}{version}{where}: {describe_dates(citation.dates)}")
+        return lines
+
     # ----- 8. respond ---------------------------------------------------------------------------------------------
 
     def respond(self, state: ResearchState) -> Update:
@@ -622,6 +744,7 @@ class ResearchNodes:
                 char_start=span.char_start,
                 char_end=span.char_end,
                 quote=span.quote,
+                dates=self.version_facts(state, state.evidence[span.evidence_id]),
             )
             for v in verified
             for span in v.spans
@@ -631,6 +754,8 @@ class ResearchNodes:
             and span.char_end is not None
         ]
         full = body
+        if citations:
+            full += "\n\n### Sources\n\n" + "\n".join(self._source_lines(citations))
         if limitations:
             full += "\n\n### Limitations\n\n" + "\n".join(f"- {line}" for line in limitations)
         answer = FinalAnswer(

@@ -140,6 +140,8 @@ class RunCreate(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     mode: Literal["dense", "bm25", "hybrid_rrf", "hybrid_rrf_rerank"] = "hybrid_rrf"
     filters: SearchFilters = Field(default_factory=SearchFilters)
+    # Answer as of this date: per document, only the version shown to apply on that date is used (ADR-0010).
+    as_of: date | None = None
 
 
 class RunCreated(BaseModel):

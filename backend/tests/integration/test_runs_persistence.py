@@ -99,3 +99,30 @@ def test_run_rows_calls_pages_and_checkpoints_round_trip(clean_db: None) -> None
     assert [c["task_type"] for c in row["llm_calls"]] == [r.task_type for r in final.llm_calls]
     assert store.get("ws_other", run_id) is None
     saver.conn.close()
+
+
+def test_temporal_source_returns_typed_dates_and_never_the_ingestion_time(clean_db: None) -> None:
+    from datetime import date
+
+    from mezvuat.persistence.models import TemporalFact
+    from mezvuat.persistence.runs import PostgresTemporalSource
+
+    sessions = get_session_factory()
+    workspace_id = _workspace()
+    with sessions.begin() as session:
+        session.add(
+            TemporalFact(
+                document_version_id="ver_p",
+                kind="published",
+                value=date(2023, 2, 1),
+                precision="day",
+                source="source_metadata",
+                confidence="high",
+                evidence="arXivRaw v1 date",
+            )
+        )
+    versions = PostgresTemporalSource(sessions).versions(workspace_id, ["doc_p"])
+    [version] = versions["doc_p"]
+    assert version.version_id == "ver_p"
+    assert [(f.kind, f.value, f.precision) for f in version.facts] == [("published", date(2023, 2, 1), "day")]
+    assert PostgresTemporalSource(sessions).versions("ws_other", ["doc_p"]) == {}

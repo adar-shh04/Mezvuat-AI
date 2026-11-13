@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from mezvuat.citations import PageSpan
 from mezvuat.core.clock import utcnow
 from mezvuat.orchestration import LLMCallRecord
-from mezvuat.persistence.models import DocumentVersion, LlmCall, ResearchRun
+from mezvuat.persistence.models import DocumentVersion, LlmCall, ResearchRun, TemporalFact
+from mezvuat.temporal import DateFact, VersionDates
 
 log = logging.getLogger(__name__)
 
@@ -166,6 +167,59 @@ class PostgresPageMap:
             for version_id, pages in rows
             if pages
         }
+
+
+class PostgresTemporalSource:
+    """All non-failed versions of the given documents with their typed dates. `ingested_at` is never included."""
+
+    def __init__(self, sessions: sessionmaker[Session]) -> None:
+        self._sessions = sessions
+
+    def versions(self, workspace_id: str, document_ids: Sequence[str]) -> dict[str, list[VersionDates]]:
+        if not document_ids:
+            return {}
+        with self._sessions() as session:
+            versions = session.execute(
+                select(
+                    DocumentVersion.id,
+                    DocumentVersion.document_id,
+                    DocumentVersion.version_label,
+                    DocumentVersion.version_ordinal,
+                    DocumentVersion.is_latest_version,
+                ).where(
+                    DocumentVersion.workspace_id == workspace_id,
+                    DocumentVersion.document_id.in_(list(document_ids)),
+                    DocumentVersion.ingestion_status != "failed",
+                )
+            ).all()
+            facts = session.scalars(
+                select(TemporalFact).where(TemporalFact.document_version_id.in_([v.id for v in versions]))
+            ).all()
+        by_version: dict[str, list[DateFact]] = {}
+        for fact in facts:
+            by_version.setdefault(fact.document_version_id, []).append(
+                DateFact.model_validate(
+                    {
+                        "kind": fact.kind,
+                        "value": fact.value,
+                        "precision": fact.precision,
+                        "source": fact.source,
+                        "confidence": fact.confidence,
+                    }
+                )
+            )
+        result: dict[str, list[VersionDates]] = {}
+        for version_id, document_id, label, ordinal, latest in versions:
+            result.setdefault(document_id, []).append(
+                VersionDates(
+                    version_id=version_id,
+                    version_label=label,
+                    version_ordinal=ordinal,
+                    is_latest_version=latest,
+                    facts=by_version.get(version_id, []),
+                )
+            )
+        return result
 
 
 def postgres_checkpointer(dsn: str, serde: SerializerProtocol, max_size: int = 4) -> PostgresSaver:

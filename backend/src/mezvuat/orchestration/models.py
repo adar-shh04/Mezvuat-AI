@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from mezvuat.citations import MAX_QUOTE_CHARS, SpanRef
+from mezvuat.temporal import DateFact
 
 MAX_SUBQUESTIONS = 4
 MAX_NEW_QUERIES = 2
@@ -137,6 +138,8 @@ class Citation(BaseModel):
     char_start: int
     char_end: int
     quote: str
+    # The cited version's known dates, by kind. Empty means unknown, never "today" or the ingestion time.
+    dates: list[DateFact] = Field(default_factory=list)
 
 
 class FinalAnswer(BaseModel):

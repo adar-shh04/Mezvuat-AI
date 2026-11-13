@@ -39,7 +39,12 @@ def create_run(workspace_id: str, body: RunCreate, service: RunServiceDep, polic
         include_references=body.filters.include_references,
     )
     run_id = service.start(
-        workspace_id=workspace_id, data_policy=policy, question=body.question, mode=body.mode, filters=filters
+        workspace_id=workspace_id,
+        data_policy=policy,
+        question=body.question,
+        mode=body.mode,
+        filters=filters,
+        as_of=body.as_of,
     )
     base = f"/api/v1/workspaces/{workspace_id}/runs/{run_id}"
     return RunCreated(run_id=run_id, status="queued", run_url=base, events_url=f"{base}/events")

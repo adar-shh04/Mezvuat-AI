@@ -95,6 +95,16 @@ Later capabilities in scope:
 3. PDF `/Info` dates, low confidence, since they often reflect file creation.
 4. Dates in the text, such as "Published: …" on the title page, medium confidence, with the evidence quote stored.
 
+## Amendment, 2026-11-14: as-of and latest in the research workflow (M5, part 1)
+
+- `mezvuat.temporal` holds the rules and depends only on `core`. `ingested_at` is not a `DateFact` kind, so it cannot reach any temporal decision.
+- **Ordering date.** A version is ordered by its best `revised` fact, else its best `published` fact. The best fact is chosen by source (`source_metadata` > `user` > `extracted_text` > `pdf_info`), then confidence.
+- **Precision.** A date with year precision cannot decide a comparison within its year, and one with month precision cannot decide it within its month. Two candidates with the same date are both unresolved.
+- **In the graph.** The `as_of` date comes from the run request, or else from the query analysis, which is then disclosed under limitations. Per document, assessment and synthesis see only the evidence from the applicable version. Unresolved versions, and documents with no known dates, are excluded and named under limitations. Versions that did not exist yet are excluded silently.
+- **Latest.** When the question asks for the latest version, or the request sets `latest_only`, a document's latest flag decides which evidence is used. The flag comes from the version table, falling back to the chunk payload. A document whose latest version is unknown is kept, and the limitation says that the latest version is unknown.
+- **Answers.** Every citation carries its version's dates. The answer ends with a deterministic `Sources` section that shows each cited version's dates by kind, or "dates unknown". The evidence headers in prompts show the same labels.
+- **Not done yet.** The temporal question set of 30 or more questions with gold answers is still to build. It needs either generation on the public corpus (Groq quota) or the product owner's time.
+
 ## Consequences
 
 - Queries must join `temporal_fact`. That is fine at this scale; a materialized view per version can be added if needed.

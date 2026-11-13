@@ -106,7 +106,7 @@ check_untyped_defs = true
 [[tool.mypy.overrides]]
 module = [
     "mezvuat.core.*", "mezvuat.retrieval.*", "mezvuat.ml.*", "mezvuat.ingestion.*", "mezvuat.persistence.*",
-    "mezvuat.inference.*", "mezvuat.citations.*", "mezvuat.orchestration.*",
+    "mezvuat.inference.*", "mezvuat.citations.*", "mezvuat.orchestration.*", "mezvuat.temporal.*",
 ]
 strict = true
 
@@ -158,6 +158,15 @@ name = "citations depend only on core"
 type = "forbidden"
 source_modules = ["mezvuat.citations"]
 forbidden_modules = ["mezvuat.inference", "mezvuat.orchestration", "mezvuat.retrieval", "mezvuat.ingestion"]
+
+[[tool.importlinter.contracts]]
+name = "temporal reasoning depends only on core"
+type = "forbidden"
+source_modules = ["mezvuat.temporal"]
+forbidden_modules = [
+    "mezvuat.inference", "mezvuat.orchestration", "mezvuat.retrieval", "mezvuat.ingestion", "mezvuat.persistence",
+    "mezvuat.citations", "mezvuat.api",
+]
 
 [[tool.importlinter.contracts]]
 name = "only inference talks to LLM providers"

@@ -63,9 +63,12 @@ This shows that the safeguards work on a weak model. It says nothing about answe
 
 The Sources section said "dates unknown", because the smoke script has no temporal source.
 
+## Verified afterwards (2026-11-14, coordinator)
+
+With the compose Postgres and Qdrant started (`docker compose -f infra/compose.yaml up -d postgres qdrant`), `uv run --no-sync pytest -q -m integration` at `c7827e8` gave **16 passed, 0 skipped**. This ran migration `0002` against a live database and exercised `SqlRunStore`, `SqlCallRecorder`, `PostgresPageMap` and the `PostgresSaver` checkpointer (`tests/integration/test_runs_persistence.py`, 2 tests), plus the 14 ingestion end-to-end tests. The tests use the `mezvuat_test` database and a per-process Qdrant collection, so the dev data was not touched.
+
 ## Not verified
 
-- **Postgres paths.** These were not exercised because the compose Postgres was not running and this session did not start containers: migration `0002` against a live database (only rendered offline with `alembic upgrade 0001:0002 --sql`), `SqlRunStore`, `SqlCallRecorder`, `PostgresPageMap` and the `PostgresSaver` checkpointer. `tests/integration/test_runs_persistence.py` covers them and skips without the services.
 - **End-to-end `/runs`** against real Postgres, Qdrant and the embedding model.
 - **Checkpoint retention pruning** is not implemented.
 

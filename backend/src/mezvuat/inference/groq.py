@@ -18,19 +18,12 @@ from typing import Any
 import httpx
 
 from mezvuat.core.config import Settings
-from mezvuat.core.errors import MezvuatError
+from mezvuat.inference.errors import InferenceError, StructuredOutputInvalidError
+
+__all__ = ["GroqClient", "InferenceError", "StructuredOutputInvalidError", "parse_reset"]
 
 log = logging.getLogger(__name__)
 _DURATION = re.compile(r"(?:(\d+(?:\.\d+)?)m)?(?:(\d+(?:\.\d+)?)s)?(?:(\d+(?:\.\d+)?)ms)?$")
-
-
-class InferenceError(MezvuatError):
-    code = "inference_failed"
-    http_status = 502
-
-
-class StructuredOutputInvalidError(InferenceError):
-    code = "structured_output_invalid"
 
 
 def parse_reset(value: str | None) -> float:

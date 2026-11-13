@@ -1,0 +1,51 @@
+"""What the research graph needs from the outside, as protocols. Production adapters live in the API layer."""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+from typing import Protocol
+
+from mezvuat.citations import PageSpan
+from mezvuat.inference import LLMClient
+from mezvuat.orchestration.state import LLMCallRecord, RunFilters
+from mezvuat.retrieval.types import RankedEvidence
+
+
+class EvidenceSearch(Protocol):
+    def search(self, workspace_id: str, query: str, k: int, filters: RunFilters) -> list[RankedEvidence]: ...
+
+
+class PageMapSource(Protocol):
+    """Page character ranges per document version, in the version's normalised text."""
+
+    def page_spans(self, workspace_id: str, version_ids: Sequence[str]) -> dict[str, list[PageSpan]]: ...
+
+
+class CallRecorder(Protocol):
+    """Persists `llm_call` rows as they happen, so a crashed or failed run still accounts for every request."""
+
+    def record(self, records: Sequence[LLMCallRecord]) -> None: ...
+
+
+class NoPageMap:
+    def page_spans(self, workspace_id: str, version_ids: Sequence[str]) -> dict[str, list[PageSpan]]:
+        return {}
+
+
+@dataclass
+class WorkflowDeps:
+    llm: LLMClient
+    search: EvidenceSearch
+    pages: PageMapSource = field(default_factory=NoPageMap)
+    recorder: CallRecorder | None = None
+    clock: Callable[[], float] = time.time
+    per_query_k: int = 8
+    # Per LLM call; each call also gets at most the run's remaining deadline.
+    max_call_timeout_s: float = 60.0
+    # The research loop only continues with at least this much time left.
+    min_loop_time_s: float = 20.0
+    synthesis_evidence_chars: int = 24_000
+    assess_items_per_subquestion: int = 3
+    assess_item_chars: int = 800

@@ -5,6 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import quote
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -30,9 +31,25 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://127.0.0.1:16333"
     qdrant_api_key: SecretStr | None = None
 
+    # Inference (ADR-0011). Only `direct` exists before M8.
+    inference_mode: Literal["direct", "modelmesh", "modelmesh_with_fallback"] = "direct"
     groq_api_key: SecretStr | None = None
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_model_small: str = "openai/gpt-oss-20b"
+    groq_model_large: str = "openai/gpt-oss-120b"
+    # Decision D1: private workspaces only ever use a local backend. Unset means private workspaces cannot run.
+    ollama_base_url: str | None = None
+    ollama_model: str = "llama3.2:3b"
+    ollama_model_large: str | None = None
+    # Which direct backend serves public-corpus workspaces. `ollama` keeps development off the Groq quota.
+    direct_public_backend: Literal["groq", "ollama"] = "groq"
+
+    # Research runs (ADR-0008 bounds).
+    run_deadline_s: float = Field(default=120.0, gt=0)
+    run_max_llm_calls: int = Field(default=12, gt=0)
+    run_max_tokens: int = Field(default=150_000, gt=0)
+    run_concurrency: int = Field(default=2, gt=0)
+    run_checkpointer: Literal["postgres", "memory"] = "postgres"
 
     embedding_model_id: str = "BAAI/bge-small-en-v1.5"
     reranker_model_id: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
@@ -51,6 +68,15 @@ class Settings(BaseSettings):
         password = self.postgres_password.get_secret_value()
         return (
             f"postgresql+psycopg://{self.postgres_user}:{password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @property
+    def psycopg_dsn(self) -> str:
+        """libpq connection string for the LangGraph checkpointer, which uses psycopg directly."""
+        password = quote(self.postgres_password.get_secret_value(), safe="")
+        return (
+            f"postgresql://{quote(self.postgres_user, safe='')}:{password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 

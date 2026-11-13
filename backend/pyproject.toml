@@ -10,6 +10,8 @@ dependencies = [
     "defusedxml>=0.7",
     "fastapi>=0.162",
     "httpx>=0.28",
+    "langgraph>=1.2",
+    "langgraph-checkpoint-postgres>=3.0",
     "numpy>=2.3",
     "psycopg[binary]>=3.3",
     "pydantic>=2.14",
@@ -102,7 +104,10 @@ no_implicit_optional = true
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["mezvuat.core.*", "mezvuat.retrieval.*", "mezvuat.ml.*", "mezvuat.ingestion.*", "mezvuat.persistence.*"]
+module = [
+    "mezvuat.core.*", "mezvuat.retrieval.*", "mezvuat.ml.*", "mezvuat.ingestion.*", "mezvuat.persistence.*",
+    "mezvuat.inference.*", "mezvuat.citations.*", "mezvuat.orchestration.*",
+]
 strict = true
 
 [[tool.mypy.overrides]]
@@ -140,6 +145,25 @@ type = "forbidden"
 source_modules = ["mezvuat.api", "mezvuat.retrieval", "mezvuat.ingestion", "mezvuat.workspaces", "mezvuat.worker"]
 forbidden_modules = ["mezvuat.evaluation", "mezvuat.ml.training"]
 allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "the research workflow reaches storage and HTTP only through its protocols"
+type = "forbidden"
+source_modules = ["mezvuat.orchestration", "mezvuat.citations"]
+forbidden_modules = ["mezvuat.persistence", "mezvuat.api", "mezvuat.worker", "httpx", "sqlalchemy", "psycopg"]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "citations depend only on core"
+type = "forbidden"
+source_modules = ["mezvuat.citations"]
+forbidden_modules = ["mezvuat.inference", "mezvuat.orchestration", "mezvuat.retrieval", "mezvuat.ingestion"]
+
+[[tool.importlinter.contracts]]
+name = "only inference talks to LLM providers"
+type = "forbidden"
+source_modules = ["mezvuat.inference"]
+forbidden_modules = ["mezvuat.orchestration", "mezvuat.persistence", "mezvuat.api", "mezvuat.retrieval"]
 
 [[tool.importlinter.contracts]]
 name = "database and vector drivers stay in persistence"

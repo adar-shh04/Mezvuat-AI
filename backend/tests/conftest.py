@@ -20,6 +20,11 @@ os.environ.update(
         "MEZVUAT_CORPUS_MANIFEST": str(_TEST_DATA / "allowlist.json"),
         "INDEX_VERSION": f"test{os.getpid()}",
         "MEZVUAT_API_KEY": "",
+        # Tests never reach a real LLM provider: a placeholder key (respx mocks the endpoint) and no local backend.
+        "GROQ_API_KEY": "test-placeholder-not-a-key",
+        "INFERENCE_MODE": "direct",
+        "DIRECT_PUBLIC_BACKEND": "groq",
+        "RUN_CHECKPOINTER": "memory",
     }
 )
 

@@ -38,6 +38,17 @@
     "seconds_waiting_for_rate_limits": 1791.6,
     "wall_clock_seconds": 1841.7,
     "finished_at": "2026-11-12T21:42:56.902987+00:00"
+   },
+   {
+    "model": "openai/gpt-oss-20b",
+    "calls": 13,
+    "prompt_tokens": 38702,
+    "completion_tokens": 3496,
+    "total_tokens": 42198,
+    "retries_429": 1,
+    "seconds_waiting_for_rate_limits": 315.0,
+    "wall_clock_seconds": 329.0,
+    "finished_at": "2026-11-13T03:07:33.167009+00:00"
    }
   ]
  },

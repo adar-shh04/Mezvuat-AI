@@ -78,6 +78,19 @@ When a limit is hit, the graph moves forward: insufficient evidence leads to syn
 - **Structured nodes do not stream.** Groq does not support streaming together with structured output, and it is not needed for those nodes.
 - **Prompt versioning:** every node prompt lives in `orchestration/prompts/*.md` with a version id. That id is recorded per LLM call and fed into `context_fingerprint` (ADR-0011).
 
+## Amendment, 2026-11-14: as built in M4
+
+These are implementation choices within the decision above. None widens a bound.
+
+- **Synchronous graph.** Nodes and the `LLMClient` are synchronous, like the rest of the request path. psycopg's async mode cannot run on Windows' default event loop, and retrieval is already sync. A run executes in a bounded thread pool in the API process (`RUN_CONCURRENCY`, default 2), and progress reaches clients through an in-memory event log per run (`GET /runs/{id}/events`, with `Last-Event-ID` resume). After a restart, the `research_run` row is the source of truth.
+- **Checkpointer.** `PostgresSaver` (sync) over a psycopg pool. `setup()` creates and versions LangGraph's own tables, outside Alembic. The serializer allowlists only the state classes (`STATE_MODELS`). Retention pruning is not implemented yet.
+- **Counts truncate, lengths fail.** More than 4 subquestions or 2 new queries are truncated by the validator. A quote over 300 characters fails validation, which triggers the repair retry.
+- **Plan shortcut without an LLM call.** When `understand_query` reports `single_hop`, or when analysis was skipped, `plan_research` emits one subquestion equal to the question and makes no LLM call.
+- **Budget accounting.** Every HTTP attempt counts against the 12-call budget, including repair retries and retries after 5xx. The repair retry is allowed only when at least 2 calls are left. The research loop continues only when `RESERVED_CALLS + 2` calls (2 for synthesize and respond) and `min_loop_time_s` remain. A skipped step adds a limitation that names the reason.
+- **Closed set per synthesis.** `verify` accepts only the evidence ids that the synthesis prompt showed (`shown_evidence_ids`), not every id in the registry.
+- **Degradation.** `inference_unavailable`, `inference_not_permitted` and `inference_rejected` go to `fail`. Invalid structured output and rate limiting degrade the step (fallback plan, no assessment, no reformulation), and the limitation is recorded. If `respond` fails, the answer is the deterministic rendering of the verified claims.
+- **Prompt versions.** Prompts live in `orchestration/prompts/*.md` with a `version: N` header. `respond@2` replaced `respond@1` before any recorded run, because its example marker `[E2]` could be copied literally.
+
 ## Consequences
 
 - Fully inspectable runs, with predictable worst-case cost: 12 calls.

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -132,3 +132,54 @@ class HealthOut(BaseModel):
     status: Literal["ok", "degraded"]
     postgres: str
     qdrant: str
+
+
+class RunCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    question: str = Field(min_length=1, max_length=2000)
+    mode: Literal["dense", "bm25", "hybrid_rrf", "hybrid_rrf_rerank"] = "hybrid_rrf"
+    filters: SearchFilters = Field(default_factory=SearchFilters)
+
+
+class RunCreated(BaseModel):
+    run_id: str
+    status: str
+    run_url: str
+    events_url: str
+
+
+class RunErrorOut(BaseModel):
+    code: str
+    message: str | None
+
+
+class LlmCallOut(BaseModel):
+    client_request_id: str
+    workflow_node: str | None
+    task_type: str
+    backend: str
+    provider: str | None
+    model: str | None
+    status: str | None
+    error_code: str | None
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    latency_ms: int | None
+
+
+class RunOut(BaseModel):
+    run_id: str
+    workspace_id: str
+    question: str
+    status: Literal["queued", "running", "completed", "failed"]
+    data_policy: Literal["any", "local_only"]
+    retrieval_mode: str
+    created_at: datetime
+    started_at: datetime | None
+    finished_at: datetime | None
+    error: RunErrorOut | None
+    # `FinalAnswer` from `mezvuat.orchestration`: markdown, citations (exact spans and pages), claims, limitations.
+    answer: dict[str, Any] | None
+    summary: dict[str, Any]
+    llm_calls: list[LlmCallOut]

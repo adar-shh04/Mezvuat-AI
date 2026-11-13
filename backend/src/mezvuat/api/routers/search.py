@@ -3,9 +3,9 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from mezvuat.api.deps import (
+    LazyEmbedder,
     SessionDep,
     get_dense_index,
-    get_embedder,
     get_lexical_store,
     get_reranker,
     require_api_key,
@@ -21,13 +21,6 @@ router = APIRouter(
 )
 
 
-class _LazyEmbedder:
-    """Loads the embedding model on first use, so lexical-only searches never pay for it."""
-
-    def embed_query(self, query: str) -> list[float]:
-        return get_embedder().embed_query(query)
-
-
 @router.post("/search", response_model=SearchResponse)
 def search(workspace_id: str, body: SearchRequest, session: SessionDep) -> SearchResponse:
     get_workspace(session, workspace_id)
@@ -35,7 +28,7 @@ def search(workspace_id: str, body: SearchRequest, session: SessionDep) -> Searc
     pipeline = RetrievalPipeline(
         lexical=get_lexical_store(),
         dense=get_dense_index(),
-        embedder=_LazyEmbedder(),
+        embedder=LazyEmbedder(),
         store=PostgresChunkStore(session),
         reranker=reranker,
     )

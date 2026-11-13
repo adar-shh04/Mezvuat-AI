@@ -10,7 +10,7 @@ Mezvuat AI is a research and knowledge intelligence platform. It works over a fo
 
 Mezvuat works on its own with a direct LLM provider. It can also use [ModelMesh](../modelmesh), an independent inference gateway, through ModelMesh's versioned public API.
 
-> **Status: Phase 2 in progress.** M0, M1, M2 and the part of M3 that needs no API key are implemented and verified: workspaces, ingestion with provenance, hybrid retrieval, and evaluation on public benchmarks. There is no LLM workflow, frontend or ModelMesh integration yet. Licence: AGPL-3.0.
+> **Status: Phase 2 in progress.** M0–M2 and most of M3 are implemented and verified: workspaces, ingestion with provenance, hybrid retrieval, and evaluation on public benchmarks. M4 adds the bounded LangGraph research workflow with verifiable citations and the `/runs` API over a direct provider (Groq for public-corpus workspaces, Ollama for private ones); see `docs/eval/m4_verification.md` for what was and was not verified. There is no frontend or ModelMesh integration yet. Licence: AGPL-3.0.
 >
 > - `docs/spec/PRODUCT_SPEC.md`: the product specification
 > - `docs/DECISIONS.md`: product owner decisions, which override the ADRs

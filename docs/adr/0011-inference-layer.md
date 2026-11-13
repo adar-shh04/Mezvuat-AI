@@ -260,6 +260,15 @@ The product owner chose public cloud for the public corpus and local models for 
 - **Offline jobs obey D1 too:** RAGAS judging and LLM pre-labelling run only on the public corpus.
 - **Rate limits.** A new ModelMesh key defaults to 20 RPM, 50K TPM and $0.25/day, and a research run can make 12 calls with large evidence payloads. 429 is handled as specified above; if the defaults block normal use, report it and request explicit limits.
 
+## Amendment, 2026-11-14: direct backends as built in M4
+
+- **Synchronous interface.** `LLMClient.complete()` returns `LLMResult` and `stream()` returns an iterator, for the reason given in ADR-0008's M4 amendment. The fields are unchanged. Each HTTP attempt is an `LLMAttempt` with its own `X-Request-ID`, and every attempt becomes one `llm_call` row, including failed attempts and repair retries.
+- **One OpenAI-compatible backend class** serves Groq (`locality: cloud`) and Ollama (`locality: local`, through Ollama's `/v1/chat/completions`). A cloud backend refuses `local_only` requests before sending anything. `DirectClient` picks the public backend for `any` and the local one for `local_only`, and raises `inference_not_permitted` if neither is allowed. It never widens the policy.
+- **Configuration.** `OLLAMA_BASE_URL` (unset by default: private workspaces then cannot run), `OLLAMA_MODEL`, `OLLAMA_MODEL_LARGE`, and `DIRECT_PUBLIC_BACKEND` (`groq` by default; `ollama` keeps local development off the Groq quota). `GROQ_MODEL_LARGE` serves `evidence_synthesis`, `final_response` and `citation_verification`; every other task uses `GROQ_MODEL_SMALL`. gpt-oss models are sent `reasoning_effort: "low"`.
+- **Retries.** Transport errors and 5xx get at most 2 retries with full-jitter backoff, then `inference_unavailable`. A 429 waits for `Retry-After` when that fits the request deadline, at most twice, then `inference_rate_limited`. Other 4xx responses are `inference_rejected`. Error bodies are reduced to status, type and code, because they can echo prompt text.
+- **Ollama structured output** was checked live on Ollama 0.40.16 with `llama3.2:3b`: `response_format: json_schema` is honoured through the OpenAI-compatible endpoint.
+- `INFERENCE_MODE=modelmesh*` fails at start-up with `inference_mode_unsupported` until M8.
+
 ## Consequences
 
 - Mezvuat runs without ModelMesh: public workspaces need a Groq key, private workspaces need Ollama. ModelMesh adds routing, caching and telemetry with no node changes.

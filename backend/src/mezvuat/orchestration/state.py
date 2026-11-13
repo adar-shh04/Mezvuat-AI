@@ -53,6 +53,7 @@ class RunFilters(BaseModel):
     latest_only: bool = False
     published_from: date | None = None
     published_to: date | None = None
+    include_references: bool = False
 
 
 class PendingQuery(BaseModel):

@@ -12,7 +12,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
 from mezvuat.api.deps import get_dense_index
-from mezvuat.api.routers import documents, search, workspaces
+from mezvuat.api.routers import documents, runs, search, workspaces
 from mezvuat.api.schemas import HealthOut
 from mezvuat.core.config import get_settings
 from mezvuat.core.errors import MezvuatError, RetrievalUnavailableError
@@ -69,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(workspaces.router)
     app.include_router(documents.router)
     app.include_router(search.router)
+    app.include_router(runs.router)
     return app
 
 

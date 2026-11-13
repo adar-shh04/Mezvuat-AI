@@ -248,4 +248,38 @@ class LlmCall(Base):
     cost_estimated_usd: Mapped[float | None] = mapped_column(Float)
     latency_ms: Mapped[int | None] = mapped_column(Integer)
     cache_status: Mapped[str | None] = mapped_column(String(16))
+    # Added in M4 (migration 0002).
+    provider: Mapped[str | None] = mapped_column(String(32))
+    prompt_version: Mapped[str | None] = mapped_column(String(64))
+    iteration: Mapped[int | None] = mapped_column(Integer)
+    status: Mapped[str | None] = mapped_column(String(16))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    http_status: Mapped[int | None] = mapped_column(Integer)
+    finish_reason: Mapped[str | None] = mapped_column(String(16))
+    structured_mode: Mapped[str | None] = mapped_column(String(24))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ResearchRun(Base):
+    """One research question and its outcome. The step-by-step state lives in the LangGraph checkpoint tables."""
+
+    __tablename__ = "research_run"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspace.id", ondelete="CASCADE"), index=True)
+    question: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), server_default="queued")
+    data_policy: Mapped[str] = mapped_column(String(16))
+    retrieval_mode: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    answer: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    summary: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+
+    __table_args__ = (
+        CheckConstraint("status IN ('queued', 'running', 'completed', 'failed')", name="ck_run_status"),
+        CheckConstraint("data_policy IN ('any', 'local_only')", name="ck_run_data_policy"),
+    )

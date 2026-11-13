@@ -84,6 +84,15 @@ Each claim gets one status: `supported`, `partially_supported`, `unsupported`, `
    - Source text is displayed as text, never as HTML.
 6. **Workspace isolation.** Retrieval cannot cross workspaces (ADR-0004 and ADR-0005), so an injected document cannot pull in another tenant's content.
 
+## Amendment, 2026-11-14: deterministic layer as built in M4
+
+- **Status before NLI exists.** A claim that passes the deterministic checks is `supported` with `method: "quote_match"`. Every answer that relies on such claims says so under limitations: the quote exists at the cited location, but its support for the claim has not been checked semantically. M5 adds NLI and the judge, which refine this status.
+- **Normalisation.** In addition to whitespace, NFKC and line-break hyphenation, typographic single quotes, double quotes and dashes are folded to ASCII, because models rarely reproduce them. Case is kept. Fuzzy matching (rapidfuzz, ratio 0.95 or more) is deferred to M5.
+- **Minimum quote length.** A quote must have at least 20 normalised characters, so that a claim cannot be "verified" by quoting a single term.
+- **Every cited id needs a quote.** A claim that cites an id without a verified quote for that id fails.
+- **Marker validation.** Besides unknown `[E#]` markers, pseudo-citations such as `[3]`, `[Source 2]` or `[E3 p.2]` also make the validator replace the model's text. An answer without any marker is replaced by the deterministic rendering too. It is not just flagged, because uncited model prose would reach the user.
+- **Gaps.** Synthesis `gaps` are shown under limitations, at most 5 of them and 300 characters each. Synthesis `conflicts` are kept in the run state but not shown until M5 builds the cited conflict section.
+
 ## Consequences
 
 - **Citations are verifiable by construction.** The UI can highlight the exact span on the exact page.

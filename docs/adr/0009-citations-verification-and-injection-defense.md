@@ -93,6 +93,14 @@ Each claim gets one status: `supported`, `partially_supported`, `unsupported`, `
 - **Marker validation.** Besides unknown `[E#]` markers, pseudo-citations such as `[3]`, `[Source 2]` or `[E3 p.2]` also make the validator replace the model's text. An answer without any marker is replaced by the deterministic rendering too. It is not just flagged, because uncited model prose would reach the user.
 - **Gaps.** Synthesis `gaps` are shown under limitations, at most 5 of them and 300 characters each. Synthesis `conflicts` are kept in the run state but not shown until M5 builds the cited conflict section.
 
+## Amendment, 2026-11-14: injection flagging and output checks (M5, part 2)
+
+- **Where flagging happens.** Chunks are flagged when they enter the run's evidence registry (`citations/injection.py`), not at ingestion. The result is the same for every run, and it needs no schema change or re-index. Flagged evidence stays usable. Its prompt header carries a warning, its citations carry `injection_suspect`, and the answer lists it under limitations. Hidden-text detection (tiny or white fonts) still needs the parser's character attributes and is not done.
+- **Signals.** Override phrases, role markers, persona changes, prompt-extraction requests, citation manipulation, dictated answers, text addressed to the model, and evidence-delimiter forgery. "The final answer is …" alone is not a signal, because QA papers use it constantly.
+- **Prompt-leak check.** Any output that reproduces 8 consecutive words of any node prompt is treated as a leak. In a claim it marks the claim unsupported; in the model's answer it triggers the deterministic rendering; in a gap it drops the gap. The note for a dropped leaking claim does not repeat its text.
+- **No markers outside verified claims.** Model text shown anywhere other than a verified claim's markers is stripped of bracketed citation-like text: claim text, dropped-claim notes, gaps, and document titles in the Sources section.
+- **Measured.** The adversarial suite (`tests/unit/test_adversarial.py`) has 22 hostile documents and a scripted model that obeys them. In all 22, no unknown citation and no prompt text reaches the answer. The heuristics flag 20 of the 22; the 2 they miss are deliberately subtle. They flag 0 of 8 benign controls. On real papers, 16 of 2,261 chunks (0.71%) are flagged, in 60 demo-corpus papers with one version each. These are mostly papers that quote prompt templates. Nobody has checked these flags by hand, so they are not a precision figure.
+
 ## Consequences
 
 - **Citations are verifiable by construction.** The UI can highlight the exact span on the exact page.

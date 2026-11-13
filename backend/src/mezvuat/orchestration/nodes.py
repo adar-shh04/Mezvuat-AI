@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass, field
@@ -18,7 +19,16 @@ from typing import Any, TypeVar
 from langgraph.config import get_stream_writer
 from pydantic import BaseModel
 
-from mezvuat.citations import EvidenceItem, PageSpan, QuoteInput, check_claim, chunk_index, scan_markers
+from mezvuat.citations import (
+    EvidenceItem,
+    PageSpan,
+    PromptLeakDetector,
+    QuoteInput,
+    check_claim,
+    chunk_index,
+    injection_signals,
+    scan_markers,
+)
 from mezvuat.core.errors import MezvuatError
 from mezvuat.inference import (
     FATAL_INFERENCE_CODES,
@@ -48,7 +58,7 @@ from mezvuat.orchestration.models import (
     SubQuestion,
     Sufficiency,
 )
-from mezvuat.orchestration.prompts import Prompt, evidence_section, load_prompt, new_boundary
+from mezvuat.orchestration.prompts import PROMPT_NAMES, Prompt, evidence_section, load_prompt, new_boundary
 from mezvuat.orchestration.state import (
     MAX_EVIDENCE_FOR_SYNTHESIS,
     MAX_ITER,
@@ -98,6 +108,14 @@ def _fail(node: str, code: str, message: str) -> Update:
     return {"status": "failed", "error": RunError(code=code, message=message, node=node)}
 
 
+_ANY_BRACKET_CITATION = re.compile(r"\[[^\]\n]{0,40}\]")
+
+
+def _plain(text: str) -> str:
+    """Model text shown outside the verified claims carries no citation-like markers."""
+    return " ".join(_ANY_BRACKET_CITATION.sub("", text).split())
+
+
 def _json(model: BaseModel | None) -> str:
     return "null" if model is None else json.dumps(model.model_dump(mode="json"), ensure_ascii=False)
 
@@ -106,6 +124,7 @@ class ResearchNodes:
     def __init__(self, deps: WorkflowDeps) -> None:
         self.deps = deps
         self.system = load_prompt("system")
+        self.leaks = PromptLeakDetector(load_prompt(name).template for name in PROMPT_NAMES)
 
     # ----- budget -------------------------------------------------------------------------------------------------
 
@@ -350,6 +369,7 @@ class ResearchNodes:
             query=pending.query,
             rank=ranked.rank,
             score=ranked.score,
+            injection_signals=injection_signals(chunk.text),
         )
 
     def _attach_pages(self, workspace_id: str, items: dict[str, EvidenceItem]) -> dict[str, EvidenceItem]:
@@ -566,6 +586,10 @@ class ResearchNodes:
                 [QuoteInput(evidence_id=q.evidence_id, text=q.text) for q in claim.quotes],
                 registry,
             )
+            if self.leaks.leaks(claim.text):
+                check = check.model_copy(
+                    update={"passed": False, "problems": [*check.problems, "claim reproduces the system instructions"]}
+                )
             verdicts.append(
                 ClaimVerdict(
                     claim_id=claim_id,
@@ -688,7 +712,7 @@ class ResearchNodes:
             pages = sorted({c.page for c in citations if c.evidence_id == citation.evidence_id and c.page is not None})
             where = f", p. {', '.join(str(p) for p in pages)}" if pages else ""
             version = f" ({citation.version_label})" if citation.version_label else ""
-            title = citation.document_title or citation.document_id
+            title = _plain(citation.document_title or citation.document_id)
             lines.append(f"- [{citation.evidence_id}] {title}{version}{where}: {describe_dates(citation.dates)}")
         return lines
 
@@ -700,11 +724,21 @@ class ResearchNodes:
         verified = [v for v in verdicts if v.status in ("supported", "partially_supported")]
         dropped = [v for v in verdicts if v not in verified]
         limitations = list(dict.fromkeys(state.limitations))
-        limitations += [f"The system could not verify this claim, so it was left out: {v.text}" for v in dropped]
+        limitations += [self._dropped_note(v) for v in dropped]
         if any(v.method == "quote_match" for v in verified):
             limitations.append(QUOTE_ONLY_LIMITATION)
+        flagged = [state.evidence[e] for e in state.shown_evidence_ids if state.evidence[e].injection_signals]
+        if flagged:
+            ids = ", ".join(item.evidence_id for item in flagged)
+            limitations.append(
+                f"Evidence {ids} contained instruction-like text. It was treated as quoted data, not as instructions."
+            )
         if state.draft:
-            limitations += [f"Not answered by the evidence: {gap[:300]}" for gap in state.draft.gaps[:5]]
+            limitations += [
+                f"Not answered by the evidence: {_plain(gap)[:300]}"
+                for gap in state.draft.gaps[:5]
+                if not self.leaks.leaks(gap)
+            ]
         updates: Update = {}
         flags: list[str] = []
         allowed = {e for v in verified for e in v.evidence_ids}
@@ -720,7 +754,10 @@ class ResearchNodes:
             flags += stream_flags
             if markdown is not None:
                 report = scan_markers(markdown, allowed)
-                if not report.valid:
+                if self.leaks.leaks(markdown):
+                    flags.append("prompt_leak")
+                    markdown = None
+                elif not report.valid:
                     flags.append("unknown_citation_markers")
                     markdown = None
                 elif not report.used:
@@ -745,6 +782,7 @@ class ResearchNodes:
                 char_end=span.char_end,
                 quote=span.quote,
                 dates=self.version_facts(state, state.evidence[span.evidence_id]),
+                injection_suspect=bool(state.evidence[span.evidence_id].injection_signals),
             )
             for v in verified
             for span in v.spans
@@ -769,13 +807,18 @@ class ResearchNodes:
         writer({"event": "answer_final", "rendering": rendering})
         return {**updates, "answer": answer, "status": "completed"}
 
+    def _dropped_note(self, verdict: ClaimVerdict) -> str:
+        if self.leaks.leaks(verdict.text):
+            return "A claim that reproduced the system's instructions was withheld."
+        return f"The system could not verify this claim, so it was left out: {_plain(verdict.text)}"
+
     @staticmethod
     def _deterministic(verified: Iterable[ClaimVerdict]) -> str:
         lines = []
         for v in verified:
             markers = "".join(f"[{e}]" for e in v.evidence_ids)
             label = "*Interpretation:* " if v.kind == "interpretation" else ""
-            lines.append(f"- {label}{v.text} {markers}")
+            lines.append(f"- {label}{_plain(v.text)} {markers}")
         if not lines:
             return ABSTAIN_TEXT
         return "Based on the retrieved evidence:\n\n" + "\n".join(lines)

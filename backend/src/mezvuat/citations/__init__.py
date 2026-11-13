@@ -9,6 +9,7 @@ from mezvuat.citations.checks import (
     check_quote,
     scan_markers,
 )
+from mezvuat.citations.injection import PromptLeakDetector, injection_signals
 from mezvuat.citations.quotes import MAX_QUOTE_CHARS, MIN_QUOTE_CHARS, find_quote, normalize_for_match
 from mezvuat.citations.registry import (
     EVIDENCE_ID,
@@ -27,12 +28,14 @@ __all__ = [
     "EvidenceItem",
     "MarkerReport",
     "PageSpan",
+    "PromptLeakDetector",
     "QuoteInput",
     "SpanRef",
     "check_claim",
     "check_quote",
     "chunk_index",
     "find_quote",
+    "injection_signals",
     "next_evidence_id",
     "normalize_for_match",
     "page_at",

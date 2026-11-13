@@ -60,3 +60,29 @@ This shows that the safeguards work on a weak model. It says nothing about answe
 - **End-to-end `/runs`** against real Postgres, Qdrant and the embedding model.
 - **A live Groq run.** `scripts/smoke_run.py --backend groq` is the intended single smoke test.
 - **Checkpoint retention pruning** is not implemented.
+
+# M5 progress (parts 1 and 2), same session
+
+Gates after part 2: ruff clean, mypy clean on 84 files, 7 import contracts kept, **241 passed, 16 skipped**. The skipped tests are the integration tests, because no Postgres or Qdrant was running.
+
+**D9: temporal (`tests/unit/test_temporal.py`).**
+- `ingested_at` is not a date kind, so it cannot decide "latest".
+- Same-year year-precision and same-month month-precision dates do not resolve an as-of query.
+- Unknown dates and same-day ties stay unresolved.
+- `effective_from` and `effective_to` take precedence.
+- In the graph, an as-of question uses only the version that applied on that date. Unresolved versions and undated documents are named under limitations.
+- Latest-version questions use the latest flag.
+- Answers show each cited version's dates by kind in a Sources section.
+
+**D8: adversarial (`tests/unit/test_adversarial.py`).** The suite has 22 hostile documents, run against a scripted model that obeys them. In all 22 cases, 0 unknown citations and 0 prompt shingles reach the answer. Flag rate:
+- 20/22 hostile documents (the 2 misses are deliberately subtle);
+- 0/8 benign controls;
+- 16/2,261 chunks (0.71%) of 60 real demo-corpus papers. This was measured with the production parser and chunker and is not hand-checked.
+
+**Not done in M5:**
+- the NLI verifier and its threshold calibration, which needs a small hand-labelled claim/evidence set from the product owner;
+- the LLM-judge fallback;
+- the conflicting-evidence section, which needs NLI contradiction scores;
+- the temporal question set of 30 or more questions with gold answers.
+
+Until NLI exists, claims are verified by quote match only, and every answer says so.

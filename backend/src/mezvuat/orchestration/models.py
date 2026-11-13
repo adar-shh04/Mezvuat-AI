@@ -140,6 +140,8 @@ class Citation(BaseModel):
     quote: str
     # The cited version's known dates, by kind. Empty means unknown, never "today" or the ingestion time.
     dates: list[DateFact] = Field(default_factory=list)
+    # The cited text contains instruction-like content (ADR-0009); the evidence viewer shows a warning.
+    injection_suspect: bool = False
 
 
 class FinalAnswer(BaseModel):

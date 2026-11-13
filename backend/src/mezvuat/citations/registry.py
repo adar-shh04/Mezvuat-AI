@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 EVIDENCE_ID = re.compile(r"^E[1-9]\d*$")
 
@@ -46,6 +46,8 @@ class EvidenceItem(BaseModel):
     query: str
     rank: int
     score: float
+    # Instruction-like patterns found in `text` (ADR-0009 flagging). Flagged evidence stays usable, with a warning.
+    injection_signals: list[str] = Field(default_factory=list)
 
 
 def next_evidence_id(registry: Mapping[str, EvidenceItem]) -> str:

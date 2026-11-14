@@ -87,9 +87,22 @@ def change_candidates(old_text: str, new_text: str, limit: int = MAX_CANDIDATES)
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag != "replace":
             continue
-        for a in old[i1:i2]:
-            best = max(new[j1:j2], key=lambda b: difflib.SequenceMatcher(None, _key(a), _key(b)).ratio())
-            ratio = difflib.SequenceMatcher(None, _key(a), _key(best)).ratio()
+        block = new[j1:j2]
+        for offset, a in enumerate(old[i1:i2]):
+            # Compare against a window around the proportional position: a reflowed section can make a block
+            # hundreds of sentences long, and an all-pairs search would be quadratic in it.
+            centre = offset * len(block) // max(i2 - i1, 1)
+            window = block[max(centre - 8, 0) : centre + 9]
+            # seq2 is the one SequenceMatcher caches, so it holds the fixed sentence.
+            matcher_a = difflib.SequenceMatcher(None, "", _key(a), autojunk=False)
+            ratio, best = 0.0, ""
+            for b in window:
+                matcher_a.set_seq1(_key(b))
+                if matcher_a.real_quick_ratio() < 0.45 or matcher_a.quick_ratio() < 0.45:
+                    continue
+                score = matcher_a.ratio()
+                if score > ratio:
+                    ratio, best = score, b
             if not 0.45 <= ratio < 0.97:
                 continue
             numbers = set(_DIGITS.findall(a)) != set(_DIGITS.findall(best))

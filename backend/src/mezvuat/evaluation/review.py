@@ -2,6 +2,10 @@
 and resumed at any point. Labels are appended to `data/domain/v1/labels/<split>.human.jsonl`; nothing is overwritten.
 
 On a random fifth of the questions the LLM pre-label is hidden, to measure how much the pre-labels anchor the reviewer.
+From 2026-11-14 (decision D2 amendment) the pre-label is hidden for every item still to label: with it shown, the owner
+agreed with the LLM on 98.8% of 160 items, but only 29.2% of 24 when it was hidden. Each record says which policy
+applied (`blind_policy`) and whether the item is in the original random fifth (`in_random_subset`), so the randomised
+anchoring comparison stays separable.
 """
 
 from __future__ import annotations
@@ -21,9 +25,10 @@ from typing import Any
 
 from mezvuat.evaluation.domain import DATASET_VERSION, DomainChunk, blind_query_ids, read_jsonl
 
-TOOL_VERSION = "review-v1"
+TOOL_VERSION = "review-v2"
 SECONDS_PER_ITEM = 30  # planning estimate; the range 25 to 40 s is used for the hour estimates
 BLIND_FRACTION = 0.2
+HIDE_ALL_PRELABELS = True  # D2 amendment, 2026-11-14; `--show-prelabels` restores the random-fifth policy
 GRADE_NAMES = {0: "not relevant", 1: "partially relevant", 2: "answers the question"}
 
 
@@ -38,9 +43,10 @@ class ReviewItem:
     blind: bool
     query_position: int
     query_count: int
+    in_random_subset: bool = False
 
 
-def build_items(dataset_dir: Path, split: str, *, seed: int) -> list[ReviewItem]:
+def build_items(dataset_dir: Path, split: str, *, seed: int, hide_all: bool = False) -> list[ReviewItem]:
     queries = {q["query_id"]: q for q in read_jsonl(dataset_dir / "queries.jsonl") if q["split"] == split}
     prelabels = [p for p in read_jsonl(dataset_dir / "prelabels.jsonl") if p["split"] == split]
     blind = blind_query_ids(sorted(queries), fraction=BLIND_FRACTION, seed=seed)
@@ -60,9 +66,10 @@ def build_items(dataset_dir: Path, split: str, *, seed: int) -> list[ReviewItem]
                     passage_id=row["passage_id"],
                     prelabel=row["grade"],
                     prelabel_reason=row["reason"],
-                    blind=query_id in blind,
+                    blind=hide_all or query_id in blind,
                     query_position=position,
                     query_count=len(ordered),
+                    in_random_subset=query_id in blind,
                 )
             )
     return items
@@ -88,9 +95,11 @@ class ReviewSession:
         *,
         reviewer: str,
         split: str,
+        blind_policy: str = "random_fifth",
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.items = items
+        self.blind_policy = blind_policy
         self.path = labels_path
         self.reviewer = reviewer
         self.split = split
@@ -133,6 +142,8 @@ class ReviewSession:
                 "grade": grade,
                 "prelabel_shown": not item.blind,
                 "prelabel_grade": item.prelabel,
+                "blind_policy": self.blind_policy,
+                "in_random_subset": item.in_random_subset,
                 "accepted_prelabel": accepted_prelabel,
                 "seconds": round(now - self._started, 1),
                 "reviewer": self.reviewer,
@@ -220,14 +231,28 @@ def render(item: ReviewItem, chunk: DomainChunk, *, done: int, total: int, passa
     return "\n".join(lines)
 
 
-def run_review(split: str, *, reviewer: str, chunks: dict[str, DomainChunk], dataset_dir: Path, seed: int) -> None:
-    items = build_items(dataset_dir, split, seed=seed)
+def run_review(
+    split: str,
+    *,
+    reviewer: str,
+    chunks: dict[str, DomainChunk],
+    dataset_dir: Path,
+    seed: int,
+    hide_all: bool = HIDE_ALL_PRELABELS,
+) -> None:
+    items = build_items(dataset_dir, split, seed=seed, hide_all=hide_all)
     if not items:
         raise SystemExit(f"No pre-labelled items for split {split!r}.")
     for item in items:
         if item.chunk_id not in chunks:
             raise SystemExit("A pooled passage is missing from the local corpus. Rebuild it: mezvuat-dataset corpus")
-    session = ReviewSession(items, dataset_dir / "labels" / f"{split}.human.jsonl", reviewer=reviewer, split=split)
+    session = ReviewSession(
+        items,
+        dataset_dir / "labels" / f"{split}.human.jsonl",
+        reviewer=reviewer,
+        split=split,
+        blind_policy="all" if hide_all else "random_fifth",
+    )
     per_query = Counter(item.query_id for item in items)
     message = ""
     while True:
@@ -278,14 +303,23 @@ def status_report(dataset_dir: Path, *, seed: int) -> str:
         remaining = len(items) - len(labelled)
         blind = sum(1 for i in items if i.blind)
         lines.append(
-            f"{split}: {len(items)} items over {len({i.query_id for i in items})} questions, {blind} with hidden "
-            f"pre-labels; {len(labelled)} labelled; about {remaining * 25 / 3600:.1f} to "
+            f"{split}: {len(items)} items over {len({i.query_id for i in items})} questions, {blind} in the random "
+            f"fifth{'; pre-labels now hidden for every remaining item' if HIDE_ALL_PRELABELS else ''}; "
+            f"{len(labelled)} labelled; about {remaining * 25 / 3600:.1f} to "
             f"{remaining * 40 / 3600:.1f} hours left"
         )
         if labelled:
-            shown = [r for r in labelled.values() if r["prelabel_shown"] and r["prelabel_grade"] is not None]
-            hidden = [r for r in labelled.values() if not r["prelabel_shown"] and r["prelabel_grade"] is not None]
-            for name, rows in (("pre-label shown", shown), ("pre-label hidden", hidden)):
+            graded = [r for r in labelled.values() if r["prelabel_grade"] is not None]
+            shown = [r for r in graded if r["prelabel_shown"]]
+            hidden = [r for r in graded if not r["prelabel_shown"]]
+            # Records without `blind_policy` predate the hide-all policy, so a hidden one is in the random fifth.
+            random_hidden = [r for r in hidden if r.get("blind_policy", "random_fifth") == "random_fifth"]
+            all_hidden = [r for r in hidden if r.get("blind_policy") == "all"]
+            for name, rows in (
+                ("pre-label shown", shown),
+                ("pre-label hidden, random fifth", random_hidden),
+                ("pre-label hidden, hide-all policy", all_hidden),
+            ):
                 if rows:
                     agree = sum(r["grade"] == r["prelabel_grade"] for r in rows) / len(rows)
                     lines.append(f"  agreement with the LLM, {name}: {agree:.1%} of {len(rows)}")

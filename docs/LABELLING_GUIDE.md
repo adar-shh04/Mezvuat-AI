@@ -25,7 +25,7 @@ Each screen shows:
 2. One **passage** from the corpus, with its paper title, section and page. Passages come from several search systems, and the passage the question was written from is among them. You are not told which one it is.
 3. Usually, the LLM's **pre-label**: a suggested grade and a one-line reason.
 
-For about one question in five, the pre-label is hidden. This is deliberate. Comparing your agreement with the LLM on hidden and shown questions tells us how much the suggestions influence you (anchoring). Please judge those passages without trying to guess the model's answer.
+**Since 2026-11-14 the pre-label is hidden for every item still to label** (see D2 in `docs/DECISIONS.md`): with it shown, labels followed the LLM almost every time. Judge each passage on its own. Before that change, the pre-label was hidden for about one question in five. This is deliberate. Comparing your agreement with the LLM on hidden and shown questions tells us how much the suggestions influence you (anchoring). Please judge those passages without trying to guess the model's answer.
 
 ## Keys
 

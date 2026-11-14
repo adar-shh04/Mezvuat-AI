@@ -516,7 +516,14 @@ def cmd_review(args: argparse.Namespace) -> None:
         return
     from mezvuat.evaluation.review import run_review
 
-    run_review(args.split, reviewer=args.reviewer, chunks=ensure_corpus(), dataset_dir=DATASET_DIR, seed=SEED)
+    run_review(
+        args.split,
+        reviewer=args.reviewer,
+        chunks=ensure_corpus(),
+        dataset_dir=DATASET_DIR,
+        seed=SEED,
+        hide_all=not args.show_prelabels,
+    )
 
 
 def cmd_status(args: argparse.Namespace) -> None:
@@ -542,6 +549,11 @@ def main() -> None:
     review = sub.add_parser("review")
     review.add_argument("split", choices=["val", "test", "temporal"])
     review.add_argument("--reviewer", default="product-owner")
+    review.add_argument(
+        "--show-prelabels",
+        action="store_true",
+        help="show the LLM pre-label except on the random fifth (the policy before 2026-11-14); val/test only",
+    )
     review.set_defaults(func=cmd_review)
     sub.add_parser("status").set_defaults(func=cmd_status)
     temporal = sub.add_parser("temporal-draft", help="draft the M5 temporal question set (D11)")

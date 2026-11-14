@@ -30,6 +30,7 @@ Where an ADR conflicts with this file, update the ADR. Do not reinterpret the de
 - Size the validation and test sets to fit about 6–8 hours of review, and state the resulting sample size and its statistical power in the reports.
 - Pre-labels can anchor the reviewer. Measure this: hide the pre-label on a random subset, report the agreement, and document the limitation.
 - Split by document family before any query generation, as in ADR-0007.
+- **Amendment, 2026-11-14 (product owner): hide the pre-label for every remaining relevance item.** The anchoring check showed agreement with the LLM of 98.8% on 160 test items with the pre-label shown, against 29.2% on 24 with it hidden. In most hidden disagreements the owner graded the passage more relevant than the LLM did. From now on `review val|test` hides every pre-label (`--show-prelabels` restores the old policy). Labels made with the pre-label shown are kept but reported separately as lower-trust. The randomised comparison uses only the original random fifth, which every record marks (`in_random_subset`, `blind_policy`). The temporal review keeps its 20% hidden subset.
 
 **D3 — Langfuse**
 - The app must run with Langfuse unset. Masking is applied before data leaves the process. Add a test proving that no prompt or document text reaches the exporter.

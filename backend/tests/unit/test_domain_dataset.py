@@ -226,3 +226,39 @@ def test_groq_errors_do_not_echo_the_request() -> None:
 
 def test_groq_key_is_not_in_the_repr() -> None:
     assert "very-secret" not in repr(GroqClient(api_key="very-secret", model="m"))
+
+
+def test_hide_all_hides_every_prelabel_but_keeps_the_random_subset(tmp_path: Path) -> None:
+    dataset = write_dataset(tmp_path)
+    random_policy = build_items(dataset, "val", seed=13)
+    items = build_items(dataset, "val", seed=13, hide_all=True)
+    assert all(item.blind for item in items)
+    assert [i.in_random_subset for i in items] == [i.blind for i in random_policy]
+    session = ReviewSession(items, tmp_path / "l.jsonl", reviewer="po", split="val", blind_policy="all")
+    assert session.accept(0) is False, "a hidden pre-label can never be accepted with Enter"
+    session.grade(0, 1)
+    record = session.labelled()[(items[0].query_id, items[0].chunk_id)]
+    assert record["prelabel_shown"] is False
+    assert record["blind_policy"] == "all"
+    assert record["in_random_subset"] == items[0].in_random_subset
+
+
+def test_status_separates_the_random_fifth_from_the_hide_all_phase(tmp_path: Path) -> None:
+    dataset = write_dataset(tmp_path)
+    labels = dataset / "labels" / "val.human.jsonl"
+    old = build_items(dataset, "val", seed=13)
+    first_shown = next(i for i, item in enumerate(old) if not item.blind)
+    first_hidden = next(i for i, item in enumerate(old) if item.blind)
+    legacy = ReviewSession(old, labels, reviewer="po", split="val")
+    legacy.grade(first_shown, old[first_shown].prelabel or 0)
+    legacy.grade(first_hidden, 0)
+    # A v1 record has no blind_policy field; strip it to mimic labels saved before the change.
+    rows = [json.loads(line) for line in labels.read_text(encoding="utf-8").splitlines()]
+    labels.write_text("".join(json.dumps({k: v for k, v in r.items() if k != "blind_policy"}) + "\n" for r in rows))
+    new = build_items(dataset, "val", seed=13, hide_all=True)
+    pending = next(i for i in range(len(new)) if i not in (first_shown, first_hidden))
+    ReviewSession(new, labels, reviewer="po", split="val", blind_policy="all").grade(pending, 2)
+    report = status_report(dataset, seed=13)
+    assert "pre-label shown: 100.0% of 1" in report
+    assert "pre-label hidden, random fifth:" in report and "of 1" in report
+    assert "pre-label hidden, hide-all policy:" in report

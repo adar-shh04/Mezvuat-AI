@@ -104,7 +104,7 @@ Later capabilities in scope:
 - **Latest.** When the question asks for the latest version, or the request sets `latest_only`, a document's latest flag decides which evidence is used. The flag comes from the version table, falling back to the chunk payload. A document whose latest version is unknown is kept, and the limitation says that the latest version is unknown.
 - **Answers.** Every citation carries its version's dates. The answer ends with a deterministic `Sources` section that shows each cited version's dates by kind, or "dates unknown". The evidence headers in prompts show the same labels.
 - **Temporal question set (decision D11).** Groq has drafted it, and it is waiting for the product owner's review:
-  - Command: `mezvuat-dataset temporal-draft`. The drafts are in `data/domain/temporal/v1/drafts.jsonl`, and the review command is `.\scriptseview.ps1 temporal`.
+  - Command: `mezvuat-dataset temporal-draft`. The drafts are in `data/domain/temporal/v1/drafts.jsonl`, and the review command is `.\scripts\review.ps1 temporal`.
   - Source: the 29 multi-version papers in the val and test families. 4 had no substantive sentence changes, and 2 still failed the quote check after one retry. That leaves 81 items from 23 papers: 23 as-of, 23 latest, 23 version-change and 12 undeterminable.
   - Every version date in the corpus has day precision, and no two versions share a date. So the undeterminable items are all of one kind, "a date before the first version". The corpus has no year-only or same-day cases; those rules are covered by unit tests only.
 

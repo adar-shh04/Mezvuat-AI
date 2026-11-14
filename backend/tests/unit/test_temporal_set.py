@@ -198,3 +198,45 @@ def test_val_and_test_review_paths_are_unchanged(monkeypatch: pytest.MonkeyPatch
     dataset_cli.main()
     assert called["split"] == "test" and called["dataset_dir"] == dataset_cli.DATASET_DIR
     assert dataset_cli.TEMPORAL_DIR != dataset_cli.DATASET_DIR / "labels"
+
+
+DRAFTS = dataset_cli.TEMPORAL_DIR / "drafts.jsonl"
+
+
+@pytest.mark.skipif(not DRAFTS.exists(), reason="no temporal drafts committed yet")
+def test_committed_drafts_agree_with_the_manifest_and_the_resolver() -> None:
+    manifest = {p["arxiv_id"]: p for p in json.loads(dataset_cli.MANIFEST.read_text(encoding="utf-8"))["papers"]}
+    rows = [json.loads(line) for line in DRAFTS.read_text(encoding="utf-8").splitlines()]
+    assert len(rows) >= 30 and len({r["item_id"] for r in rows}) == len(rows)
+    for row in rows:
+        paper = manifest[row["arxiv_id"]]
+        dates = {v["label"]: v["submitted"] for v in paper["versions"]}
+        assert len(dates) >= 2, "only multi-version papers"
+        assert {v["label"]: v["submitted"] for v in row["versions"]} == dates, "versions come from the manifest"
+        for ev in row["evidence"]:
+            assert ev["submitted"] == dates[ev["version"]] and 20 <= len(ev["quote"]) <= ts.MAX_QUOTE_CHARS
+        if row["as_of"] is None:
+            continue
+        versions = [
+            VersionDates(
+                version_id=label, version_label=label, version_ordinal=n, is_latest_version=None,
+                facts=[DateFact(kind="published", value=date.fromisoformat(day), precision="day",
+                                source="source_metadata", confidence="high")],
+            )
+            for n, (label, day) in enumerate(sorted(dates.items()), start=1)
+        ]  # fmt: skip
+        applicable = resolve_as_of(versions, date.fromisoformat(row["as_of"])).applicable
+        if row["expected_behavior"] == "abstain":
+            assert applicable is None
+        else:
+            assert [applicable] == row["expected_versions"]
+
+
+def test_questions_are_made_standalone_with_the_title() -> None:
+    assert (
+        ts.standalone_question("What did the paper report?", "A Title")
+        == 'In the paper "A Title": What did the paper report?'
+    )
+    assert ts.standalone_question("What did A Title report?", "A Title") == "What did A Title report?"
+    items, _ = items_for(ts.plan_dates(date(2026, 6, 4), date(2026, 6, 18)))
+    assert all(i["question"].startswith('In the paper "Paper"') or "'Paper'" in i["question"] for i in items)

@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import time
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -390,6 +391,10 @@ def cmd_temporal_draft(args: argparse.Namespace) -> None:
     drafts_path = TEMPORAL_DIR / "drafts.jsonl"
     attempts = domain.read_jsonl(attempts_path)
     done = {row["arxiv_id"] for row in attempts}
+    if args.retry_invalid:
+        # One more try for papers whose only attempt produced quotes that did not verify.
+        tries = Counter(row["arxiv_id"] for row in attempts)
+        done -= {r["arxiv_id"] for r in attempts if r["status"] == "invalid_draft" and tries[r["arxiv_id"]] == 1}
     todo = [p for p in papers if p["arxiv_id"] not in done][: args.limit or None]
     print(f"{len(papers)} multi-version papers in {sorted(allowed)}; {len(done)} already attempted; {len(todo)} to do")
     if not todo:
@@ -471,9 +476,10 @@ def cmd_temporal_draft(args: argparse.Namespace) -> None:
                 _append(drafts_path, item)
             status = "drafted" if items else "invalid_draft"
             drafted += bool(items)
-            _append(
-                attempts_path, {**attempt, "status": status, "problems": problems, "items": len(items), "at": _now()}
-            )
+            row = {**attempt, "status": status, "problems": problems, "items": len(items), "at": _now()}
+            if not items:
+                row["draft"] = result.data  # kept so the failure can be inspected
+            _append(attempts_path, row)
             print(f"{arxiv_id}: {status} ({len(items)} items) {'; '.join(problems)}")
     finally:
         usage = client.usage
@@ -542,6 +548,7 @@ def main() -> None:
     temporal.add_argument("--splits", default="val,test", help="family splits to draw papers from")
     temporal.add_argument("--limit", type=int, default=0, help="at most this many papers in this run")
     temporal.add_argument("--model", default=None, help="Groq model (default: GROQ_MODEL_SMALL)")
+    temporal.add_argument("--retry-invalid", action="store_true", help="retry, once, papers whose quotes failed")
     temporal.set_defaults(func=cmd_temporal_draft)
     args = parser.parse_args()
     args.func(args)

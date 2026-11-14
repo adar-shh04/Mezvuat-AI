@@ -30,9 +30,10 @@ from typing import Any
 from mezvuat.citations import find_quote
 from mezvuat.ingestion.parsers.pdf import PdfParser
 
-PROMPT_VERSION = "temporal-draft-v1"
+PROMPT_VERSION = "temporal-draft-v2"
 SET_VERSION = "temporal-v1"
 MAX_CANDIDATES = 6
+MAX_QUOTE_CHARS = 450
 _SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-Z(\[])")
 _DIGITS = re.compile(r"\d+(?:\.\d+)?")
 
@@ -163,7 +164,8 @@ def draft_prompt(title: str, versions: list[VersionText], candidates: list[Candi
         f"- change_question: what changed about the topic between {first.label} and {latest.label}.",
         f"- before_question: the same topic, asked as of {plan.before_first.isoformat()}.",
         "Answers are one or two sentences. old_quote is copied exactly from the chosen OLD sentence and new_quote "
-        "exactly from the chosen NEW sentence; each quote is 20 to 300 characters and contains the changed part.",
+        "exactly from the chosen NEW sentence; each quote is 20 to 300 characters, contains the changed part, "
+        "and keeps every symbol exactly as written.",
     ]
     return "\n".join(lines)
 
@@ -190,9 +192,18 @@ def draft_schema() -> dict[str, Any]:
     }
 
 
+def standalone_question(question: str, title: str) -> str:
+    """The model often writes "the paper" without naming it; retrieval needs the title, so it is prefixed."""
+    text = question.strip()
+    if title.lower()[:25] in text.lower():
+        return text
+    return f'In the paper "{title}": {text}'
+
+
 def span(version: VersionText, quote: str, arxiv_id: str) -> dict[str, Any] | None:
     found = find_quote(version.text, quote)
-    if found is None or not 20 <= len(quote.strip()) <= 300:
+    # Up to a whole candidate sentence: this is reviewer evidence, not a synthesis quote (ADR-0009's 300 cap).
+    if found is None or not 20 <= len(quote.strip()) <= MAX_QUOTE_CHARS:
         return None
     start, end = found
     page = next((p for p, a, b in version.pages if a <= start < b), None)
@@ -240,7 +251,8 @@ def build_items(
             "item_id": f"{arxiv_id}:{kind}",
             "set_version": SET_VERSION,
             "kind": kind,
-            "question": question.strip(),
+            "question": standalone_question(question, title),
+            "drafted_question": question.strip(),
             "draft_answer": answer.strip(),
             **base,
             **extra,

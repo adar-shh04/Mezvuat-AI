@@ -1,0 +1,2 @@
+{"model": "openai/gpt-oss-20b", "calls": 26, "prompt_tokens": 25566, "completion_tokens": 13039, "retries_429": 0, "seconds_waiting": 203.1, "wall_clock_seconds": 264.3, "finished_at": "2026-11-14T11:53:29.133392+00:00"}
+{"model": "openai/gpt-oss-20b", "calls": 8, "prompt_tokens": 8317, "completion_tokens": 3829, "retries_429": 0, "seconds_waiting": 38.1, "wall_clock_seconds": 55.4, "finished_at": "2026-11-14T11:55:17.292659+00:00"}

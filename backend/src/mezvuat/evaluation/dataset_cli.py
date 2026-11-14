@@ -6,6 +6,9 @@ pool      pool candidate passages from the four retrieval systems
 prelabel  LLM pre-labels for every pooled passage
 review    the product owner's labelling tool (see docs/LABELLING_GUIDE.md)
 status    progress and workload
+
+temporal-draft   draft the M5 temporal question set with Groq (decision D11); resumable
+review temporal  the owner's review of the temporal drafts
 """
 
 from __future__ import annotations
@@ -33,6 +36,7 @@ SPLITS = REPO / "data" / "manifests" / "demo_corpus_splits.json"
 SEED = 13
 BLIND_FRACTION = 0.2
 TARGETS = {"test": 60, "val": 40}
+TEMPORAL_DIR = REPO / "data" / "domain" / "temporal" / "v1"
 
 
 def cache_dir() -> Path:
@@ -372,11 +376,138 @@ def cmd_prelabel(args: argparse.Namespace) -> None:
     write_manifest(meta)
 
 
+def cmd_temporal_draft(args: argparse.Namespace) -> None:
+    """Draft temporal questions paper by paper. Each paper is attempted once; a quota error stops cleanly."""
+    from mezvuat.evaluation import temporal_set as ts
+    from mezvuat.inference.groq import GroqClient, InferenceError
+
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    splits = json.loads(SPLITS.read_text(encoding="utf-8"))["assignment"]
+    pdf_dir = Path(os.environ.get("MEZVUAT_DATA_ROOT", REPO / "data")) / "corpus" / "arxiv"
+    allowed = set(args.splits.split(","))
+    papers = sorted(ts.eligible_papers(manifest, splits, allowed), key=lambda p: p["arxiv_id"])
+    attempts_path = TEMPORAL_DIR / "attempts.jsonl"
+    drafts_path = TEMPORAL_DIR / "drafts.jsonl"
+    attempts = domain.read_jsonl(attempts_path)
+    done = {row["arxiv_id"] for row in attempts}
+    todo = [p for p in papers if p["arxiv_id"] not in done][: args.limit or None]
+    print(f"{len(papers)} multi-version papers in {sorted(allowed)}; {len(done)} already attempted; {len(todo)} to do")
+    if not todo:
+        return
+    settings = get_settings()
+    client = GroqClient.from_settings(settings, model=args.model or settings.groq_model_small)
+    client.max_retries = 2  # pacing waits only; a quota error stops the run instead of looping
+    started = time.monotonic()
+    try:
+        limits = client.rate_limits()
+    except InferenceError as exc:
+        print(f"Groq quota check failed ({exc.code}); nothing drafted. Try again later.")
+        return
+    print("Groq limits: " + ", ".join(f"{k.removeprefix('x-ratelimit-')}={v}" for k, v in sorted(limits.items())))
+    remaining = limits.get("x-ratelimit-remaining-requests", "")
+    if remaining.isdigit() and int(remaining) < len(todo) + 5:
+        todo = todo[: max(int(remaining) - 5, 0)]
+        print(f"Only {remaining} requests left today; drafting {len(todo)} papers now, the rest on the next run.")
+    drafted = sum(1 for row in attempts if row["status"] == "drafted")
+    try:
+        for paper in todo:
+            arxiv_id = paper["arxiv_id"]
+            ordered = sorted(paper["versions"], key=lambda v: v["ordinal"])
+            versions = [
+                ts.load_version(
+                    pdf_dir / f"{arxiv_id.replace('/', '_')}{v['label']}.pdf",
+                    v["label"],
+                    v["submitted"],
+                    v["raw_sha256"],
+                )
+                for v in ordered
+            ]
+            candidates = ts.change_candidates(versions[0].text, versions[-1].text)
+            attempt: dict[str, Any] = {"arxiv_id": arxiv_id, "split": splits[arxiv_id], "candidates": len(candidates)}
+            if not candidates:
+                _append(attempts_path, {**attempt, "status": "no_change_candidates", "at": _now()})
+                print(f"{arxiv_id}: no substantive sentence changes between versions")
+                continue
+            plan = ts.plan_dates(versions[0].submitted, versions[1].submitted)
+            prompt = ts.draft_prompt(paper["title"], versions, candidates, plan)
+            try:
+                result = client.structured(
+                    [{"role": "system", "content": ts.SYSTEM}, {"role": "user", "content": prompt}],
+                    schema_name="temporal_draft",
+                    schema=ts.draft_schema(),
+                    temperature=0.0,
+                    seed=SEED,
+                    max_tokens=2000,
+                    estimated_prompt_tokens=len(prompt) // 3,
+                )
+            except InferenceError as exc:
+                if exc.code in ("quota_exhausted", "retries_exhausted"):
+                    print(
+                        f"Stopped on Groq {exc.code}; {drafted} papers drafted so far. Progress is saved: rerun later."
+                    )
+                    return
+                _append(attempts_path, {**attempt, "status": "error", "error": exc.code, "at": _now()})
+                continue
+            drafted_by = {
+                "model": result.model,
+                "prompt_version": ts.PROMPT_VERSION,
+                "prompt_sha256": domain.sha256_text(ts.SYSTEM + prompt),
+                "temperature": 0.0,
+                "seed": SEED,
+                "provider_request_id": result.request_id,
+                "drafted_at": _now(),
+            }
+            items, problems = ts.build_items(
+                arxiv_id=arxiv_id,
+                title=paper["title"],
+                split=splits[arxiv_id],
+                versions=versions,
+                plan=plan,
+                draft=result.data,
+                include_undeterminable=drafted % 2 == 0,
+                drafted_by=drafted_by,
+            )
+            for item in items:
+                _append(drafts_path, item)
+            status = "drafted" if items else "invalid_draft"
+            drafted += bool(items)
+            _append(
+                attempts_path, {**attempt, "status": status, "problems": problems, "items": len(items), "at": _now()}
+            )
+            print(f"{arxiv_id}: {status} ({len(items)} items) {'; '.join(problems)}")
+    finally:
+        usage = client.usage
+        _append(
+            TEMPORAL_DIR / "usage.jsonl",
+            {
+                "model": client.model,
+                "calls": usage.calls,
+                "prompt_tokens": usage.prompt_tokens,
+                "completion_tokens": usage.completion_tokens,
+                "retries_429": usage.retries_429,
+                "seconds_waiting": round(usage.seconds_waiting, 1),
+                "wall_clock_seconds": round(time.monotonic() - started, 1),
+                "finished_at": _now(),
+            },
+        )
+
+
+def _append(path: Path, row: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def _val_first(pool: dict[str, Any]) -> tuple[bool, str]:
     return (pool["split"] != "val", pool["query_id"])
 
 
 def cmd_review(args: argparse.Namespace) -> None:
+    if args.split == "temporal":
+        from mezvuat.evaluation.temporal_review import run_temporal_review
+
+        run_temporal_review(TEMPORAL_DIR, reviewer=args.reviewer, seed=SEED)
+        return
     from mezvuat.evaluation.review import run_review
 
     run_review(args.split, reviewer=args.reviewer, chunks=ensure_corpus(), dataset_dir=DATASET_DIR, seed=SEED)
@@ -386,6 +517,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     from mezvuat.evaluation.review import status_report
 
     print(status_report(DATASET_DIR, seed=SEED))
+    from mezvuat.evaluation.temporal_review import temporal_status
+
+    print(temporal_status(TEMPORAL_DIR, seed=SEED))
 
 
 def main() -> None:
@@ -400,10 +534,15 @@ def main() -> None:
     sub.add_parser("pool").set_defaults(func=cmd_pool)
     sub.add_parser("prelabel").set_defaults(func=cmd_prelabel)
     review = sub.add_parser("review")
-    review.add_argument("split", choices=["val", "test"])
+    review.add_argument("split", choices=["val", "test", "temporal"])
     review.add_argument("--reviewer", default="product-owner")
     review.set_defaults(func=cmd_review)
     sub.add_parser("status").set_defaults(func=cmd_status)
+    temporal = sub.add_parser("temporal-draft", help="draft the M5 temporal question set (D11)")
+    temporal.add_argument("--splits", default="val,test", help="family splits to draw papers from")
+    temporal.add_argument("--limit", type=int, default=0, help="at most this many papers in this run")
+    temporal.add_argument("--model", default=None, help="Groq model (default: GROQ_MODEL_SMALL)")
+    temporal.set_defaults(func=cmd_temporal_draft)
     args = parser.parse_args()
     args.func(args)
 

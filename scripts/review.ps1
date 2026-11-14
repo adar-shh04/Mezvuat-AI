@@ -1,5 +1,6 @@
-# Start or resume relevance review from PowerShell. Usage: .\scripts\review.ps1 val   (then: .\scripts\review.ps1 test)
-param([ValidateSet("val", "test")][string]$Split = "val")
+# Start or resume review from PowerShell. Usage: .\scripts\review.ps1 val   (then: .\scripts\review.ps1 test)
+# Temporal question set (decision D11): .\scripts\review.ps1 temporal  (writes data/domain/temporal/v1/review.human.jsonl)
+param([ValidateSet("val", "test", "temporal")][string]$Split = "val")
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $cache = if ($env:MEZVUAT_CACHE_ROOT) { $env:MEZVUAT_CACHE_ROOT } else { "X:/mezvuat-cache" }

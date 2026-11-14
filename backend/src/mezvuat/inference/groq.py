@@ -99,6 +99,34 @@ class GroqClient:
         if remaining_requests is not None and remaining_requests.isdigit() and int(remaining_requests) == 0:
             raise InferenceError("Groq daily request quota is exhausted", code="quota_exhausted")
 
+    def rate_limits(self) -> dict[str, str]:
+        """Spend one tiny request to read Groq's rate-limit headers (requests per day, tokens per minute).
+
+        Raises `quota_exhausted` if the daily request quota is already used up. Never retried.
+        """
+        with self._lock:
+            self._wait_turn()
+        response = self.client.post(
+            f"{self.base_url}/chat/completions",
+            json={
+                "model": self.model,
+                "messages": [{"role": "user", "content": "Reply with OK."}],
+                "max_completion_tokens": 16,
+                "reasoning_effort": "low",
+            },
+            headers={"Authorization": f"Bearer {self.api_key}"},
+        )
+        limits = {k: v for k, v in response.headers.items() if k.lower().startswith("x-ratelimit-")}
+        if response.status_code == 429:
+            raise InferenceError("Groq quota is exhausted for now", code="quota_exhausted")
+        if response.status_code != 200:
+            raise InferenceError(f"Groq probe returned {response.status_code}")
+        usage = response.json().get("usage", {})
+        self.usage.calls += 1
+        self.usage.prompt_tokens += int(usage.get("prompt_tokens", 0))
+        self.usage.completion_tokens += int(usage.get("completion_tokens", 0))
+        return limits
+
     def structured(
         self,
         messages: list[dict[str, str]],

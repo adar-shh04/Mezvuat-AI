@@ -12,9 +12,10 @@ Where an ADR conflicts with this file, update the ADR. Do not reinterpret the de
 | D5 | Demo corpus | arXiv cs.IR / cs.CL papers under CC licences, with multiple versions. |
 | D6 | AGPL dependencies | Allowed in Mezvuat. |
 | D7 | Repository licence | AGPL-3.0. |
-| D8 | Hosting and CI | GitHub with GitHub Actions. Commit locally; push only when the product owner says so. |
+| D8 | Hosting and CI | GitHub with GitHub Actions. The repository is public at https://github.com/adar-shh04/Mezvuat-AI (updated 2026-11-14 at the product owner's request). Work is committed locally; the coordinator pushes `phase-2` after verifying each batch. |
 | D9 | Cloud demo | Not in this phase. Local Docker Compose only. |
 | D10 | Installs and downloads | Approved: uv, Python 3.13, CUDA PyTorch, models and datasets. Cache on X:. |
+| D11 | Temporal question set (M5) | Drafted by an LLM (Groq, free tier) from the public demo corpus; the product owner confirms, corrects or rejects every item. Recorded 2026-11-14. |
 
 ## What each decision requires
 
@@ -39,6 +40,12 @@ Where an ADR conflicts with this file, update the ADR. Do not reinterpret the de
 **D6 and D7 — AGPL**
 - Allowed does not mean preferred. Re-open ADR-0003 and ADR-0004 and decide with evidence: compare PyMuPDF and pdfplumber on extraction quality for the demo corpus, and judge ParadeDB against bm25s on retrieval quality and operational cost. Keep the simpler option unless the difference is measurable.
 - Add an AGPL-3.0 `LICENSE`. Check that every dependency's licence is compatible.
+
+**D11 — Temporal question set**
+- An LLM drafts the questions and gold answers from the public demo corpus only (D1). Each gold answer cites exact source spans: paper id, version and a verbatim quote that the tooling has checked against that version's text.
+- The product owner confirms, corrects or rejects every item. An item counts as gold only after review.
+- The D2 anchoring check applies: the draft answer is hidden on a random 20% of the items, and agreement is reported.
+- Versions and dates come only from arXiv metadata. If the corpus lacks a kind of case, the report says so; no version or date is invented.
 
 **Limits on ModelMesh keys**
 - ModelMesh's default for new keys is 20 RPM, 50K TPM and $0.25/day. A research run can make up to 12 LLM calls with large evidence payloads, so it may approach the token limit. Handle 429 as the contract specifies. If defaults block normal use, report it; ModelMesh keys can be given explicit limits.

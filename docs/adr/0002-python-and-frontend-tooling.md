@@ -82,3 +82,30 @@ Each dependency is justified when it is added. "Popular" is not a justification 
 - uv docs: docs.astral.sh/uv/guides/integration/pytorch/ and docs.astral.sh/uv/concepts/python-versions/
 - ty status: pypi.org/pypi/ty
 - Next.js: registry.npmjs.org/next/latest (16.4.5) and nextjs.org/docs/app/getting-started/installation
+
+## Amendment, 2026-11-15: frontend as built in M7
+
+**Versions, checked on the npm registry on 2026-11-15.**
+
+| Package | Version | Why this one |
+|---|---|---|
+| `next` | **16.4.6** | `latest` dist-tag; 16 is still the current stable major (17 exists only as canary builds of 16.5). The plan's "Next.js 16" holds. Requires Node ≥ 20.9; we use Node 24.13 LTS locally, in CI and in the image. |
+| `react`, `react-dom` | 19.3.1 | `latest`; Next 16 accepts `^19`. |
+| `typescript` | **5.9.3**, not 7.0.2 | 7.x is the native port. `openapi-typescript` 7.13 declares `typescript: ^5.x` and `typescript-eslint` 8.72 declares `<6.1.0`, so 5.9 is the newest version every tool supports. |
+| `eslint` | **9.39.5**, not 10.x | `eslint-config-next` 16.4.6 pulls in `eslint-plugin-react`, `-import` and `-jsx-a11y`, whose peer ranges stop at ESLint 9. npm marks 9.x as no longer supported; move to 10 when those plugins do. |
+| `react-markdown` 10.1.0 + `rehype-sanitize` 6.0.0 | runtime | Sanitized Markdown (ADR-0009 §5) without `dangerouslySetInnerHTML`: raw HTML is skipped, the tree is sanitized with GitHub's schema, unsafe URLs are dropped, images are not rendered and links show their URL. Both MIT, from the unified collective. |
+| `openapi-typescript` 7.13.0 | dev | Generates `src/lib/api-types.ts` from `frontend/openapi.json` (written by `scripts/export_openapi.py`). Types only, no runtime client; the fetch wrapper is 100 lines in `src/lib/api.ts`. |
+| `@playwright/test` 1.65.1 | dev | See below. |
+
+**Deviations from the decision table above.**
+- **No Tailwind.** One hand-written `globals.css` (about 400 lines) covers the UI. Tailwind 4 would add `tailwindcss`, `@tailwindcss/postcss` and a native binary for a handful of screens. Revisit if the UI grows.
+- **No state or data-fetching library**, as planned. React state plus `EventSource` is enough.
+- **A same-origin proxy** (`src/app/api/v1/[...path]/route.ts`) forwards `/api/v1/*` to `MEZVUAT_API_URL` and adds `MEZVUAT_API_KEY` on the server. The key never reaches the browser, there is no CORS configuration, and uploads and SSE stream through unbuffered.
+- **`agentRules: false`** in `next.config.ts`: `next dev` otherwise writes an `AGENTS.md` into the repository.
+- **`output: "standalone"` only in the Docker build** (`NEXT_OUTPUT=standalone`), because `next start` does not support standalone output and CI tests the production build with `next start`.
+
+**Why Playwright is a dev dependency.** The M7 acceptance test is behavioural: clicking a citation must open the right document, page and highlighted span. That needs a real browser running the real `EventSource`, Markdown sanitizer and DOM, which a unit-test runner such as Vitest with jsdom cannot give. Playwright (Apache-2.0) runs Chromium only: locally the headless shell (`npx playwright install --only-shell chromium`, about 290 MB under `PLAYWRIGHT_BROWSERS_PATH` on X:), in CI with `--with-deps`. It is a dev dependency, so it never enters the image. It also serves the stand-in API through `page.route`, so no second mocking library is needed.
+
+**Licences.** `frontend/scripts/check-licenses.mjs` checks every installed npm package; the result is in `docs/FRONTEND_DEPENDENCY_LICENSES.md`. On 2026-11-15: 452 packages (112 runtime), all MIT, ISC, BSD, Apache-2.0, 0BSD, BlueOak, CC0, CC-BY-4.0 (`caniuse-lite` data), Python-2.0, MPL-2.0, or Apache-2.0 AND LGPL-3.0-or-later (`sharp` and its libvips binaries, an optional dependency of `next`). All are compatible with AGPL-3.0.
+
+**Caches.** `scripts/dev-env.sh` sets `npm_config_cache` and `PLAYWRIGHT_BROWSERS_PATH` under `X:/mezvuat-cache` and `NEXT_TELEMETRY_DISABLED=1`.

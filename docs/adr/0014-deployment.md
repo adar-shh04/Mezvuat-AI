@@ -72,3 +72,11 @@ Further rules:
 - langfuse.com/pricing
 - github.com/mlflow/mlflow/pkgs/container/mlflow
 - grobid.readthedocs.io/en/latest/Grobid-docker/
+
+## Amendment, 2026-11-15: frontend service as built in M7
+
+- The `frontend` image is `node:24.13-alpine` running Next.js's **standalone server** (`node server.js`) as the unprivileged `node` user, not `next start`. It is a three-stage build: `npm ci`, `next build` with `NEXT_OUTPUT=standalone`, then a runtime stage that copies only the standalone output and the static assets.
+- It is published on **127.0.0.1:13000** (container port 3000), not 3000, so it does not clash with other local projects. This follows the port scheme of the other services.
+- The browser talks only to the frontend. The frontend's `/api/v1` proxy calls `http://api:8000` over the compose network and adds `MEZVUAT_API_KEY` from `.env`, so the key is never sent to the browser. The API port stays published for scripts and the CLI.
+- The frontend waits for a healthy `api` service and has its own healthcheck, using Node's `fetch` because the image has no curl. Memory limit: 384 MB.
+- CI lints, type-checks and builds the frontend, runs the Playwright smoke test, and builds the frontend image.

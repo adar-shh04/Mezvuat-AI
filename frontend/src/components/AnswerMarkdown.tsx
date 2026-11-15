@@ -6,9 +6,9 @@ import type { Citation } from "@/lib/api";
 import { citedEvidenceId, linkMarkers } from "@/lib/citations";
 
 /**
- * Renders answer Markdown sanitized: raw HTML is skipped, the hast tree goes through rehype-sanitize (GitHub's
- * schema), and react-markdown's URL filter drops `javascript:` and similar links. `[E#]` markers become buttons
- * that open the evidence viewer.
+ * Renders answer Markdown sanitized (ADR-0009 §5): raw HTML is skipped, the hast tree goes through
+ * rehype-sanitize (GitHub's schema), react-markdown's URL filter drops `javascript:` and similar links, images
+ * are never loaded, and links show their full URL. `[E#]` markers become buttons that open the evidence viewer.
  */
 export function AnswerMarkdown({
   markdown,
@@ -42,10 +42,16 @@ export function AnswerMarkdown({
           </button>
         );
       }
+      // react-markdown's URL filter empties unsafe hrefs (javascript:, data:); show those as plain text.
+      if (!href) return <span>{children}</span>;
+      // ADR-0009: links are shown with their full URL, so the reader sees where they lead.
       return (
-        <a href={href} target="_blank" rel="noreferrer noopener">
-          {children}
-        </a>
+        <>
+          <a href={href} target="_blank" rel="noreferrer noopener">
+            {children}
+          </a>{" "}
+          <span className="muted">({href})</span>
+        </>
       );
     },
     img() {

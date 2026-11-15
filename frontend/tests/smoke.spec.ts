@@ -28,6 +28,9 @@ test("clicking a citation opens the right document, page and highlighted span (D
   await expect(answer).toContainText("hybrid retrieval improved ranking quality over BM25");
   await expect(answer.locator("script, img, b")).toHaveCount(0);
   await expect(answer.locator('a[href^="javascript"]')).toHaveCount(0);
+  await expect(answer).toContainText("bad link");
+  await expect(answer.getByRole("link", { name: "the paper" })).toHaveAttribute("href", "https://arxiv.org/abs/2403.01234");
+  await expect(answer).toContainText("(https://arxiv.org/abs/2403.01234)");
   expect(await page.evaluate(() => (window as unknown as { __pwned?: boolean }).__pwned)).toBeUndefined();
 
   // Backend, fallback and data-policy badges, from the run's llm_calls and summary.

@@ -87,6 +87,28 @@ services:
         condition: service_healthy
     mem_limit: 1200m
 
+  # The web UI (M7). It calls the API through its own /api/v1 proxy, which adds MEZVUAT_API_KEY server-side.
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    image: mezvuat-frontend:dev
+    environment:
+      MEZVUAT_API_URL: http://api:8000
+      MEZVUAT_API_KEY: ${MEZVUAT_API_KEY:-}
+    ports:
+      - "127.0.0.1:13000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    mem_limit: 384m
+
   # Optional: experiment tracking. Experiments normally log to a local file store instead.
   mlflow:
     profiles: ["ml"]

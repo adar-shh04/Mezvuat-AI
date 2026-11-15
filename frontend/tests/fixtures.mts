@@ -128,8 +128,9 @@ export const ANSWER: S["FinalAnswer"] = {
   markdown: [
     "In the revised version, hybrid retrieval improved ranking quality over BM25 [E1]. " +
       "One retrieved passage contained instruction-like text [E2].",
-    '<script>window.__pwned = true</script><img src="x" onerror="window.__pwned = true"> ' +
-      "[bad link](javascript:window.__pwned=true) <b>raw html</b>",
+    '<script>window.__pwned = true</script><img src="x" onerror="window.__pwned = true">',
+    'Inline: <img src="x" onerror="window.__pwned = true"> <b>raw html</b> ![remote](https://example.org/t.png) ' +
+      "[bad link](javascript:window.__pwned=true) [the paper](https://arxiv.org/abs/2403.01234)",
     "### Sources",
     "- [E1] Temporal RAG Paper (v2), p. 2: Published 2024-03-05 · Revised 2024-06-10\n" +
       "- [E2] Temporal RAG Paper (v2), p. 1: Published 2024-03-05 · Revised 2024-06-10",

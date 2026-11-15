@@ -9,3 +9,8 @@ export MLFLOW_TRACKING_URI="sqlite:///$MEZVUAT_CACHE_ROOT/mlflow/mlflow.db"
 export MLFLOW_ARTIFACTS_ROOT="$MEZVUAT_CACHE_ROOT/mlflow/artifacts"
 export PATH="/c/Users/DELL/AppData/Roaming/Python/Python314/Scripts:$PATH"
 mkdir -p "$UV_CACHE_DIR" "$UV_PYTHON_INSTALL_DIR" "$HF_HOME" "$MEZVUAT_DATA_ROOT" "$MEZVUAT_CACHE_ROOT/mlflow/artifacts"
+# Frontend (M7): npm and Playwright caches off C: too. Playwright installs only Chromium.
+export npm_config_cache="$MEZVUAT_CACHE_ROOT/npm"
+export PLAYWRIGHT_BROWSERS_PATH="$MEZVUAT_CACHE_ROOT/playwright"
+export NEXT_TELEMETRY_DISABLED=1
+mkdir -p "$npm_config_cache" "$PLAYWRIGHT_BROWSERS_PATH"

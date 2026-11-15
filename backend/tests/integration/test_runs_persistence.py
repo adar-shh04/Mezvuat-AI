@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from fastapi.testclient import TestClient
 
 from mezvuat.citations import PageSpan
 from mezvuat.core.config import get_settings
@@ -126,3 +127,33 @@ def test_temporal_source_returns_typed_dates_and_never_the_ingestion_time(clean_
     assert version.version_id == "ver_p"
     assert [(f.kind, f.value, f.precision) for f in version.facts] == [("published", date(2023, 2, 1), "day")]
     assert PostgresTemporalSource(sessions).versions("ws_other", ["doc_p"]) == {}
+
+
+def test_feedback_rows_are_scoped_to_the_run_workspace(clean_db: None) -> None:
+    sessions = get_session_factory()
+    workspace_id = _workspace()
+    store = SqlRunStore(sessions)
+    run_id = new_id("run")
+    store.create(run_id=run_id, workspace_id=workspace_id, question="q", data_policy="any", retrieval_mode="bm25")
+    row = store.add_feedback(workspace_id, run_id, rating="down", claim_id="C1", comment="wrong page")
+    assert row is not None and row["feedback_id"].startswith("fb_") and row["claim_id"] == "C1"
+    assert store.add_feedback("ws_other", run_id, rating="up", claim_id=None, comment=None) is None
+    assert store.add_feedback(workspace_id, "run_missing", rating="up", claim_id=None, comment=None) is None
+
+
+def test_version_text_endpoint_returns_the_page_holding_an_offset(client: TestClient) -> None:
+    sessions = get_session_factory()
+    workspace_id = _workspace()
+    text = "a" * 150 + "Page two starts here. " + "b" * 228
+    with sessions.begin() as session:
+        version = session.get(DocumentVersion, "ver_p")
+        assert version is not None
+        version.normalized_text = text
+    base = f"/api/v1/workspaces/{workspace_id}/documents/doc_p/versions/ver_p/text"
+    body = client.get(base, params={"at": 155}).json()
+    assert (body["page"], body["page_count"], body["start"], body["end"]) == (2, 2, 150, 400)
+    assert body["text"].startswith("Page two starts here.")
+    assert client.get(base, params={"page": 1}).json()["text"] == "a" * 150
+    assert client.get(base, params={"page": 9}).status_code == 404
+    other = "/api/v1/workspaces/ws_other/documents/doc_p/versions/ver_p/text"
+    assert client.get(other).status_code == 404

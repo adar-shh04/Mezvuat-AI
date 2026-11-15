@@ -283,3 +283,19 @@ class ResearchRun(Base):
         CheckConstraint("status IN ('queued', 'running', 'completed', 'failed')", name="ck_run_status"),
         CheckConstraint("data_policy IN ('any', 'local_only')", name="ck_run_data_policy"),
     )
+
+
+class RunFeedback(Base):
+    """A user's thumbs up or down on a run's answer, or on one claim in it (M7). M6 forwards these to Langfuse."""
+
+    __tablename__ = "run_feedback"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey("research_run.id", ondelete="CASCADE"), index=True)
+    workspace_id: Mapped[str] = mapped_column(ForeignKey("workspace.id", ondelete="CASCADE"), index=True)
+    rating: Mapped[str] = mapped_column(String(8))
+    claim_id: Mapped[str | None] = mapped_column(String(40))
+    comment: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    __table_args__ = (CheckConstraint("rating IN ('up', 'down')", name="ck_feedback_rating"),)

@@ -109,6 +109,10 @@ class RunStore(Protocol):
 
     def get(self, workspace_id: str, run_id: str) -> dict[str, Any] | None: ...
 
+    def add_feedback(
+        self, workspace_id: str, run_id: str, *, rating: str, claim_id: str | None, comment: str | None
+    ) -> dict[str, Any] | None: ...
+
 
 # Builds the workflow dependencies for one run (retrieval session, LLM client, recorder) and releases them after.
 WorkflowFactory = Callable[[str, str, RetrievalMode], AbstractContextManager[WorkflowDeps]]

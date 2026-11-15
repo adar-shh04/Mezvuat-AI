@@ -15,8 +15,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from mezvuat.citations import PageSpan
 from mezvuat.core.clock import utcnow
+from mezvuat.core.ids import new_id
 from mezvuat.orchestration import LLMCallRecord
-from mezvuat.persistence.models import DocumentVersion, LlmCall, ResearchRun, TemporalFact
+from mezvuat.persistence.models import DocumentVersion, LlmCall, ResearchRun, RunFeedback, TemporalFact
 from mezvuat.temporal import DateFact, VersionDates
 
 log = logging.getLogger(__name__)
@@ -107,6 +108,34 @@ class SqlRunStore:
                     }
                     for c in calls
                 ],
+            }
+
+    def add_feedback(
+        self, workspace_id: str, run_id: str, *, rating: str, claim_id: str | None, comment: str | None
+    ) -> dict[str, Any] | None:
+        """Store one feedback row. None when the run does not exist in this workspace."""
+        with self._sessions.begin() as session:
+            exists = session.scalar(
+                select(ResearchRun.id).where(ResearchRun.id == run_id, ResearchRun.workspace_id == workspace_id)
+            )
+            if exists is None:
+                return None
+            row = RunFeedback(
+                id=new_id("fb"),
+                run_id=run_id,
+                workspace_id=workspace_id,
+                rating=rating,
+                claim_id=claim_id,
+                comment=comment,
+                created_at=utcnow(),
+            )
+            session.add(row)
+            return {
+                "feedback_id": row.id,
+                "run_id": run_id,
+                "rating": rating,
+                "claim_id": claim_id,
+                "created_at": row.created_at,
             }
 
 

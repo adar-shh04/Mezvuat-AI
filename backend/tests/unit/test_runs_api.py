@@ -23,6 +23,7 @@ from tests.unit.test_research_graph import CHUNKS, PAGES, analysis, answer_citin
 class MemoryRunStore:
     def __init__(self, recorder: ListRecorder) -> None:
         self.rows: dict[str, dict[str, Any]] = {}
+        self.feedback: list[dict[str, Any]] = []
         self.recorder = recorder
 
     def create(self, *, run_id: str, workspace_id: str, question: str, data_policy: str, retrieval_mode: str) -> None:
@@ -70,6 +71,15 @@ class MemoryRunStore:
             if c.run_id == run_id
         ]
         return {**row, "llm_calls": calls}
+
+    def add_feedback(
+        self, workspace_id: str, run_id: str, *, rating: str, claim_id: str | None, comment: str | None
+    ) -> dict[str, Any] | None:
+        if self.get(workspace_id, run_id) is None:
+            return None
+        row = {"feedback_id": f"fb_{len(self.feedback)}", "run_id": run_id, "rating": rating, "claim_id": claim_id}
+        self.feedback.append({**row, "comment": comment})
+        return {**row, "created_at": utcnow()}
 
 
 def happy_script() -> dict[str, list[Any]]:
@@ -263,3 +273,32 @@ def test_events_for_a_run_no_longer_in_memory_come_from_the_store(harness: dict[
     events = read_sse(client, body["events_url"])
     assert len(events) == 1 and events[0][1] == "run_completed"
     assert events[0][2]["answer"]["citations"]
+
+
+def test_feedback_is_stored_against_the_run_and_its_workspace(harness: dict[str, Any]) -> None:
+    client: TestClient = harness["client"]
+    body = client.post("/api/v1/workspaces/ws_1/runs", json={"question": "How does BM25 rank documents?"}).json()
+    run = wait_done(client, body["run_url"])
+    claim_id = run["answer"]["claims"][0]["claim_id"]
+    url = f"{body['run_url']}/feedback"
+    whole = client.post(url, json={"rating": "up"})
+    assert whole.status_code == 201
+    assert whole.json()["rating"] == "up" and whole.json()["claim_id"] is None
+    one = client.post(url, json={"rating": "down", "claim_id": claim_id, "comment": "too vague"})
+    assert one.status_code == 201 and one.json()["claim_id"] == claim_id
+    store = harness["service"].store
+    assert [(f["rating"], f["claim_id"], f["comment"]) for f in store.feedback] == [
+        ("up", None, None),
+        ("down", claim_id, "too vague"),
+    ]
+    assert client.post(url, json={"rating": "meh"}).status_code == 422
+    other = f"/api/v1/workspaces/ws_2/runs/{body['run_id']}/feedback"
+    assert client.post(other, json={"rating": "up"}).status_code == 404
+    assert len(store.feedback) == 2
+
+
+def test_typed_answer_round_trips_through_the_openapi_schema(harness: dict[str, Any]) -> None:
+    client: TestClient = harness["client"]
+    schema = client.get("/openapi.json").json()["components"]["schemas"]
+    assert schema["RunOut"]["properties"]["answer"]["anyOf"][0]["$ref"].endswith("/FinalAnswer")
+    assert {"injection_suspect", "dates", "char_start", "char_end", "page"} <= set(schema["Citation"]["properties"])

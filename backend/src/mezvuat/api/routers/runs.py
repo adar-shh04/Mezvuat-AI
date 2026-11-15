@@ -16,7 +16,7 @@ from starlette.concurrency import run_in_threadpool
 
 from mezvuat.api.deps import get_run_service, require_api_key, workspace_data_policy
 from mezvuat.api.runs import BusEvent, RunService, sse_format
-from mezvuat.api.schemas import RunCreate, RunCreated, RunErrorOut, RunOut
+from mezvuat.api.schemas import FeedbackCreate, FeedbackOut, RunCreate, RunCreated, RunErrorOut, RunOut
 from mezvuat.core.errors import NotFoundError
 from mezvuat.inference import DataPolicy
 from mezvuat.orchestration import RunFilters
@@ -78,9 +78,12 @@ async def run_events(
         if not service.bus.has(run_id):
             # Not in this process's memory (finished long ago, or the API restarted): report the stored outcome.
             outcome = "run_completed" if run.status == "completed" else "run_failed"
-            data = {"run_id": run_id, "status": run.status, "answer": run.answer, "error": run.error}
-            if run.error is not None:
-                data["error"] = run.error.model_dump()
+            data = {
+                "run_id": run_id,
+                "status": run.status,
+                "answer": run.answer.model_dump(mode="json") if run.answer else None,
+                "error": run.error.model_dump() if run.error else None,
+            }
             yield sse_format(BusEvent(after + 1, outcome, data))
             return
         cursor = after
@@ -101,3 +104,14 @@ async def run_events(
     return StreamingResponse(
         stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
+
+
+@router.post("/{run_id}/feedback", status_code=201, response_model=FeedbackOut)
+def create_feedback(workspace_id: str, run_id: str, body: FeedbackCreate, service: RunServiceDep) -> FeedbackOut:
+    """A thumbs up or down on the answer, or on one of its claims. Stored for M6, which forwards it to Langfuse."""
+    row = service.store.add_feedback(
+        workspace_id, run_id, rating=body.rating, claim_id=body.claim_id, comment=body.comment
+    )
+    if row is None:
+        raise NotFoundError("run not found")
+    return FeedbackOut(**row)

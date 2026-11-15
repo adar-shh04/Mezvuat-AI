@@ -3,13 +3,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import joinedload, selectinload, undefer
 
 from mezvuat.api.deps import SessionDep, SettingsDep, get_blob_store, require_api_key
-from mezvuat.api.schemas import DocumentOut, DocumentVersionOut, SubmitOut, UrlIngestRequest
+from mezvuat.api.schemas import DocumentOut, DocumentVersionOut, SubmitOut, UrlIngestRequest, VersionTextOut
+from mezvuat.api.text_view import select_window
 from mezvuat.core.errors import NotFoundError, PayloadTooLargeError
 from mezvuat.ingestion import service
 from mezvuat.ingestion.service import SubmitResult
@@ -91,3 +92,41 @@ def get_document(workspace_id: str, document_id: str, session: SessionDep) -> Do
     if document is None:
         raise NotFoundError("document not found")
     return document
+
+
+@router.get("/{document_id}/versions/{version_id}/text", response_model=VersionTextOut)
+def get_version_text(
+    workspace_id: str,
+    document_id: str,
+    version_id: str,
+    session: SessionDep,
+    page: Annotated[int | None, Query(ge=1)] = None,
+    at: Annotated[
+        int | None, Query(ge=0, description="An absolute character offset; returns the page holding it")
+    ] = None,
+) -> VersionTextOut:
+    """One page of the normalized text, for the evidence viewer. Citation offsets index into the same text."""
+    version = session.scalar(
+        select(DocumentVersion)
+        .where(
+            DocumentVersion.workspace_id == workspace_id,
+            DocumentVersion.document_id == document_id,
+            DocumentVersion.id == version_id,
+        )
+        .options(undefer(DocumentVersion.normalized_text), undefer(DocumentVersion.pages))
+    )
+    if version is None:
+        raise NotFoundError("document version not found")
+    if version.normalized_text is None:
+        raise NotFoundError("this version has no extracted text yet")
+    text = version.normalized_text
+    window = select_window(len(text), version.pages, page=page, at=at)
+    return VersionTextOut(
+        document_id=document_id,
+        document_version_id=version_id,
+        page=window.page,
+        page_count=window.page_count,
+        start=window.start,
+        end=window.end,
+        text=text[window.start : window.end],
+    )

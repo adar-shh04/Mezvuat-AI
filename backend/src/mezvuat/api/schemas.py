@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+
+from mezvuat.orchestration import FinalAnswer
 
 
 class WorkspaceCreate(BaseModel):
@@ -170,6 +172,25 @@ class LlmCallOut(BaseModel):
     latency_ms: int | None
 
 
+class RunSummaryOut(BaseModel):
+    """Run counters (`api.runs.summarize`). Empty when a run crashed before producing a final state."""
+
+    model_config = ConfigDict(extra="allow")
+
+    as_of: str | None = None
+    iterations: int | None = None
+    resynthesized: bool | None = None
+    evidence_items: int | None = None
+    retrieval_calls: int | None = None
+    llm_calls: int | None = None
+    llm_calls_left: int | None = None
+    # "direct" until M8 adds ModelMesh. A ModelMesh run that fell back to a direct backend will say so here.
+    backend: str | None = None
+    providers: list[str] = Field(default_factory=list)
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+
+
 class RunOut(BaseModel):
     run_id: str
     workspace_id: str
@@ -181,7 +202,37 @@ class RunOut(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
     error: RunErrorOut | None
-    # `FinalAnswer` from `mezvuat.orchestration`: markdown, citations (exact spans and pages), claims, limitations.
-    answer: dict[str, Any] | None
-    summary: dict[str, Any]
+    # Markdown, citations (exact spans and pages), claim verdicts, limitations and flags.
+    answer: FinalAnswer | None
+    summary: RunSummaryOut
     llm_calls: list[LlmCallOut]
+
+
+class FeedbackCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rating: Literal["up", "down"]
+    # Optional target inside the answer: a claim id from `answer.claims`. Unset means the whole answer.
+    claim_id: str | None = Field(default=None, max_length=40)
+    comment: str | None = Field(default=None, max_length=2000)
+
+
+class FeedbackOut(BaseModel):
+    feedback_id: str
+    run_id: str
+    rating: Literal["up", "down"]
+    claim_id: str | None
+    created_at: datetime
+
+
+class VersionTextOut(BaseModel):
+    """One page of a version's normalized text. Citation offsets are absolute, so the span on this page is
+    `text[char_start - start : char_end - start]`."""
+
+    document_id: str
+    document_version_id: str
+    page: int | None
+    page_count: int
+    start: int
+    end: int
+    text: str

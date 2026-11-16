@@ -97,3 +97,81 @@ Gates after part 2: ruff clean, mypy clean on 84 files, 7 import contracts kept,
 - the temporal question set of 30 or more questions with gold answers.
 
 Until NLI exists, claims are verified by quote match only, and every answer says so.
+
+# M5 part 3: NLI verifier, LLM-judge fallback and calibration tooling (2026-11-16)
+
+Executed on the dev machine, branch `phase-2`, while the ModelMesh benchmark was running. No Groq call was made, and no Ollama call either: the 4 GB GPU held the benchmark's `qwen3:4b`. All NLI work ran on CPU with `CUDA_VISIBLE_DEVICES=-1`. Details are in the ADR-0009 amendment of 2026-11-16.
+
+## Quality gates
+
+| Command | Result |
+|---|---|
+| `ruff check .` / `ruff format --check .` | All checks passed / 134 files already formatted |
+| `mypy` | no issues in 92 source files |
+| `lint-imports` | 7 contracts kept, 0 broken |
+| `python ../scripts/export_openapi.py --check` | `frontend/openapi.json` is up to date |
+| `pytest -q` with the compose Postgres and Qdrant up | **328 passed, 0 skipped** (281 before). The live-model test ran because the model is in the local cache. |
+| `npm run typecheck`, `npm run lint`, `npm run build` | no errors, no problems, compiled |
+| `npx playwright test` (dev server, mocked backend) | **3 passed** |
+
+The new tests are in `tests/unit/test_nli_verifier.py` (20) and `tests/unit/test_nli_calibration_tools.py` (27).
+
+## What is verified
+
+- **NLI in the graph,** using a rule-based NLI fake:
+  - an entailed claim is `supported` with method `nli`;
+  - a contradicted claim gets the one re-synthesis, is dropped, and is listed under Conflicting evidence with its span, page and dates;
+  - a claim whose sources disagree has `between_documents` set;
+  - an undecided claim is kept as `partially_supported`;
+  - a model failure, or too little run time left, falls back to the quote check and the answer says so.
+- **The real model:** the pinned model loads on CPU with the registered label order. On three hand-written pairs it labels the entailment and the contradiction correctly. This is a smoke test, not an accuracy figure.
+- **LLM judge,** with scripted fakes only:
+  - it is off by default;
+  - a verdict counts only with a verbatim quote;
+  - a contradiction it finds is listed as a conflict;
+  - it never spends the response's call;
+  - its calls are capped;
+  - the request carries `citation_verification`, temperature 0 and the run's data policy.
+- **Frontend:** the conflicts panel shows the contradicted claim and its quote, and opens the span on its page in the evidence viewer. The claims panel says which checks ran and that the thresholds are provisional.
+- **Review modes:**
+  - `review nli` saves, resumes and undoes labels;
+  - no suggestion appears on the review screen;
+  - `val`, `test`, `temporal` and `nli` each reach their own tool and file.
+
+## Calibration set
+
+- **Location:** `data/domain/nli/v1/pairs.jsonl`, 150 pairs from 29 val-family papers.
+- **By expected label (construction prior, not gold):** 50 supported, 50 contradicted, 50 neutral.
+- **By method:**
+
+| Method | Pairs |
+|---|---|
+| `sentence_verbatim` | 12 |
+| `sentence_rewrite` | 38 |
+| `perturb_number` | 15 |
+| `perturb_negation` | 13 |
+| `perturb_antonym` | 16 |
+| `perturb_swap` | 6 |
+| `same_passage_far` | 20 |
+| `same_paper_other_passage` | 18 |
+| `other_paper` | 12 |
+
+- **Review command:** `.\scripts\review.ps1 nli`. Nothing is labelled yet.
+
+## CPU latency
+
+Measured on the 150 pairs, with 6 torch threads, while the benchmark shared the machine:
+
+| Measure | Result |
+|---|---|
+| One pair per call | median 231 ms, p95 586 ms |
+| Batched, 16 pairs | 155 ms per pair |
+| Model load | 33 s |
+
+## Not verified
+
+- **Calibration.** No thresholds have been calibrated, because no owner labels exist. Answers use the provisional rule (τ_e = τ_c = 0.5) and say so. Calibration is tested on synthetic labels only.
+- **NLI accuracy** on this corpus is unknown until the owner's labels exist.
+- **A live judge call.** The judge has never been run against a live model.
+- **An end-to-end `/runs` call** with the real NLI model behind the API.
+- **The compose stack.** NLI is off there by default: the model adds about 0.7 to 0.85 GB to the process (measured natively), and the API's 1200m limit was not resized or tried.

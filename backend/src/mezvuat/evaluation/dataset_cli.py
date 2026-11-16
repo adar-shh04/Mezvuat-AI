@@ -9,6 +9,10 @@ status    progress and workload
 
 temporal-draft   draft the M5 temporal question set with Groq (decision D11); resumable
 review temporal  the owner's review of the temporal drafts
+
+nli-pairs        build the NLI calibration pairs from the demo corpus (no LLM)
+review nli       the owner's labelling of those pairs; no model suggestion is shown
+nli-calibrate    fit the NLI thresholds on the owner's labels (CPU); refuses to run without them
 """
 
 from __future__ import annotations
@@ -38,6 +42,7 @@ SEED = 13
 BLIND_FRACTION = 0.2
 TARGETS = {"test": 60, "val": 40}
 TEMPORAL_DIR = REPO / "data" / "domain" / "temporal" / "v1"
+NLI_DIR = REPO / "data" / "domain" / "nli" / "v1"
 
 
 def cache_dir() -> Path:
@@ -508,7 +513,92 @@ def _val_first(pool: dict[str, Any]) -> tuple[bool, str]:
     return (pool["split"] != "val", pool["query_id"])
 
 
+def cmd_nli_pairs(args: argparse.Namespace) -> None:
+    from mezvuat.evaluation import nli_pairs
+    from mezvuat.evaluation.nli_review import PAIRS_FILE, REVIEW_FILE
+
+    chunks = ensure_corpus()
+    rows = nli_pairs.build_pairs(chunks.values(), seed=SEED, split=args.split)
+    pairs_path = NLI_DIR / PAIRS_FILE
+    if pairs_path.exists() and domain.read_jsonl(NLI_DIR / REVIEW_FILE) and domain.read_jsonl(pairs_path) != rows:
+        raise SystemExit("Pairs already have owner labels; not overwriting them with a different sample.")
+    domain.write_jsonl(pairs_path, rows)
+    info = nli_pairs.summary(rows)
+    meta = {
+        "generator_version": nli_pairs.GENERATOR_VERSION,
+        "seed": SEED,
+        "family_split": args.split,
+        "corpus_digest": read_manifest().get("corpus", {}).get("digest"),
+        "pairs_sha256": domain.sha256_text(pairs_path.read_text(encoding="utf-8")),
+        "quotas": {m: {"expected": e, "quota": n} for m, (e, n) in nli_pairs.QUOTAS.items()},
+        "max_pairs_per_paper": nli_pairs.MAX_PAIRS_PER_PAPER,
+        "summary": info,
+        "method": (nli_pairs.__doc__ or "").strip(),
+        "built_at": _now(),
+    }
+    (NLI_DIR / "manifest.json").write_text(json.dumps(meta, indent=1) + "\n", encoding="utf-8", newline="\n")
+    print(f"{info['pairs']} pairs from {info['papers']} papers: {info['by_expected_label']}")
+    print("by method: " + ", ".join(f"{k}={n}" for k, n in info["by_method"].items()))
+
+
+def cmd_nli_calibrate(args: argparse.Namespace) -> None:
+    from mezvuat.evaluation import nli_calibration as cal
+    from mezvuat.evaluation.nli_review import REVIEW_FILE, NliReviewSession, load_pairs
+
+    pairs = load_pairs(NLI_DIR)
+    labels = NliReviewSession(pairs, NLI_DIR / REVIEW_FILE, reviewer="calibration").labelled()
+    if not labels:
+        raise SystemExit("No owner labels yet: run `review nli` first. Nothing was calibrated.")
+    gold = Counter(cal.REVIEW_TO_SUPPORT.get(r["label"], r["label"]) for r in labels.values())
+    try:
+        cal.check_counts(gold, args.min_per_label)
+    except cal.InsufficientLabelsError as exc:
+        raise SystemExit(f"{exc}. Nothing was calibrated.") from exc
+    from mezvuat.ml.nli import CrossEncoderNli
+    from mezvuat.ml.registry import get_nli_spec
+
+    settings = get_settings()
+    spec = get_nli_spec(settings.nli_model_id)
+    model = CrossEncoderNli(spec, device=settings.nli_device)
+    by_id = {p.pair_id: p for p in pairs}
+    ordered = sorted(labels)
+    started = time.perf_counter()
+    scores = model.predict([(by_id[i].data["premise"]["text"], by_id[i].data["claim"]) for i in ordered])
+    seconds = time.perf_counter() - started
+    examples, skipped = cal.examples_from(labels, dict(zip(ordered, scores, strict=True)))
+    labels_sha = domain.sha256_text((NLI_DIR / REVIEW_FILE).read_text(encoding="utf-8"))
+    source = f"nli-calibrate on {len(examples)} owner labels (review file {labels_sha[:12]}), {_now()[:10]}"
+    report = cal.calibrate(
+        examples,
+        min_supported_precision=args.min_supported_precision,
+        source=source,
+        minimum_per_label=args.min_per_label,
+    )
+    report |= {
+        "model_id": spec.model_id,
+        "revision": spec.revision,
+        "device": model.device,
+        "scoring_seconds": round(seconds, 2),
+        "skipped": skipped,
+        "review_file_sha256": labels_sha,
+    }
+    (NLI_DIR / "calibration_report.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    keep = ("entailment", "contradiction", "calibrated", "source", "model_id", "revision")
+    (NLI_DIR / "thresholds.json").write_text(json.dumps({k: report[k] for k in keep}, indent=1) + "\n")
+    held_out = report["cross_validation"]["held_out"]
+    print(
+        f"tau_e={report['entailment']} tau_c={report['contradiction']} on {len(examples)} labels; held-out "
+        f"macro-F1 {held_out['macro_f1']}, supported precision {held_out['per_label']['supported']['precision']}; "
+        f"precision target met: {report['precision_target_met']}. Written to {NLI_DIR}."
+    )
+
+
 def cmd_review(args: argparse.Namespace) -> None:
+    if args.split == "nli":
+        from mezvuat.evaluation.nli_review import run_nli_review
+
+        run_nli_review(NLI_DIR, reviewer=args.reviewer)
+        return
     if args.split == "temporal":
         from mezvuat.evaluation.temporal_review import run_temporal_review
 
@@ -533,6 +623,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     from mezvuat.evaluation.temporal_review import temporal_status
 
     print(temporal_status(TEMPORAL_DIR, seed=SEED))
+    from mezvuat.evaluation.nli_review import nli_status
+
+    print(nli_status(NLI_DIR))
 
 
 def main() -> None:
@@ -547,7 +640,7 @@ def main() -> None:
     sub.add_parser("pool").set_defaults(func=cmd_pool)
     sub.add_parser("prelabel").set_defaults(func=cmd_prelabel)
     review = sub.add_parser("review")
-    review.add_argument("split", choices=["val", "test", "temporal"])
+    review.add_argument("split", choices=["val", "test", "temporal", "nli"])
     review.add_argument("--reviewer", default="product-owner")
     review.add_argument(
         "--show-prelabels",
@@ -562,6 +655,13 @@ def main() -> None:
     temporal.add_argument("--model", default=None, help="Groq model (default: GROQ_MODEL_SMALL)")
     temporal.add_argument("--retry-invalid", action="store_true", help="retry, once, papers whose quotes failed")
     temporal.set_defaults(func=cmd_temporal_draft)
+    pairs = sub.add_parser("nli-pairs", help="build the NLI calibration pairs from the demo corpus (no LLM)")
+    pairs.add_argument("--split", default="val", help="family split to draw papers from")
+    pairs.set_defaults(func=cmd_nli_pairs)
+    calibrate = sub.add_parser("nli-calibrate", help="fit the NLI thresholds on the owner's labels (CPU)")
+    calibrate.add_argument("--min-supported-precision", type=float, default=0.9)
+    calibrate.add_argument("--min-per-label", type=int, default=20)
+    calibrate.set_defaults(func=cmd_nli_calibrate)
     args = parser.parse_args()
     args.func(args)
 

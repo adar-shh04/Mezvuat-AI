@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start or resume relevance review. Usage: bash scripts/review.sh val   (then: bash scripts/review.sh test)
+# Start or resume review. Usage: bash scripts/review.sh val   (also: test, temporal, nli)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/dev-env.sh

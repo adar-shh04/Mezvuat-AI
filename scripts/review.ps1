@@ -1,6 +1,7 @@
 # Start or resume review from PowerShell. Usage: .\scripts\review.ps1 val   (then: .\scripts\review.ps1 test)
 # Temporal question set (decision D11): .\scripts\review.ps1 temporal  (writes data/domain/temporal/v1/review.human.jsonl)
-param([ValidateSet("val", "test", "temporal")][string]$Split = "val")
+# NLI calibration pairs (M5): .\scripts\review.ps1 nli  (writes data/domain/nli/v1/review.human.jsonl; no model suggestion is shown)
+param([ValidateSet("val", "test", "temporal", "nli")][string]$Split = "val")
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $cache = if ($env:MEZVUAT_CACHE_ROOT) { $env:MEZVUAT_CACHE_ROOT } else { "X:/mezvuat-cache" }

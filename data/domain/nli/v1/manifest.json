@@ -1,0 +1,68 @@
+{
+ "generator_version": "nli-pairs-v1",
+ "seed": 13,
+ "family_split": "val",
+ "corpus_digest": "c23031f00a996b7a72254a0c1200a4d9d344872873fc4358688e0a5cfd17a4f1",
+ "pairs_sha256": "20c24302aa478a15a7cae1bfe6cbe0ad6c7b0cd6dc12b6c20056136e93c01249",
+ "quotas": {
+  "sentence_verbatim": {
+   "expected": "supported",
+   "quota": 12
+  },
+  "sentence_rewrite": {
+   "expected": "supported",
+   "quota": 38
+  },
+  "perturb_number": {
+   "expected": "contradicted",
+   "quota": 15
+  },
+  "perturb_negation": {
+   "expected": "contradicted",
+   "quota": 13
+  },
+  "perturb_antonym": {
+   "expected": "contradicted",
+   "quota": 16
+  },
+  "perturb_swap": {
+   "expected": "contradicted",
+   "quota": 6
+  },
+  "same_passage_far": {
+   "expected": "neutral",
+   "quota": 20
+  },
+  "same_paper_other_passage": {
+   "expected": "neutral",
+   "quota": 18
+  },
+  "other_paper": {
+   "expected": "neutral",
+   "quota": 12
+  }
+ },
+ "max_pairs_per_paper": 9,
+ "summary": {
+  "pairs": 150,
+  "by_method": {
+   "other_paper": 12,
+   "perturb_antonym": 16,
+   "perturb_negation": 13,
+   "perturb_number": 15,
+   "perturb_swap": 6,
+   "same_paper_other_passage": 18,
+   "same_passage_far": 20,
+   "sentence_rewrite": 38,
+   "sentence_verbatim": 12
+  },
+  "by_expected_label": {
+   "contradicted": 50,
+   "neutral": 50,
+   "supported": 50
+  },
+  "papers": 29
+ },
+ "method": "Claim/evidence pairs for calibrating the NLI thresholds (ADR-0009, M5 part 3).\n\nEvery pair is built from the public demo corpus without an LLM. A claim is a sentence of a passage, a light rewrite\nof it, a perturbation meant to contradict it, or a sentence from elsewhere; the premise is what the verifier would\nsee for that sentence: the sentence with one neighbour on each side (`premise_window`). Each method has an\n*expected* label by construction, which is a prior for balancing the sample, never a gold label: the owner labels\nevery pair without seeing it (D2 amendment of 2026-11-14).\n\nMethods, by expected label:\n- supported: `sentence_verbatim` (the sentence itself, an easy anchor) and `sentence_rewrite` (a discourse opener,\n  reporting frame such as \"we show that\", trailing parenthetical or subordinate clause removed).\n- contradicted: `perturb_number` (one number changed), `perturb_negation` (a negation added or removed),\n  `perturb_antonym` (one directional word swapped, e.g. higher/lower), `perturb_swap` (two named systems swapped in\n  a comparative sentence).\n- neutral: `same_passage_far` (a sentence of the same passage outside the premise window), `same_paper_other_passage`\n  (a sentence of another section of the same paper, against the most word-overlapping window there) and\n  `other_paper` (the most word-overlapping window of a different paper).\n\nPapers come from the `val` family split only (ADR-0007): thresholds are tuned on validation data.",
+ "built_at": "2026-11-16T15:37:50.396231+00:00"
+}

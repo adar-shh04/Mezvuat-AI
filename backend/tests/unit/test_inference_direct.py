@@ -252,9 +252,9 @@ def test_no_backend_configured_is_a_clear_error() -> None:
         client.complete(request())
 
 
-def test_modelmesh_mode_is_not_available_before_m8() -> None:
-    with pytest.raises(InferenceRejectedError, match="M8"):
-        build_llm_client(Settings(inference_mode="modelmesh"))
+def test_modelmesh_mode_needs_a_base_url() -> None:
+    with pytest.raises(InferenceRejectedError, match="MODELMESH_BASE_URL"):
+        build_llm_client(Settings(_env_file=None, inference_mode="modelmesh"))  # type: ignore[call-arg]
 
 
 def sse(*events: Any, done: bool = True) -> bytes:

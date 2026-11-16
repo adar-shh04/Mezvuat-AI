@@ -3,21 +3,26 @@
 from mezvuat.inference.direct import DirectClient, OpenAICompatibleBackend
 from mezvuat.inference.errors import (
     FATAL_INFERENCE_CODES,
+    InferenceContractMismatchError,
     InferenceError,
     InferenceNotPermittedError,
     InferenceRateLimitedError,
     InferenceRejectedError,
     InferenceUnavailableError,
+    ModelMeshRejectedError,
+    ModelMeshUnavailableError,
     StreamIncompleteError,
     StructuredOutputInvalidError,
 )
-from mezvuat.inference.factory import build_llm_client
+from mezvuat.inference.factory import build_llm_client, modelmesh_ops, namespace_secret
+from mezvuat.inference.modelmesh.keys import evidence_key
 from mezvuat.inference.schema import portability_problems, portable_schema
 from mezvuat.inference.types import (
     TASK_TYPES,
     ChatMessage,
     Correlation,
     DataPolicy,
+    EvidenceKey,
     LLMAttempt,
     LLMClient,
     LLMRequest,
@@ -36,6 +41,8 @@ __all__ = [
     "Correlation",
     "DataPolicy",
     "DirectClient",
+    "EvidenceKey",
+    "InferenceContractMismatchError",
     "InferenceError",
     "InferenceNotPermittedError",
     "InferenceRateLimitedError",
@@ -47,6 +54,8 @@ __all__ = [
     "LLMResult",
     "LLMStreamEvent",
     "LLMUsage",
+    "ModelMeshRejectedError",
+    "ModelMeshUnavailableError",
     "OpenAICompatibleBackend",
     "StreamDelta",
     "StreamDone",
@@ -54,6 +63,9 @@ __all__ = [
     "StructuredOutputInvalidError",
     "TaskType",
     "build_llm_client",
+    "evidence_key",
+    "modelmesh_ops",
+    "namespace_secret",
     "portability_problems",
     "portable_schema",
 ]

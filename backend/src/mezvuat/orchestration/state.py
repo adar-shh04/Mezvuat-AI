@@ -108,6 +108,12 @@ class LLMCallRecord(BaseModel):
     latency_ms: int
     finish_reason: str | None
     structured_mode: str
+    # ModelMesh correlation and accounting (M8). Defaults keep checkpoints written before M8 readable.
+    modelmesh_request_id: str | None = None
+    modelmesh_trace_id: str | None = None
+    cache_status: str | None = None
+    cost_estimated_usd: float | None = None
+    fallback_reason: str | None = None
 
 
 class Budget(BaseModel):

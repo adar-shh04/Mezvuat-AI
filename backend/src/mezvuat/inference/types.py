@@ -28,6 +28,9 @@ TASK_TYPES: frozenset[str] = frozenset(TaskType.__args__)  # type: ignore[attr-d
 # Decision D1: "any" for verified public-corpus workspaces, "local_only" for everything else.
 DataPolicy = Literal["any", "local_only"]
 Role = Literal["system", "user", "assistant"]
+Backend = Literal["direct", "modelmesh"]
+# One piece of evidence shown to the model, for the cache fingerprint: (chunk id, version id, sha256 of the text).
+EvidenceKey = tuple[str, str, str]
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,13 @@ class LLMRequest:
     timeout_s: float = 60.0
     # One repair retry with the validation error fed back (ADR-0011). The graph sets 0 when the budget is short.
     repair_attempts: int = 1
+    # ModelMesh only (ADR-0011). The workspace scopes the cache namespace; the evidence keys feed the fingerprint.
+    workspace_id: str | None = None
+    evidence_keys: tuple[EvidenceKey, ...] = ()
+    # An explicit model pin (the evaluation judge). Pinned requests never fall back to another backend or model.
+    model: str | None = None
+    # Overrides the per-task routing policy (the combined benchmark compares policies).
+    routing_policy: str | None = None
 
 
 @dataclass(frozen=True)
@@ -80,13 +90,22 @@ class LLMAttempt:
     usage: LLMUsage
     latency_ms: int
     finish_reason: str | None
+    backend: Backend = "direct"
+    # ModelMesh correlation (contract §1): the `mmr_` id and the W3C trace id it reports. None on the direct path.
+    modelmesh_request_id: str | None = None
+    modelmesh_trace_id: str | None = None
+    cache_status: str | None = None
+    # ModelMesh's estimate, never billing data. None when nothing reported one.
+    cost_estimated_usd: float | None = None
+    # Set on direct attempts made because ModelMesh could not serve the call, e.g. `modelmesh_503`, `circuit_open`.
+    fallback_reason: str | None = None
 
 
 @dataclass
 class LLMResult:
     text: str
     parsed: BaseModel | None
-    backend: Literal["direct", "modelmesh"]
+    backend: Backend
     provider: str
     model: str
     finish_reason: str | None
@@ -95,6 +114,8 @@ class LLMResult:
     # Never estimated: the direct backend reports no cost and no cache status.
     cost_estimated_usd: float | None = None
     cache_status: str | None = None
+    # Why the direct backend answered instead of ModelMesh. None when no fallback happened.
+    fallback_reason: str | None = None
 
     @property
     def usage(self) -> LLMUsage:

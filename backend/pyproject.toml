@@ -47,6 +47,7 @@ dev = [
     "respx>=0.22",
     "ruff>=0.17",
     "types-pyyaml>=6.0",
+    "jsonschema>=4.25",
 ]
 
 [project.scripts]

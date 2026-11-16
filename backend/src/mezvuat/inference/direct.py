@@ -34,6 +34,7 @@ from mezvuat.inference.errors import (
     StreamIncompleteError,
     StructuredOutputInvalidError,
 )
+from mezvuat.inference.http import RETRYABLE_STATUS, error_info, retry_after
 from mezvuat.inference.schema import portable_schema
 from mezvuat.inference.types import (
     LLMAttempt,
@@ -46,7 +47,6 @@ from mezvuat.inference.types import (
 )
 
 log = logging.getLogger(__name__)
-_RETRYABLE_STATUS = frozenset({500, 502, 503, 504})
 _MAX_TRANSIENT_RETRIES = 2
 _MAX_RATE_LIMIT_RETRIES = 2
 _MAX_REPAIR_ERROR_CHARS = 1500
@@ -54,25 +54,8 @@ _MAX_REPAIR_ERROR_CHARS = 1500
 Locality = Literal["cloud", "local"]
 
 
-def _retry_after(response: httpx.Response) -> float | None:
-    value = response.headers.get("retry-after")
-    if value is None:
-        return None
-    try:
-        return max(float(value), 0.0)
-    except ValueError:
-        return None
-
-
 def _error_summary(response: httpx.Response) -> str:
-    try:
-        error = response.json().get("error", {}) if "json" in response.headers.get("content-type", "") else {}
-    except (json.JSONDecodeError, AttributeError):
-        error = {}
-    if not isinstance(error, dict):
-        error = {}
-    parts = [str(response.status_code), str(error.get("type") or ""), str(error.get("code") or "")]
-    return " ".join(p for p in parts if p)
+    return error_info(response).summary
 
 
 @dataclass
@@ -177,7 +160,7 @@ class OpenAICompatibleBackend:
             provider_id = response.headers.get("x-request-id")
             attempts.append(self._attempt(body, client_request_id, provider_id, started, "error", response, summary))
             if response.status_code == 429:
-                wait = _retry_after(response)
+                wait = retry_after(response)
                 wait = self._backoff(limited) if wait is None else wait
                 if limited >= _MAX_RATE_LIMIT_RETRIES or self.clock() + wait >= deadline:
                     raise InferenceRateLimitedError(
@@ -186,10 +169,10 @@ class OpenAICompatibleBackend:
                 self.sleep(wait)
                 limited += 1
                 continue
-            if response.status_code in _RETRYABLE_STATUS:
+            if response.status_code in RETRYABLE_STATUS:
                 if transient >= _MAX_TRANSIENT_RETRIES:
                     raise InferenceUnavailableError(f"{self.provider} returned {summary}", attempts=attempts)
-                hint = _retry_after(response)
+                hint = retry_after(response)
                 self._wait(hint if hint is not None else self._backoff(transient), deadline, attempts)
                 transient += 1
                 continue

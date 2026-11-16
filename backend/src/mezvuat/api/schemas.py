@@ -170,6 +170,13 @@ class LlmCallOut(BaseModel):
     prompt_tokens: int | None
     completion_tokens: int | None
     latency_ms: int | None
+    # ModelMesh correlation (contract §1) and the reason a direct backend answered instead. None on direct calls.
+    modelmesh_request_id: str | None = None
+    modelmesh_trace_id: str | None = None
+    fallback_reason: str | None = None
+    cache_status: str | None = None
+    # ModelMesh's estimate, not billing data.
+    cost_estimated_usd: float | None = None
 
 
 class RunSummaryOut(BaseModel):
@@ -184,8 +191,12 @@ class RunSummaryOut(BaseModel):
     retrieval_calls: int | None = None
     llm_calls: int | None = None
     llm_calls_left: int | None = None
-    # "direct" until M8 adds ModelMesh. A ModelMesh run that fell back to a direct backend will say so here.
+    # The backend that served the run's calls: "direct", "modelmesh", or "modelmesh+direct" when some fell back.
     backend: str | None = None
+    backends: list[str] = Field(default_factory=list)
+    # True when at least one call was answered by a direct backend because ModelMesh could not serve it.
+    fallback: bool | None = None
+    fallback_reasons: list[str] = Field(default_factory=list)
     providers: list[str] = Field(default_factory=list)
     prompt_tokens: int | None = None
     completion_tokens: int | None = None

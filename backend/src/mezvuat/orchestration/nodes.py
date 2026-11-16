@@ -46,6 +46,7 @@ from mezvuat.inference import (
     StreamDone,
     StreamIncompleteError,
     TaskType,
+    evidence_key,
 )
 from mezvuat.orchestration.deps import WorkflowDeps
 from mezvuat.orchestration.models import (
@@ -154,7 +155,7 @@ class ResearchNodes:
                 run_id=state.run_id,
                 workflow_node=node,
                 task_type=task_type,
-                backend="direct",
+                backend=a.backend,
                 provider=a.provider,
                 model=a.model,
                 prompt_version=prompt.version_id,
@@ -169,6 +170,11 @@ class ResearchNodes:
                 latency_ms=a.latency_ms,
                 finish_reason=a.finish_reason,
                 structured_mode=mode,
+                modelmesh_request_id=a.modelmesh_request_id,
+                modelmesh_trace_id=a.modelmesh_trace_id,
+                cache_status=a.cache_status,
+                cost_estimated_usd=a.cost_estimated_usd,
+                fallback_reason=a.fallback_reason,
             )
             for a in attempts
         ]
@@ -210,6 +216,7 @@ class ResearchNodes:
         schema: type[BaseModel] | None,
         max_tokens: int,
         temperature: float = 0.0,
+        evidence: Sequence[EvidenceItem] = (),
     ) -> LLMRequest:
         return LLMRequest(
             task_type=task_type,
@@ -222,6 +229,8 @@ class ResearchNodes:
             seed=0,
             timeout_s=max(min(self.deps.max_call_timeout_s, self.remaining_s(state)), 1.0),
             repair_attempts=1 if state.budget.llm_calls_left >= 2 else 0,
+            workspace_id=state.workspace_id,
+            evidence_keys=tuple(evidence_key(i.chunk_id, i.document_version_id, i.text) for i in evidence),
         )
 
     def structured(
@@ -233,12 +242,20 @@ class ResearchNodes:
         values: dict[str, str],
         schema: type[M],
         max_tokens: int,
+        evidence: Sequence[EvidenceItem] = (),
     ) -> _Call:
         prompt = load_prompt(prompt_name)
         if not self.can_call(state):
             return _Call(skipped="the run's LLM call, token or time budget was exhausted")
         request = self._request(
-            state, node, task_type, prompt, prompt.render(values), schema=schema, max_tokens=max_tokens
+            state,
+            node,
+            task_type,
+            prompt,
+            prompt.render(values),
+            schema=schema,
+            max_tokens=max_tokens,
+            evidence=evidence,
         )
         try:
             result = self.deps.llm.complete(request)
@@ -432,6 +449,7 @@ class ResearchNodes:
             },
             Sufficiency,
             700,
+            evidence=shown,
         )
         if call.fatal:
             return {**call.updates, **call.failure("assess_evidence")}
@@ -563,6 +581,7 @@ class ResearchNodes:
             },
             Draft,
             3000,
+            evidence=chosen,
         )
         updates = {**updates, **call.updates}
         if call.fatal:
@@ -695,6 +714,7 @@ class ResearchNodes:
             },
             JudgeOutput,
             400,
+            evidence=cited,
         )
         if not isinstance(call.parsed, JudgeOutput):
             reason = call.skipped or (call.error.code if call.error else "no output")

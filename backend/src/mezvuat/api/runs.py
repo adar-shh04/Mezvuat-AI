@@ -234,6 +234,8 @@ class RunService:
 
 def summarize(state: ResearchState) -> dict[str, Any]:
     providers = sorted({c.provider for c in state.llm_calls})
+    backends = sorted({c.backend for c in state.llm_calls}, key=lambda b: (b != "modelmesh", b))
+    reasons = sorted({c.fallback_reason for c in state.llm_calls if c.fallback_reason})
     return {
         "as_of": state.as_of.isoformat() if state.as_of else None,
         "iterations": state.iteration,
@@ -242,7 +244,10 @@ def summarize(state: ResearchState) -> dict[str, Any]:
         "retrieval_calls": len(state.retrieval_log),
         "llm_calls": len(state.llm_calls),
         "llm_calls_left": state.budget.llm_calls_left,
-        "backend": "direct",
+        "backend": "+".join(backends) if backends else None,
+        "backends": backends,
+        "fallback": bool(reasons),
+        "fallback_reasons": reasons,
         "providers": providers,
         "prompt_tokens": sum(c.prompt_tokens or 0 for c in state.llm_calls),
         "completion_tokens": sum(c.completion_tokens or 0 for c in state.llm_calls),

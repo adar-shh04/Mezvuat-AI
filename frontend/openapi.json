@@ -973,6 +973,17 @@
             "title": "Backend",
             "type": "string"
           },
+          "cache_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Status"
+          },
           "client_request_id": {
             "title": "Client Request Id",
             "type": "string"
@@ -988,6 +999,17 @@
             ],
             "title": "Completion Tokens"
           },
+          "cost_estimated_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Estimated Usd"
+          },
           "error_code": {
             "anyOf": [
               {
@@ -998,6 +1020,17 @@
               }
             ],
             "title": "Error Code"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback Reason"
           },
           "latency_ms": {
             "anyOf": [
@@ -1020,6 +1053,28 @@
               }
             ],
             "title": "Model"
+          },
+          "modelmesh_request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelmesh Request Id"
+          },
+          "modelmesh_trace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelmesh Trace Id"
           },
           "prompt_tokens": {
             "anyOf": [
@@ -1391,6 +1446,13 @@
             ],
             "title": "Backend"
           },
+          "backends": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Backends",
+            "type": "array"
+          },
           "completion_tokens": {
             "anyOf": [
               {
@@ -1412,6 +1474,24 @@
               }
             ],
             "title": "Evidence Items"
+          },
+          "fallback": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fallback"
+          },
+          "fallback_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fallback Reasons",
+            "type": "array"
           },
           "iterations": {
             "anyOf": [

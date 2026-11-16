@@ -520,16 +520,26 @@ export interface components {
         LlmCallOut: {
             /** Backend */
             backend: string;
+            /** Cache Status */
+            cache_status?: string | null;
             /** Client Request Id */
             client_request_id: string;
             /** Completion Tokens */
             completion_tokens: number | null;
+            /** Cost Estimated Usd */
+            cost_estimated_usd?: number | null;
             /** Error Code */
             error_code: string | null;
+            /** Fallback Reason */
+            fallback_reason?: string | null;
             /** Latency Ms */
             latency_ms: number | null;
             /** Model */
             model: string | null;
+            /** Modelmesh Request Id */
+            modelmesh_request_id?: string | null;
+            /** Modelmesh Trace Id */
+            modelmesh_trace_id?: string | null;
             /** Prompt Tokens */
             prompt_tokens: number | null;
             /** Provider */
@@ -644,10 +654,16 @@ export interface components {
             as_of?: string | null;
             /** Backend */
             backend?: string | null;
+            /** Backends */
+            backends?: string[];
             /** Completion Tokens */
             completion_tokens?: number | null;
             /** Evidence Items */
             evidence_items?: number | null;
+            /** Fallback */
+            fallback?: boolean | null;
+            /** Fallback Reasons */
+            fallback_reasons?: string[];
             /** Iterations */
             iterations?: number | null;
             /** Llm Calls */

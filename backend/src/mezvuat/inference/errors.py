@@ -53,6 +53,41 @@ class InferenceRejectedError(InferenceError):
     code = "inference_rejected"
 
 
+class ModelMeshUnavailableError(InferenceUnavailableError):
+    """ModelMesh cannot serve this call (contract §3.1 first row): network errors, 500/502/503/504, or an open
+    circuit breaker. The only error that allows the direct fallback. `reason` is recorded on the fallback attempts."""
+
+    def __init__(self, message: str, *, reason: str, attempts: list[LLMAttempt] | None = None) -> None:
+        super().__init__(message, attempts=attempts)
+        self.reason = reason
+
+
+class ModelMeshRejectedError(InferenceRejectedError):
+    """A ModelMesh 4xx other than 429. Never a fallback trigger; `status` and `error_type` come from the contract."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status: int,
+        error_type: str | None,
+        error_code: str | None,
+        attempts: list[LLMAttempt] | None = None,
+    ) -> None:
+        super().__init__(message, attempts=attempts)
+        self.status = status
+        self.error_type = error_type
+        self.error_code = error_code
+
+
+class InferenceContractMismatchError(InferenceError):
+    """ModelMesh does not support a field Mezvuat must not drop (`routing.data_policy`, `cache.namespace`), or it
+    serves a different major contract version. Nothing is sent: sending without them would weaken privacy."""
+
+    code = "inference_contract_mismatch"
+    http_status = 503
+
+
 class StreamIncompleteError(InferenceError):
     """The stream ended without `[DONE]`. The partial output must be discarded."""
 
@@ -60,5 +95,10 @@ class StreamIncompleteError(InferenceError):
 
 
 FATAL_INFERENCE_CODES = frozenset(
-    {InferenceUnavailableError.code, InferenceNotPermittedError.code, InferenceRejectedError.code}
+    {
+        InferenceUnavailableError.code,
+        InferenceNotPermittedError.code,
+        InferenceRejectedError.code,
+        InferenceContractMismatchError.code,
+    }
 )

@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     mezvuat_env: Literal["dev", "test", "prod"] = "dev"
     mezvuat_log_level: str = "INFO"
     mezvuat_api_key: SecretStr | None = None
+    # Server secret for HMAC-derived identifiers sent to ModelMesh (the cache namespace). Required in ModelMesh modes.
+    mezvuat_secret_key: SecretStr | None = None
     mezvuat_data_dir: Path = Path("data/runtime")
     mezvuat_corpus_manifest: Path = Path("../data/manifests/demo_corpus.json")
 
@@ -31,8 +33,19 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://127.0.0.1:16333"
     qdrant_api_key: SecretStr | None = None
 
-    # Inference (ADR-0011). Only `direct` exists before M8.
+    # Inference (ADR-0011). `modelmesh` has no fallback; `modelmesh_with_fallback` uses the direct backends below.
     inference_mode: Literal["direct", "modelmesh", "modelmesh_with_fallback"] = "direct"
+    # Unset by default on purpose: nothing talks to ModelMesh unless this is configured. Without the `/v1` suffix.
+    modelmesh_base_url: str | None = None
+    modelmesh_api_key: SecretStr | None = None
+    # Per-request socket timeout ceiling; each call also gets at most its remaining deadline.
+    modelmesh_timeout_s: float = Field(default=60.0, gt=0)
+    modelmesh_contract_ttl_s: float = Field(default=600.0, gt=0)
+    modelmesh_calibration_ttl_s: float = Field(default=3600.0, gt=0)
+    modelmesh_breaker_failures: int = Field(default=5, gt=0)
+    modelmesh_breaker_open_s: float = Field(default=30.0, gt=0)
+    # `min_quality` per task type, as JSON. Sent only where `GET /v1/routing/calibration` says `calibrated: true`.
+    modelmesh_min_quality: dict[str, float] = Field(default_factory=dict)
     groq_api_key: SecretStr | None = None
     groq_base_url: str = "https://api.groq.com/openai/v1"
     groq_model_small: str = "openai/gpt-oss-20b"
@@ -88,6 +101,12 @@ class Settings(BaseSettings):
             f"postgresql://{quote(self.postgres_user, safe='')}:{password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+
+    @property
+    def modelmesh_url(self) -> str | None:
+        if not self.modelmesh_base_url:
+            return None
+        return self.modelmesh_base_url.rstrip("/").removesuffix("/v1")
 
     @property
     def blob_dir(self) -> Path:

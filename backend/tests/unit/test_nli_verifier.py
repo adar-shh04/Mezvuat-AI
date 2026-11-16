@@ -418,3 +418,12 @@ def test_the_pinned_model_runs_on_cpu_with_the_registered_label_order(monkeypatc
     assert thresholds.label(contra) == "contradicted"
     assert neutral.entailment < 0.5
     assert abs(entail.entailment + entail.contradiction + entail.neutral - 1.0) < 1e-4
+
+
+def test_nli_is_skipped_when_the_run_is_nearly_out_of_time() -> None:
+    nli = RuleNli([("scores documents using", "entailment")])
+    final, _ = run(llm([one_claim]), nli=nli, nli_min_time_s=20_000.0)
+    assert nli.calls == []
+    assert final.answer is not None and final.answer.verification is not None
+    assert final.answer.verification.nli_unavailable
+    assert NLI_UNAVAILABLE_LIMITATION in final.answer.limitations

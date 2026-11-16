@@ -622,6 +622,9 @@ class ResearchNodes:
         nli = self.deps.nli
         if nli is None or not passing:
             return {"verification": verdicts, "nli_unavailable": False}
+        if self.remaining_s(state) < self.deps.nli_min_time_s:
+            log.warning("too little run time left for NLI; claims keep the quote check", extra={"run_id": state.run_id})
+            return {"verification": verdicts, "nli_unavailable": True}
         try:
             results = verify_claims(
                 [(verdicts[i].text, verdicts[i].spans) for i in passing],

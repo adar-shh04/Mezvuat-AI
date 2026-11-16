@@ -67,6 +67,8 @@ class WorkflowDeps:
     nli_thresholds: NliThresholds = field(default_factory=NliThresholds)
     # Sentences of context on each side of a quote in the NLI premise.
     nli_premise_sentences: int = 1
+    # NLI is skipped (and the answer says so) when less run time than this is left.
+    nli_min_time_s: float = 10.0
     # The LLM judge for claims NLI leaves undecided. Off until its agreement with the owner's labels is measured.
     llm_judge: bool = False
     max_judge_calls: int = 3

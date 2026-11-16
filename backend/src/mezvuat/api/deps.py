@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import secrets
 import threading
 from collections.abc import Iterator, Sequence
@@ -97,12 +98,27 @@ def get_reranker() -> CrossEncoderReranker:
     return CrossEncoderReranker.from_model_id(settings.reranker_model_id, device=settings.ml_device)
 
 
-@lru_cache
-def get_nli() -> Any:
-    from mezvuat.ml.nli import CrossEncoderNli
+_nli_lock = threading.Lock()
+_nli: Any = None
 
-    settings = get_settings()
-    return CrossEncoderNli.from_model_id(settings.nli_model_id, device=settings.nli_device)
+
+def get_nli() -> Any:
+    """The NLI model, loaded once. Loading takes tens of seconds on CPU, so the API preloads it at start-up."""
+    global _nli
+    with _nli_lock:
+        if _nli is None:
+            from mezvuat.ml.nli import CrossEncoderNli
+
+            settings = get_settings()
+            _nli = CrossEncoderNli.from_model_id(settings.nli_model_id, device=settings.nli_device)
+        return _nli
+
+
+def preload_nli() -> None:
+    try:
+        get_nli()
+    except Exception:  # The verifier falls back to the quote check; a failed preload must not stop the API.
+        logging.getLogger("mezvuat.api").exception("NLI model preload failed; claims will keep the quote check")
 
 
 class LazyNli:

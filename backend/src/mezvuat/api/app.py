@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Awaitable, Callable
+import threading
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from mezvuat.api.deps import get_dense_index
+from mezvuat.api.deps import get_dense_index, preload_nli
 from mezvuat.api.routers import documents, runs, search, workspaces
 from mezvuat.api.schemas import HealthOut
 from mezvuat.core.config import get_settings
@@ -27,7 +29,15 @@ _SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9_:.-]{1,128}$")
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.mezvuat_log_level)
-    app = FastAPI(title="Mezvuat AI", version="0.1.0")
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        # The NLI model takes tens of seconds to load on CPU; load it before the first run needs it.
+        if settings.nli_enabled and settings.mezvuat_env != "test":
+            threading.Thread(target=preload_nli, name="nli-preload", daemon=True).start()
+        yield
+
+    app = FastAPI(title="Mezvuat AI", version="0.1.0", lifespan=lifespan)
 
     @app.middleware("http")
     async def request_id(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

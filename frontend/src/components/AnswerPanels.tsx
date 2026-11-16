@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { api, errorMessage, type ClaimVerdict, type FinalAnswer } from "@/lib/api";
+import { api, errorMessage, type Citation, type ClaimVerdict, type FinalAnswer } from "@/lib/api";
+import { describeDates } from "@/lib/citations";
 import { Badge } from "./Badges";
 
 const FLAG_TEXT: Record<string, string> = {
@@ -50,27 +51,110 @@ export function LimitationsPanel({ answer }: { answer: FinalAnswer }) {
   );
 }
 
-export function ConflictsPanel({ answer }: { answer: FinalAnswer }) {
-  const contradicted = answer.claims.filter((c) => c.status === "contradicted");
+const METHOD_TEXT: Record<string, string> = {
+  quote_match: "quote match",
+  nli: "NLI",
+  llm_judge: "LLM judge",
+  none: "none",
+};
+
+/** Which checks decided the claims, from the answer's verification summary. */
+export function checksText(answer: FinalAnswer): string {
+  const info = answer.verification;
+  if (!info) return "Claims were checked by exact quote match.";
+  const checks = info.checks.map((c) => METHOD_TEXT[c] ?? c).join(", then ");
+  const parts = [`Checked by ${checks || "nothing"}.`];
+  if (info.nli_model) {
+    parts.push(
+      `NLI model: ${info.nli_model}, ${info.nli_thresholds_calibrated ? "calibrated thresholds" : "provisional thresholds (not calibrated yet)"}.`,
+    );
+  }
+  if (info.nli_unavailable) parts.push("The NLI verifier was unavailable for this run.");
+  return parts.join(" ");
+}
+
+function ConflictSpan({
+  citation,
+  kind,
+  claimId,
+  onCite,
+}: {
+  citation: Citation;
+  kind: "contradicts" | "supports";
+  claimId: string;
+  onCite: (claimId: string, evidenceId: string) => void;
+}) {
+  const where = [citation.document_title ?? citation.document_id, citation.version_label]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    <li>
+      <Badge tone={kind === "contradicts" ? "bad" : "ok"}>{kind}</Badge>{" "}
+      <button
+        type="button"
+        className="cite"
+        aria-label={`Show conflicting evidence ${citation.evidence_id}`}
+        onClick={() => onCite(claimId, citation.evidence_id)}
+      >
+        {citation.evidence_id}
+      </button>{" "}
+      {where}
+      {citation.page !== null && citation.page !== undefined ? `, p. ${citation.page}` : ""}
+      <span className="muted"> · {describeDates(citation.dates ?? [])}</span>
+      <blockquote className="muted">{citation.quote}</blockquote>
+    </li>
+  );
+}
+
+export function ConflictsPanel({
+  answer,
+  onCite,
+}: {
+  answer: FinalAnswer;
+  onCite: (claimId: string, evidenceId: string) => void;
+}) {
+  const conflicts = answer.conflicts ?? [];
   return (
     <section className="panel" aria-label="Conflicts">
       <h3>Conflicting evidence</h3>
-      {contradicted.length > 0 ? (
-        <ul>
-          {contradicted.map((c) => (
-            <li key={c.claim_id}>
-              {c.text} <span className="muted">({c.evidence_ids.join(", ")})</span>
-              {c.problems.length > 0 && <div className="muted">{c.problems.join("; ")}</div>}
+      {conflicts.length > 0 ? (
+        <ul className="plain">
+          {conflicts.map((c) => (
+            <li key={c.claim_id} data-testid="conflict">
+              <div>
+                <strong>Left out of the answer:</strong> {c.claim_text}{" "}
+                <Badge>{METHOD_TEXT[c.method] ?? c.method}</Badge>
+                {c.between_documents && <Badge tone="warn">sources disagree</Badge>}
+              </div>
+              <ul className="plain">
+                {c.contradicted_by.map((cit) => (
+                  <ConflictSpan
+                    key={`against-${cit.evidence_id}`}
+                    citation={cit}
+                    kind="contradicts"
+                    claimId={c.claim_id}
+                    onCite={onCite}
+                  />
+                ))}
+                {c.supported_by.map((cit) => (
+                  <ConflictSpan
+                    key={`for-${cit.evidence_id}`}
+                    citation={cit}
+                    kind="supports"
+                    claimId={c.claim_id}
+                    onCite={onCite}
+                  />
+                ))}
+              </ul>
             </li>
           ))}
         </ul>
       ) : (
         <p className="muted">No contradicted claims.</p>
       )}
-      <p className="muted">
-        Claims are checked by exact quote match only. Detecting conflicts between sources needs the NLI verifier,
-        which is not built yet (M5), so conflicting evidence can go unflagged.
-      </p>
+      {!answer.verification?.nli_model && (
+        <p className="muted">Without the NLI verifier, contradicting evidence is not detected.</p>
+      )}
     </section>
   );
 }
@@ -90,6 +174,9 @@ export function ClaimsPanel({
   return (
     <section className="panel" aria-label="Claims">
       <h3>Claims and how they were checked</h3>
+      <p className="muted" data-testid="checks-used">
+        {checksText(answer)}
+      </p>
       <ul className="plain">
         {answer.claims.map((c) => (
           <li key={c.claim_id}>

@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from mezvuat.citations import PageSpan
+from mezvuat.citations import NliScores, PageSpan
 from mezvuat.core.errors import RetrievalUnavailableError
 from mezvuat.core.ids import new_id
 from mezvuat.inference import (
@@ -215,3 +215,30 @@ def id_for(request: LLMRequest, phrase: str) -> str:
         if phrase in text:
             return evidence_id
     raise AssertionError(f"no evidence block contains {phrase!r}")
+
+
+@dataclass
+class RuleNli:
+    """An NLI double: the first rule whose phrase occurs in "premise || hypothesis" decides; otherwise neutral."""
+
+    rules: list[tuple[str, str]] = field(default_factory=list)
+    model_id: str = "fake/nli"
+    calls: list[list[tuple[str, str]]] = field(default_factory=list)
+    fail: bool = False
+
+    def predict(self, pairs: Sequence[tuple[str, str]]) -> list[NliScores]:
+        self.calls.append(list(pairs))
+        if self.fail:
+            raise RuntimeError("model weights missing")
+        out = []
+        for premise, hypothesis in pairs:
+            label = next((lab for phrase, lab in self.rules if phrase in f"{premise} || {hypothesis}"), "neutral")
+            out.append(NLI_SCORES[label])
+        return out
+
+
+NLI_SCORES = {
+    "entailment": NliScores(entailment=0.94, contradiction=0.02, neutral=0.04),
+    "contradiction": NliScores(entailment=0.03, contradiction=0.91, neutral=0.06),
+    "neutral": NliScores(entailment=0.2, contradiction=0.1, neutral=0.7),
+}

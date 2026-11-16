@@ -11,7 +11,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from mezvuat.citations import MAX_QUOTE_CHARS, SpanRef
+from mezvuat.citations import MAX_QUOTE_CHARS, NliVerdict, SpanRef, SupportLabel
 from mezvuat.temporal import DateFact
 
 MAX_SUBQUESTIONS = 4
@@ -105,7 +105,28 @@ class Draft(BaseModel):
 
 
 ClaimStatus = Literal["supported", "partially_supported", "unsupported", "contradicted", "unverifiable"]
+# How support was established (ADR-0009). `quote_match` alone means no semantic check decided the claim.
 SupportMethod = Literal["quote_match", "nli", "llm_judge", "none"]
+
+
+class JudgeOutput(BaseModel):
+    """The LLM judge's answer for one claim (ADR-0009 step 3). The quote must pass the same substring check."""
+
+    verdict: Literal["supported", "contradicted", "not_enough_info"]
+    evidence_id: str = Field(description="the evidence id the quote is taken from; empty for not_enough_info")
+    quote: str = Field(description="an exact quote from that evidence; empty for not_enough_info")
+    reason: str
+
+
+class JudgeCheck(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    verdict: SupportLabel
+    # The judge's verdict counts only when its quote is verbatim in the cited evidence.
+    accepted: bool
+    span: SpanRef | None
+    problems: list[str]
+    model: str | None
 
 
 class ClaimVerdict(BaseModel):
@@ -115,11 +136,13 @@ class ClaimVerdict(BaseModel):
     text: str
     kind: Literal["fact", "interpretation"]
     status: ClaimStatus
-    # How support was established. M4 has only the deterministic quote match (ADR-0009 step 1).
     method: SupportMethod
     evidence_ids: list[str]
     spans: list[SpanRef]
     problems: list[str]
+    # Semantic checks, when they ran. `nli` holds per-span scores; `judge` only for claims NLI left undecided.
+    nli: NliVerdict | None = None
+    judge: JudgeCheck | None = None
 
 
 class Citation(BaseModel):
@@ -144,6 +167,33 @@ class Citation(BaseModel):
     injection_suspect: bool = False
 
 
+class Conflict(BaseModel):
+    """A claim that cited evidence contradicts, with the contradicting and any supporting spans (ADR-0009)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    claim_id: str
+    claim_text: str
+    method: SupportMethod
+    contradicted_by: list[Citation]
+    supported_by: list[Citation]
+    # True when the contradicting and supporting spans come from different documents: the sources disagree.
+    between_documents: bool
+
+
+class VerificationInfo(BaseModel):
+    """Which checks decided the answer's claims, so the answer can say so."""
+
+    model_config = ConfigDict(frozen=True)
+
+    checks: list[SupportMethod]
+    nli_model: str | None
+    nli_thresholds_calibrated: bool | None
+    nli_unavailable: bool
+    llm_judge_enabled: bool
+    claims_by_status: dict[str, int]
+
+
 class FinalAnswer(BaseModel):
     markdown: str
     rendering: Literal["model", "deterministic"]
@@ -151,3 +201,5 @@ class FinalAnswer(BaseModel):
     claims: list[ClaimVerdict]
     limitations: list[str]
     flags: list[str]
+    conflicts: list[Conflict] = Field(default_factory=list)
+    verification: VerificationInfo | None = None

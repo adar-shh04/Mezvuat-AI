@@ -43,6 +43,7 @@ PROMPT_NAMES = (
     "assess_evidence",
     "reformulate",
     "synthesize",
+    "judge_claim",
     "respond",
 )
 

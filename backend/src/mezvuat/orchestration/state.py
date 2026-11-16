@@ -8,16 +8,18 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from mezvuat.citations import EvidenceItem, PageSpan, SpanRef
+from mezvuat.citations import EvidenceItem, NliScores, NliVerdict, PageSpan, SpanRef, SpanSupport
 from mezvuat.inference import DataPolicy
 from mezvuat.orchestration.models import (
     Citation,
     ClaimVerdict,
+    Conflict,
     Coverage,
     Draft,
     DraftClaim,
     DraftQuote,
     FinalAnswer,
+    JudgeCheck,
     QueryAnalysis,
     QueryRewrite,
     Reformulation,
@@ -25,6 +27,7 @@ from mezvuat.orchestration.models import (
     SubQuestion,
     Sufficiency,
     TemporalScope,
+    VerificationInfo,
 )
 from mezvuat.temporal import AsOfResolution, DateFact, VersionDates
 
@@ -152,6 +155,8 @@ class ResearchState(BaseModel):
     # The closed set of ids the synthesis prompt showed; a claim may cite only these (ADR-0009).
     shown_evidence_ids: list[str] = Field(default_factory=list)
     verification: list[ClaimVerdict] | None = None
+    # The NLI model was configured but failed; claims fell back to the quote-match check.
+    nli_unavailable: bool = False
     answer: FinalAnswer | None = None
     limitations: Annotated[list[str], operator.add] = Field(default_factory=list)
     llm_calls: Annotated[list[LLMCallRecord], operator.add] = Field(default_factory=list)
@@ -187,6 +192,12 @@ STATE_MODELS: tuple[type[BaseModel], ...] = (
     DraftClaim,
     DraftQuote,
     ClaimVerdict,
+    NliVerdict,
+    NliScores,
+    SpanSupport,
+    JudgeCheck,
     Citation,
+    Conflict,
+    VerificationInfo,
     FinalAnswer,
 )

@@ -7,7 +7,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Protocol
 
-from mezvuat.citations import PageSpan
+from mezvuat.citations import NliModel, NliThresholds, PageSpan
 from mezvuat.inference import LLMClient
 from mezvuat.orchestration.state import LLMCallRecord, RunFilters
 from mezvuat.retrieval.types import RankedEvidence
@@ -62,3 +62,11 @@ class WorkflowDeps:
     synthesis_evidence_chars: int = 24_000
     assess_items_per_subquestion: int = 3
     assess_item_chars: int = 800
+    # Claim verification (ADR-0009). Without an NLI model, claims are checked by quote match only (the M4 layer).
+    nli: NliModel | None = None
+    nli_thresholds: NliThresholds = field(default_factory=NliThresholds)
+    # Sentences of context on each side of a quote in the NLI premise.
+    nli_premise_sentences: int = 1
+    # The LLM judge for claims NLI leaves undecided. Off until its agreement with the owner's labels is measured.
+    llm_judge: bool = False
+    max_judge_calls: int = 3

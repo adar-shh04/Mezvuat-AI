@@ -21,13 +21,17 @@ from pydantic import BaseModel
 
 from mezvuat.citations import (
     EvidenceItem,
+    NliVerdict,
     PageSpan,
     PromptLeakDetector,
     QuoteInput,
+    SpanRef,
     check_claim,
+    check_quote,
     chunk_index,
     injection_signals,
     scan_markers,
+    verify_claims,
 )
 from mezvuat.core.errors import MezvuatError
 from mezvuat.inference import (
@@ -49,14 +53,19 @@ from mezvuat.orchestration.models import (
     MAX_SUBQUESTIONS,
     Citation,
     ClaimVerdict,
+    Conflict,
     Coverage,
     Draft,
     FinalAnswer,
+    JudgeCheck,
+    JudgeOutput,
     QueryAnalysis,
     Reformulation,
     ResearchPlan,
     SubQuestion,
     Sufficiency,
+    SupportMethod,
+    VerificationInfo,
 )
 from mezvuat.orchestration.prompts import PROMPT_NAMES, Prompt, evidence_section, load_prompt, new_boundary
 from mezvuat.orchestration.state import (
@@ -82,6 +91,7 @@ QUOTE_ONLY_LIMITATION = (
     "Citations were checked for verbatim quotes at the cited location only. Whether each quote fully supports its "
     "claim has not been checked by a semantic model yet."
 )
+NLI_UNAVAILABLE_LIMITATION = "The NLI verifier was unavailable for this run, so claims kept the quote-match check only."
 ABSTAIN_TEXT = "I could not find evidence in this workspace that answers the question, so I am not giving an answer."
 
 
@@ -602,7 +612,116 @@ class ResearchNodes:
                     problems=check.problems,
                 )
             )
-        return {"verification": verdicts}
+        return self._semantic_checks(state, verdicts, registry)
+
+    def _semantic_checks(
+        self, state: ResearchState, verdicts: list[ClaimVerdict], registry: dict[str, EvidenceItem]
+    ) -> Update:
+        """NLI on every claim that passed the quote check, then the LLM judge for the ones NLI left undecided."""
+        passing = [i for i, v in enumerate(verdicts) if v.status == "supported"]
+        nli = self.deps.nli
+        if nli is None or not passing:
+            return {"verification": verdicts, "nli_unavailable": False}
+        try:
+            results = verify_claims(
+                [(verdicts[i].text, verdicts[i].spans) for i in passing],
+                registry,
+                nli,
+                self.deps.nli_thresholds,
+                sentences=self.deps.nli_premise_sentences,
+            )
+        except Exception:  # The verifier is an extra layer; its failure must not cost the user the run.
+            log.exception("NLI verification failed; claims keep the quote-match check", extra={"run_id": state.run_id})
+            return {"verification": verdicts, "nli_unavailable": True}
+        updates: Update = {}
+        current = state
+        judge_calls = 0
+        judge_stopped = False
+        for index, result in zip(passing, results, strict=True):
+            verdict = self._apply_nli(verdicts[index], result)
+            if (
+                result.label == "not_enough_info"
+                and self.deps.llm_judge
+                and not judge_stopped
+                and judge_calls < self.deps.max_judge_calls
+                # One judge call, and the response still has its call.
+                and self.can_call(current, calls=2)
+            ):
+                judge_calls += 1
+                verdict, step, judge_stopped = self._judge(current, verdict, registry)
+                if step:
+                    updates = self._merge(updates, step)
+                    current = current.model_copy(update={"budget": step["budget"]})
+            verdicts[index] = verdict
+        return {**updates, "verification": verdicts, "nli_unavailable": False}
+
+    @staticmethod
+    def _apply_nli(verdict: ClaimVerdict, result: NliVerdict) -> ClaimVerdict:
+        if result.label == "supported":
+            return verdict.model_copy(update={"status": "supported", "method": "nli", "nli": result})
+        if result.label == "contradicted":
+            against = [s.evidence_id for s in result.spans if s.label == "contradicted"]
+            problem = f"NLI: evidence {', '.join(against)} contradicts this claim"
+            return verdict.model_copy(
+                update={
+                    "status": "contradicted",
+                    "method": "nli",
+                    "nli": result,
+                    "problems": [*verdict.problems, problem],
+                }
+            )
+        # Kept, but only the quote check stands behind it: shown as partially supported, method quote_match.
+        problem = "NLI: the quoted evidence does not clearly entail this claim"
+        return verdict.model_copy(
+            update={"status": "partially_supported", "nli": result, "problems": [*verdict.problems, problem]}
+        )
+
+    def _judge(
+        self, state: ResearchState, verdict: ClaimVerdict, registry: dict[str, EvidenceItem]
+    ) -> tuple[ClaimVerdict, Update, bool]:
+        """One LLM-judge call (ADR-0009 step 3). Returns the verdict, the call's bookkeeping, and whether to stop."""
+        cited = [registry[e] for e in verdict.evidence_ids if e in registry]
+        call = self.structured(
+            state,
+            "verify",
+            "citation_verification",
+            "judge_claim",
+            {
+                "claim": _plain(verdict.text),
+                "evidence": evidence_section(cited, new_boundary(), dates=self.dates_label(state)),
+            },
+            JudgeOutput,
+            400,
+        )
+        if not isinstance(call.parsed, JudgeOutput):
+            reason = call.skipped or (call.error.code if call.error else "no output")
+            problem = f"LLM judge unavailable ({reason})"
+            return verdict.model_copy(update={"problems": [*verdict.problems, problem]}), call.updates, True
+        out = call.parsed
+        model = call.result.model if call.result else None
+        if out.verdict == "not_enough_info":
+            check = JudgeCheck(verdict="not_enough_info", accepted=True, span=None, problems=[], model=model)
+            return verdict.model_copy(update={"judge": check}), call.updates, False
+        span = check_quote(QuoteInput(evidence_id=out.evidence_id, text=out.quote), set(verdict.evidence_ids), registry)
+        if span.status != "ok":
+            problems = [f"LLM judge said {out.verdict}, but its quote for {out.evidence_id} failed: {span.status}"]
+            check = JudgeCheck(verdict=out.verdict, accepted=False, span=None, problems=problems, model=model)
+            judged = verdict.model_copy(update={"judge": check, "problems": [*verdict.problems, *problems]})
+            return judged, call.updates, False
+        check = JudgeCheck(verdict=out.verdict, accepted=True, span=span, problems=[], model=model)
+        if out.verdict == "supported":
+            judged = verdict.model_copy(update={"status": "supported", "method": "llm_judge", "judge": check})
+            return judged, call.updates, False
+        problem = f"LLM judge: evidence {out.evidence_id} contradicts this claim"
+        judged = verdict.model_copy(
+            update={
+                "status": "contradicted",
+                "method": "llm_judge",
+                "judge": check,
+                "problems": [*verdict.problems, problem],
+            }
+        )
+        return judged, call.updates, False
 
     def route_after_verify(self, state: ResearchState) -> str:
         if state.status == "failed":
@@ -725,8 +844,7 @@ class ResearchNodes:
         dropped = [v for v in verdicts if v not in verified]
         limitations = list(dict.fromkeys(state.limitations))
         limitations += [self._dropped_note(v) for v in dropped]
-        if any(v.method == "quote_match" for v in verified):
-            limitations.append(QUOTE_ONLY_LIMITATION)
+        limitations += self._check_notes(state, verdicts, verified)
         flagged = [state.evidence[e] for e in state.shown_evidence_ids if state.evidence[e].injection_signals]
         if flagged:
             ids = ", ".join(item.evidence_id for item in flagged)
@@ -769,29 +887,15 @@ class ResearchNodes:
         body = markdown if markdown is not None else self._deterministic(verified)
         used = set(scan_markers(body, allowed).used) if verified else set()
         citations = [
-            Citation(
-                evidence_id=span.evidence_id,
-                claim_id=v.claim_id,
-                chunk_id=state.evidence[span.evidence_id].chunk_id,
-                document_id=state.evidence[span.evidence_id].document_id,
-                document_version_id=state.evidence[span.evidence_id].document_version_id,
-                document_title=state.evidence[span.evidence_id].document_title,
-                version_label=state.evidence[span.evidence_id].version_label,
-                page=span.page,
-                char_start=span.char_start,
-                char_end=span.char_end,
-                quote=span.quote,
-                dates=self.version_facts(state, state.evidence[span.evidence_id]),
-                injection_suspect=bool(state.evidence[span.evidence_id].injection_signals),
-            )
+            citation
             for v in verified
             for span in v.spans
-            if span.status == "ok"
-            and span.evidence_id in used
-            and span.char_start is not None
-            and span.char_end is not None
+            if span.evidence_id in used and (citation := self._citation(state, v.claim_id, span)) is not None
         ]
+        conflicts = self._conflicts(state, verdicts)
         full = body
+        if conflicts:
+            full += "\n\n### Conflicting evidence\n\n" + "\n".join(self._conflict_lines(conflicts))
         if citations:
             full += "\n\n### Sources\n\n" + "\n".join(self._source_lines(citations))
         if limitations:
@@ -803,6 +907,8 @@ class ResearchNodes:
             claims=verdicts,
             limitations=limitations,
             flags=flags,
+            conflicts=conflicts,
+            verification=self._verification_info(state, verdicts),
         )
         writer({"event": "answer_final", "rendering": rendering})
         return {**updates, "answer": answer, "status": "completed"}
@@ -810,7 +916,142 @@ class ResearchNodes:
     def _dropped_note(self, verdict: ClaimVerdict) -> str:
         if self.leaks.leaks(verdict.text):
             return "A claim that reproduced the system's instructions was withheld."
+        if verdict.status == "contradicted":
+            return (
+                f"This claim was left out because its cited evidence contradicts it (see Conflicting evidence): "
+                f"{_plain(verdict.text)}"
+            )
         return f"The system could not verify this claim, so it was left out: {_plain(verdict.text)}"
+
+    def _check_notes(
+        self, state: ResearchState, verdicts: list[ClaimVerdict], verified: list[ClaimVerdict]
+    ) -> list[str]:
+        """Say which check stands behind the answer's claims (ADR-0009 amendment, 2026-11-16)."""
+        notes: list[str] = []
+        unchecked = [v for v in verified if v.method == "quote_match" and v.nli is None]
+        if unchecked:
+            if state.nli_unavailable:
+                notes.append(NLI_UNAVAILABLE_LIMITATION)
+            notes.append(QUOTE_ONLY_LIMITATION)
+        checked = [v for v in verdicts if v.nli is not None]
+        if checked:
+            model = checked[0].nli.model_id if checked[0].nli else "an NLI model"
+            calibrated = all(v.nli.thresholds_calibrated for v in checked if v.nli)
+            thresholds = (
+                "Its thresholds were calibrated on labelled claim and evidence pairs."
+                if calibrated
+                else "Its decision thresholds are provisional: they have not been calibrated on labelled data yet."
+            )
+            notes.append(
+                f"Claims were checked by a verbatim quote match, then by an NLI model ({model}) that compares each "
+                f"claim with its quoted span and the neighbouring sentences. {thresholds}"
+            )
+        weak = [v for v in verified if v.status == "partially_supported"]
+        if weak:
+            notes.append(
+                f"{len(weak)} claim(s) are backed only by their verbatim quote: the NLI check did not find that the "
+                "quoted text entails them, so they are marked partially supported."
+            )
+        judged = [v for v in verdicts if v.judge is not None]
+        if judged:
+            notes.append(
+                f"{len(judged)} claim(s) that the NLI model left undecided were checked by an LLM judge; a judge "
+                "verdict counts only when its quote is verbatim in the cited evidence."
+            )
+        return notes
+
+    def _citation(self, state: ResearchState, claim_id: str, span: SpanRef) -> Citation | None:
+        if span.status != "ok" or span.char_start is None or span.char_end is None:
+            return None
+        item = state.evidence[span.evidence_id]
+        return Citation(
+            evidence_id=span.evidence_id,
+            claim_id=claim_id,
+            chunk_id=item.chunk_id,
+            document_id=item.document_id,
+            document_version_id=item.document_version_id,
+            document_title=item.document_title,
+            version_label=item.version_label,
+            page=span.page,
+            char_start=span.char_start,
+            char_end=span.char_end,
+            quote=span.quote,
+            dates=self.version_facts(state, item),
+            injection_suspect=bool(item.injection_signals),
+        )
+
+    def _conflicts(self, state: ResearchState, verdicts: list[ClaimVerdict]) -> list[Conflict]:
+        """Contradicted claims, with the spans that contradict them and any cited spans that support them."""
+        conflicts: list[Conflict] = []
+        for v in verdicts:
+            if v.status != "contradicted" or self.leaks.leaks(v.text):
+                continue
+            spans = {s.evidence_id: s for s in v.spans if s.status == "ok"}
+            against: list[SpanRef] = []
+            backing: list[SpanRef] = []
+            if v.method == "llm_judge" and v.judge is not None and v.judge.span is not None:
+                against.append(v.judge.span)
+            elif v.nli is not None:
+                labelled = [(s.label, spans[s.evidence_id]) for s in v.nli.spans if s.evidence_id in spans]
+                against = [span for label, span in labelled if label == "contradicted"]
+                backing = [span for label, span in labelled if label == "supported"]
+            contradicted_by = [c for s in against if (c := self._citation(state, v.claim_id, s)) is not None]
+            supported_by = [c for s in backing if (c := self._citation(state, v.claim_id, s)) is not None]
+            if not contradicted_by:
+                continue
+            between = bool(supported_by) and {c.document_id for c in contradicted_by} != {
+                c.document_id for c in supported_by
+            }
+            conflicts.append(
+                Conflict(
+                    claim_id=v.claim_id,
+                    claim_text=_plain(v.text),
+                    method=v.method,
+                    contradicted_by=contradicted_by,
+                    supported_by=supported_by,
+                    between_documents=between,
+                )
+            )
+        return conflicts
+
+    @staticmethod
+    def _conflict_lines(conflicts: list[Conflict]) -> list[str]:
+        """Markdown for the conflict section. Evidence ids appear without brackets: these are not answer citations."""
+
+        def where(c: Citation) -> str:
+            version = f" ({c.version_label})" if c.version_label else ""
+            page = f", p. {c.page}" if c.page is not None else ""
+            title = _plain(c.document_title or c.document_id)
+            return f"evidence {c.evidence_id}, {title}{version}{page}: {describe_dates(c.dates)}"
+
+        method = {"nli": "NLI", "llm_judge": "LLM judge"}
+        lines: list[str] = []
+        for conflict in conflicts:
+            lines.append(f"- Claim left out of the answer: {conflict.claim_text}")
+            check = method.get(conflict.method, conflict.method)
+            lines += [f"  - Contradicted by {where(c)} ({check})" for c in conflict.contradicted_by]
+            lines += [f"  - Supported by {where(c)} ({check})" for c in conflict.supported_by]
+            if conflict.between_documents:
+                lines.append("  - The documents disagree on this point.")
+        return lines
+
+    def _verification_info(self, state: ResearchState, verdicts: list[ClaimVerdict]) -> VerificationInfo:
+        checked = [v.nli for v in verdicts if v.nli is not None]
+        order: tuple[SupportMethod, ...] = ("quote_match", "nli", "llm_judge")
+        used = {"quote_match"} if any(v.method != "none" for v in verdicts) else set()
+        used |= {"nli"} if checked else set()
+        used |= {"llm_judge"} if any(v.judge is not None for v in verdicts) else set()
+        counts: dict[str, int] = {}
+        for v in verdicts:
+            counts[v.status] = counts.get(v.status, 0) + 1
+        return VerificationInfo(
+            checks=[m for m in order if m in used],
+            nli_model=checked[0].model_id if checked else (self.deps.nli.model_id if self.deps.nli else None),
+            nli_thresholds_calibrated=self.deps.nli_thresholds.calibrated if self.deps.nli is not None else None,
+            nli_unavailable=state.nli_unavailable,
+            llm_judge_enabled=self.deps.llm_judge,
+            claims_by_status=counts,
+        )
 
     @staticmethod
     def _deterministic(verified: Iterable[ClaimVerdict]) -> str:

@@ -125,6 +125,16 @@
             "title": "Evidence Ids",
             "type": "array"
           },
+          "judge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JudgeCheck"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "kind": {
             "enum": [
               "fact",
@@ -142,6 +152,16 @@
             ],
             "title": "Method",
             "type": "string"
+          },
+          "nli": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NliVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "problems": {
             "items": {
@@ -184,6 +204,57 @@
           "problems"
         ],
         "title": "ClaimVerdict",
+        "type": "object"
+      },
+      "Conflict": {
+        "description": "A claim that cited evidence contradicts, with the contradicting and any supporting spans (ADR-0009).",
+        "properties": {
+          "between_documents": {
+            "title": "Between Documents",
+            "type": "boolean"
+          },
+          "claim_id": {
+            "title": "Claim Id",
+            "type": "string"
+          },
+          "claim_text": {
+            "title": "Claim Text",
+            "type": "string"
+          },
+          "contradicted_by": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Contradicted By",
+            "type": "array"
+          },
+          "method": {
+            "enum": [
+              "quote_match",
+              "nli",
+              "llm_judge",
+              "none"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "supported_by": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "title": "Supported By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "claim_id",
+          "claim_text",
+          "method",
+          "contradicted_by",
+          "supported_by",
+          "between_documents"
+        ],
+        "title": "Conflict",
         "type": "object"
       },
       "DateFact": {
@@ -747,6 +818,13 @@
             "title": "Claims",
             "type": "array"
           },
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/Conflict"
+            },
+            "title": "Conflicts",
+            "type": "array"
+          },
           "flags": {
             "items": {
               "type": "string"
@@ -772,6 +850,16 @@
             ],
             "title": "Rendering",
             "type": "string"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -823,6 +911,60 @@
           "qdrant"
         ],
         "title": "HealthOut",
+        "type": "object"
+      },
+      "JudgeCheck": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "span": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpanRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "verdict": {
+            "enum": [
+              "supported",
+              "contradicted",
+              "not_enough_info"
+            ],
+            "title": "Verdict",
+            "type": "string"
+          }
+        },
+        "required": [
+          "verdict",
+          "accepted",
+          "span",
+          "problems",
+          "model"
+        ],
+        "title": "JudgeCheck",
         "type": "object"
       },
       "LlmCallOut": {
@@ -942,6 +1084,76 @@
           "latency_ms"
         ],
         "title": "LlmCallOut",
+        "type": "object"
+      },
+      "NliScores": {
+        "description": "Class probabilities from an NLI model; they sum to 1.",
+        "properties": {
+          "contradiction": {
+            "title": "Contradiction",
+            "type": "number"
+          },
+          "entailment": {
+            "title": "Entailment",
+            "type": "number"
+          },
+          "neutral": {
+            "title": "Neutral",
+            "type": "number"
+          }
+        },
+        "required": [
+          "entailment",
+          "contradiction",
+          "neutral"
+        ],
+        "title": "NliScores",
+        "type": "object"
+      },
+      "NliVerdict": {
+        "properties": {
+          "combined": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NliScores"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "label": {
+            "enum": [
+              "supported",
+              "contradicted",
+              "not_enough_info"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "spans": {
+            "items": {
+              "$ref": "#/components/schemas/SpanSupport"
+            },
+            "title": "Spans",
+            "type": "array"
+          },
+          "thresholds_calibrated": {
+            "title": "Thresholds Calibrated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "label",
+          "model_id",
+          "thresholds_calibrated",
+          "spans"
+        ],
+        "title": "NliVerdict",
         "type": "object"
       },
       "RunCreate": {
@@ -1471,6 +1683,39 @@
         "title": "SpanRef",
         "type": "object"
       },
+      "SpanSupport": {
+        "description": "One cited span's NLI result for a claim.",
+        "properties": {
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "label": {
+            "enum": [
+              "supported",
+              "contradicted",
+              "not_enough_info"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "premise_chars": {
+            "title": "Premise Chars",
+            "type": "integer"
+          },
+          "scores": {
+            "$ref": "#/components/schemas/NliScores"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "label",
+          "scores",
+          "premise_chars"
+        ],
+        "title": "SpanSupport",
+        "type": "object"
+      },
       "SubmitOut": {
         "properties": {
           "status": {
@@ -1593,6 +1838,71 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VerificationInfo": {
+        "description": "Which checks decided the answer's claims, so the answer can say so.",
+        "properties": {
+          "checks": {
+            "items": {
+              "enum": [
+                "quote_match",
+                "nli",
+                "llm_judge",
+                "none"
+              ],
+              "type": "string"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "claims_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Claims By Status",
+            "type": "object"
+          },
+          "llm_judge_enabled": {
+            "title": "Llm Judge Enabled",
+            "type": "boolean"
+          },
+          "nli_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nli Model"
+          },
+          "nli_thresholds_calibrated": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nli Thresholds Calibrated"
+          },
+          "nli_unavailable": {
+            "title": "Nli Unavailable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "checks",
+          "nli_model",
+          "nli_thresholds_calibrated",
+          "nli_unavailable",
+          "llm_judge_enabled",
+          "claims_by_status"
+        ],
+        "title": "VerificationInfo",
         "type": "object"
       },
       "VersionTextOut": {

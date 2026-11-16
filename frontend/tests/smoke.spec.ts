@@ -2,7 +2,14 @@
 // `page.route`; the third goes through the real Next.js proxy to `stub-server.mts`. This checks the UI against
 // the OpenAPI-typed contract, not a live backend.
 import { expect, test } from "@playwright/test";
-import { QUOTE_INJECTION, QUOTE_RESULT, WORKSPACE, type Recorded } from "./fixtures.mts";
+import {
+  CONTRADICTED_CLAIM,
+  QUOTE_INJECTION,
+  QUOTE_LIMITS,
+  QUOTE_RESULT,
+  WORKSPACE,
+  type Recorded,
+} from "./fixtures.mts";
 import { mockBackend } from "./mock-backend";
 
 const STUB = `http://127.0.0.1:${process.env.STUB_PORT ?? 3199}`;
@@ -58,9 +65,20 @@ test("clicking a citation opens the right document, page and highlighted span (D
   await expect(viewer.locator("mark")).toHaveText(QUOTE_INJECTION);
   await expect(viewer.getByTestId("injection-warning")).toBeVisible();
 
-  // Limitations and conflicts panels.
-  await expect(page.getByRole("region", { name: "Limitations" })).toContainText("exact quote match only");
-  await expect(page.getByRole("region", { name: "Conflicts" })).toContainText("No contradicted claims");
+  // Limitations, claims and conflicts panels: which check was used, and the contradicted claim with its span.
+  await expect(page.getByRole("region", { name: "Limitations" })).toContainText("then by an NLI model");
+  await expect(page.getByTestId("checks-used")).toContainText("Checked by quote match, then NLI.");
+  await expect(page.getByTestId("checks-used")).toContainText("provisional thresholds (not calibrated yet)");
+  const conflicts = page.getByRole("region", { name: "Conflicts" });
+  await expect(conflicts.getByTestId("conflict")).toHaveCount(1);
+  await expect(conflicts).toContainText(CONTRADICTED_CLAIM);
+  await expect(conflicts).toContainText("contradicts");
+  await expect(conflicts).toContainText(QUOTE_LIMITS);
+  await conflicts.getByRole("button", { name: "Show conflicting evidence E3" }).click();
+  await expect(viewer.getByLabel("Current page")).toHaveText("Page 3 of 3");
+  await expect(viewer.locator("mark")).toHaveText(QUOTE_LIMITS);
+  await page.getByRole("button", { name: "Show evidence E2" }).first().click();
+  await expect(viewer.locator("mark")).toHaveText(QUOTE_INJECTION);
 
   // Feedback buttons post to the run's feedback endpoint.
   await page.getByRole("button", { name: "Helpful", exact: true }).click();

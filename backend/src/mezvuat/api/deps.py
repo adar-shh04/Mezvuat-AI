@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import secrets
 import threading
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from functools import lru_cache
 from typing import Annotated, Any
@@ -14,6 +14,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from sqlalchemy.orm import Session
 
 from mezvuat.api.runs import RunLimits, RunService
+from mezvuat.citations import NliScores, load_thresholds
 from mezvuat.core.config import Settings, get_settings
 from mezvuat.core.errors import MezvuatError, NotFoundError
 from mezvuat.inference import DataPolicy, LLMClient, build_llm_client
@@ -96,6 +97,26 @@ def get_reranker() -> CrossEncoderReranker:
     return CrossEncoderReranker.from_model_id(settings.reranker_model_id, device=settings.ml_device)
 
 
+@lru_cache
+def get_nli() -> Any:
+    from mezvuat.ml.nli import CrossEncoderNli
+
+    settings = get_settings()
+    return CrossEncoderNli.from_model_id(settings.nli_model_id, device=settings.nli_device)
+
+
+class LazyNli:
+    """Loads the NLI model on the first claim to verify. A load failure surfaces in `verify`, which falls back."""
+
+    @property
+    def model_id(self) -> str:
+        return get_settings().nli_model_id
+
+    def predict(self, pairs: Sequence[tuple[str, str]]) -> list[NliScores]:
+        scores: list[NliScores] = get_nli().predict(pairs)
+        return scores
+
+
 class LazyEmbedder:
     """Loads the embedding model on first use, so lexical-only searches never pay for it."""
 
@@ -167,6 +188,10 @@ def production_workflow(run_id: str, workspace_id: str, mode: RetrievalMode) -> 
             temporal=PostgresTemporalSource(sessions),
             recorder=SqlCallRecorder(sessions, workspace_id),
             max_call_timeout_s=min(60.0, settings.run_deadline_s),
+            nli=LazyNli() if settings.nli_enabled else None,
+            nli_thresholds=load_thresholds(settings.nli_thresholds_file),
+            llm_judge=settings.verify_llm_judge,
+            max_judge_calls=settings.verify_max_judge_calls,
         )
 
 

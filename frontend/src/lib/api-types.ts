@@ -267,6 +267,7 @@ export interface components {
             claim_id: string;
             /** Evidence Ids */
             evidence_ids: string[];
+            judge?: components["schemas"]["JudgeCheck"] | null;
             /**
              * Kind
              * @enum {string}
@@ -277,6 +278,7 @@ export interface components {
              * @enum {string}
              */
             method: "quote_match" | "nli" | "llm_judge" | "none";
+            nli?: components["schemas"]["NliVerdict"] | null;
             /** Problems */
             problems: string[];
             /** Spans */
@@ -288,6 +290,27 @@ export interface components {
             status: "supported" | "partially_supported" | "unsupported" | "contradicted" | "unverifiable";
             /** Text */
             text: string;
+        };
+        /**
+         * Conflict
+         * @description A claim that cited evidence contradicts, with the contradicting and any supporting spans (ADR-0009).
+         */
+        Conflict: {
+            /** Between Documents */
+            between_documents: boolean;
+            /** Claim Id */
+            claim_id: string;
+            /** Claim Text */
+            claim_text: string;
+            /** Contradicted By */
+            contradicted_by: components["schemas"]["Citation"][];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "quote_match" | "nli" | "llm_judge" | "none";
+            /** Supported By */
+            supported_by: components["schemas"]["Citation"][];
         };
         /** DateFact */
         DateFact: {
@@ -446,6 +469,8 @@ export interface components {
             citations: components["schemas"]["Citation"][];
             /** Claims */
             claims: components["schemas"]["ClaimVerdict"][];
+            /** Conflicts */
+            conflicts?: components["schemas"]["Conflict"][];
             /** Flags */
             flags: string[];
             /** Limitations */
@@ -457,6 +482,7 @@ export interface components {
              * @enum {string}
              */
             rendering: "model" | "deterministic";
+            verification?: components["schemas"]["VerificationInfo"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -474,6 +500,21 @@ export interface components {
              * @enum {string}
              */
             status: "ok" | "degraded";
+        };
+        /** JudgeCheck */
+        JudgeCheck: {
+            /** Accepted */
+            accepted: boolean;
+            /** Model */
+            model: string | null;
+            /** Problems */
+            problems: string[];
+            span: components["schemas"]["SpanRef"] | null;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "supported" | "contradicted" | "not_enough_info";
         };
         /** LlmCallOut */
         LlmCallOut: {
@@ -499,6 +540,33 @@ export interface components {
             task_type: string;
             /** Workflow Node */
             workflow_node: string | null;
+        };
+        /**
+         * NliScores
+         * @description Class probabilities from an NLI model; they sum to 1.
+         */
+        NliScores: {
+            /** Contradiction */
+            contradiction: number;
+            /** Entailment */
+            entailment: number;
+            /** Neutral */
+            neutral: number;
+        };
+        /** NliVerdict */
+        NliVerdict: {
+            combined?: components["schemas"]["NliScores"] | null;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "supported" | "contradicted" | "not_enough_info";
+            /** Model Id */
+            model_id: string;
+            /** Spans */
+            spans: components["schemas"]["SpanSupport"][];
+            /** Thresholds Calibrated */
+            thresholds_calibrated: boolean;
         };
         /** RunCreate */
         RunCreate: {
@@ -675,6 +743,22 @@ export interface components {
              */
             status: "ok" | "unknown_evidence" | "not_cited_by_claim" | "not_found" | "too_short" | "too_long";
         };
+        /**
+         * SpanSupport
+         * @description One cited span's NLI result for a claim.
+         */
+        SpanSupport: {
+            /** Evidence Id */
+            evidence_id: string;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "supported" | "contradicted" | "not_enough_info";
+            /** Premise Chars */
+            premise_chars: number;
+            scores: components["schemas"]["NliScores"];
+        };
         /** SubmitOut */
         SubmitOut: {
             /**
@@ -722,6 +806,26 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * VerificationInfo
+         * @description Which checks decided the answer's claims, so the answer can say so.
+         */
+        VerificationInfo: {
+            /** Checks */
+            checks: ("quote_match" | "nli" | "llm_judge" | "none")[];
+            /** Claims By Status */
+            claims_by_status: {
+                [key: string]: number;
+            };
+            /** Llm Judge Enabled */
+            llm_judge_enabled: boolean;
+            /** Nli Model */
+            nli_model: string | null;
+            /** Nli Thresholds Calibrated */
+            nli_thresholds_calibrated: boolean | null;
+            /** Nli Unavailable */
+            nli_unavailable: boolean;
         };
         /**
          * VersionTextOut

@@ -54,6 +54,15 @@ class Settings(BaseSettings):
     embedding_model_id: str = "BAAI/bge-small-en-v1.5"
     reranker_model_id: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
     ml_device: Literal["auto", "cpu", "cuda"] = "auto"
+    # Claim verification (ADR-0009 amendment, 2026-11-16). The NLI model runs on CPU unless told otherwise.
+    nli_enabled: bool = True
+    nli_model_id: str = "cross-encoder/nli-deberta-v3-small"
+    nli_device: Literal["auto", "cpu", "cuda"] = "cpu"
+    # Written by `mezvuat-dataset nli-calibrate`. Without it the thresholds are the provisional, uncalibrated rule.
+    nli_thresholds_file: Path = Path("../data/domain/nli/v1/thresholds.json")
+    # The LLM judge for claims NLI leaves undecided: off until it has been checked against the owner's labels.
+    verify_llm_judge: bool = False
+    verify_max_judge_calls: int = Field(default=3, ge=0)
     index_version: str = "v1"
 
     upload_max_bytes: int = Field(default=50 * 1024 * 1024, gt=0)

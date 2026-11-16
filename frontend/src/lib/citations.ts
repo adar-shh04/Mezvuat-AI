@@ -75,3 +75,14 @@ export function describeDates(dates: ReadonlyArray<Pick<DateFact, "kind" | "valu
 export function citationsFor(citations: ReadonlyArray<Citation>, evidenceId: string): Citation[] {
   return citations.filter((c) => c.evidence_id === evidenceId);
 }
+
+/** The spans of one conflict (contradicting and supporting) for an evidence id. */
+export function conflictCitationsFor(
+  conflicts: ReadonlyArray<{ claim_id: string; contradicted_by: Citation[]; supported_by: Citation[] }> | undefined,
+  claimId: string,
+  evidenceId: string,
+): Citation[] {
+  const conflict = conflicts?.find((c) => c.claim_id === claimId);
+  if (!conflict) return [];
+  return citationsFor([...conflict.contradicted_by, ...conflict.supported_by], evidenceId);
+}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage, type RetrievalMode, type RunOut, type Workspace } from "@/lib/api";
-import { citationsFor } from "@/lib/citations";
+import { citationsFor, conflictCitationsFor } from "@/lib/citations";
 import {
   EVENT_NAMES,
   TERMINAL_EVENTS,
@@ -27,7 +27,8 @@ type Turn = {
   error: string | null;
 };
 
-type Selection = { turnKey: string; evidenceId: string } | null;
+// `conflictClaimId` set: the evidence was opened from the conflicts panel, so its conflict spans are shown.
+type Selection = { turnKey: string; evidenceId: string; conflictClaimId?: string } | null;
 
 const MODES: Array<{ value: RetrievalMode; label: string }> = [
   { value: "hybrid_rrf", label: "Hybrid (BM25 + dense)" },
@@ -148,7 +149,9 @@ export function ResearchChat({ workspaceId }: { workspaceId: string }) {
   const selectedTurn = selection ? turns.find((t) => t.key === selection.turnKey) : undefined;
   const selectedCitations =
     selection && selectedTurn?.progress.answer
-      ? citationsFor(selectedTurn.progress.answer.citations, selection.evidenceId)
+      ? selection.conflictClaimId
+        ? conflictCitationsFor(selectedTurn.progress.answer.conflicts, selection.conflictClaimId, selection.evidenceId)
+        : citationsFor(selectedTurn.progress.answer.citations, selection.evidenceId)
       : [];
   const running = turns.some((t) => t.progress.status === "queued" || t.progress.status === "running");
 
@@ -182,6 +185,9 @@ export function ResearchChat({ workspaceId }: { workspaceId: string }) {
                 workspaceId={workspaceId}
                 selected={selection?.turnKey === turn.key ? selection.evidenceId : null}
                 onCite={(evidenceId) => setSelection({ turnKey: turn.key, evidenceId })}
+                onConflictCite={(claimId, evidenceId) =>
+                  setSelection({ turnKey: turn.key, evidenceId, conflictClaimId: claimId })
+                }
               />
             ))}
           </section>
@@ -227,7 +233,7 @@ export function ResearchChat({ workspaceId }: { workspaceId: string }) {
         <aside className="sticky">
           {selection && selectedCitations.length > 0 ? (
             <EvidenceViewer
-              key={`${selection.turnKey}-${selection.evidenceId}`}
+              key={`${selection.turnKey}-${selection.conflictClaimId ?? ""}-${selection.evidenceId}`}
               workspaceId={workspaceId}
               citations={selectedCitations}
               onClose={() => setSelection(null)}
@@ -249,11 +255,13 @@ function TurnView({
   workspaceId,
   selected,
   onCite,
+  onConflictCite,
 }: {
   turn: Turn;
   workspaceId: string;
   selected: string | null;
   onCite: (evidenceId: string) => void;
+  onConflictCite: (claimId: string, evidenceId: string) => void;
 }) {
   const { progress, run } = turn;
   const answer = progress.answer;
@@ -292,7 +300,7 @@ function TurnView({
           <BackendBadges run={run} summary={run?.summary} />
           {turn.runId && <FeedbackButtons workspaceId={workspaceId} runId={turn.runId} />}
           <LimitationsPanel answer={answer} />
-          <ConflictsPanel answer={answer} />
+          <ConflictsPanel answer={answer} onCite={onConflictCite} />
           {turn.runId && <ClaimsPanel answer={answer} workspaceId={workspaceId} runId={turn.runId} onCite={onCite} />}
         </>
       )}

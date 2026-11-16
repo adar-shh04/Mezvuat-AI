@@ -82,3 +82,35 @@ def get_reranker_spec(model_id: str) -> RerankerSpec:
         return RERANKERS[model_id]
     except KeyError as exc:
         raise ValueError(f"unknown reranker model {model_id!r}; add it to the registry") from exc
+
+
+@dataclass(frozen=True)
+class NliSpec:
+    """An NLI cross-encoder. `labels` is the model's output order (its `config.json` `id2label`)."""
+
+    model_id: str
+    revision: str
+    labels: tuple[str, str, str]
+    max_length: int = 512
+    licence: str = ""
+
+
+NLI_MODELS: dict[str, NliSpec] = {
+    spec.model_id: spec
+    for spec in (
+        # Apache-2.0; base model microsoft/deberta-v3-small is MIT. ADR-0009 amendment of 2026-11-16.
+        NliSpec(
+            "cross-encoder/nli-deberta-v3-small",
+            "fa2804872c3b4bd748f38c0185cc85775361e735",
+            ("contradiction", "entailment", "neutral"),
+            licence="Apache-2.0",
+        ),
+    )
+}
+
+
+def get_nli_spec(model_id: str) -> NliSpec:
+    try:
+        return NLI_MODELS[model_id]
+    except KeyError as exc:
+        raise ValueError(f"unknown NLI model {model_id!r}; add it to the registry") from exc

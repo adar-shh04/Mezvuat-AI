@@ -7,6 +7,7 @@ validation; the final answer replaces it), `answer_final`, then exactly one of `
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from typing import Annotated
 
@@ -17,9 +18,12 @@ from starlette.concurrency import run_in_threadpool
 from mezvuat.api.deps import get_run_service, require_api_key, workspace_data_policy
 from mezvuat.api.runs import BusEvent, RunService, sse_format
 from mezvuat.api.schemas import FeedbackCreate, FeedbackOut, RunCreate, RunCreated, RunErrorOut, RunOut
+from mezvuat.core.config import get_settings
 from mezvuat.core.errors import NotFoundError
 from mezvuat.inference import DataPolicy
 from mezvuat.orchestration import RunFilters
+from mezvuat.persistence.db import get_session_factory
+from mezvuat.persistence.modelmesh_outbox import enqueue_run_thumbs
 
 router = APIRouter(
     prefix="/api/v1/workspaces/{workspace_id}/runs", tags=["research"], dependencies=[Depends(require_api_key)]
@@ -27,6 +31,7 @@ router = APIRouter(
 RunServiceDep = Annotated[RunService, Depends(get_run_service)]
 PolicyDep = Annotated[DataPolicy, Depends(workspace_data_policy)]
 KEEPALIVE_S = 15.0
+log = logging.getLogger(__name__)
 
 
 @router.post("", status_code=202, response_model=RunCreated)
@@ -114,4 +119,11 @@ def create_feedback(workspace_id: str, run_id: str, body: FeedbackCreate, servic
     )
     if row is None:
         raise NotFoundError("run not found")
+    if body.claim_id is None and get_settings().modelmesh_url is not None:
+        # A rating on the whole answer is shared by every ModelMesh request of the run (`attribution: workflow`).
+        # It is queued, not sent, so the user's click never waits on ModelMesh.
+        try:
+            enqueue_run_thumbs(get_session_factory(), run_id, body.rating, row["created_at"])
+        except Exception:  # The rating is stored either way; forwarding it is best effort.
+            log.exception("could not queue the rating for ModelMesh", extra={"run_id": run_id})
     return FeedbackOut(**row)

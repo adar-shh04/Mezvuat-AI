@@ -6,6 +6,7 @@ import logging
 import signal
 import socket
 import threading
+import time
 from types import FrameType
 
 import httpx
@@ -14,6 +15,7 @@ from mezvuat.core.clock import utcnow
 from mezvuat.core.config import Settings, get_settings
 from mezvuat.core.errors import MezvuatError, ValidationFailedError
 from mezvuat.core.logging import configure_logging
+from mezvuat.inference import modelmesh_ops
 from mezvuat.ingestion.pipeline import (
     IngestionContext,
     ingest_version,
@@ -24,6 +26,7 @@ from mezvuat.ml.models import HfTokenCounter, SentenceTransformerEmbedder
 from mezvuat.ml.registry import get_embedder_spec
 from mezvuat.persistence.blobstore import LocalBlobStore
 from mezvuat.persistence.db import get_session_factory
+from mezvuat.persistence.modelmesh_outbox import drain_outbox
 from mezvuat.persistence.models import IngestionJob, Workspace
 from mezvuat.persistence.qdrant import QdrantDenseIndex, collection_name
 from mezvuat.persistence.repositories import claim_next_job, recompute_classification, requeue_stale_jobs
@@ -129,7 +132,19 @@ def main() -> None:
     with factory() as session:
         requeue_stale_jobs(session)
         session.commit()
+    # ModelMesh side effects (M8): drained between jobs, at most every 30 s, and with short retries so a down
+    # ModelMesh never stalls ingestion.
+    ops = modelmesh_ops(settings)
+    if ops is not None:
+        ops.max_retries, ops.max_wait_s = 1, 5.0
+    next_drain = 0.0
     while not _stop.is_set():
+        if ops is not None and time.monotonic() >= next_drain:
+            try:
+                drain_outbox(factory, ops)
+            except Exception:
+                log.exception("ModelMesh outbox drain failed")
+            next_drain = time.monotonic() + 30.0
         worked = run_one(ctx)
         if not worked:
             _stop.wait(settings.worker_poll_interval_s)

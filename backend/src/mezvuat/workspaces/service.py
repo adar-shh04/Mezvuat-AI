@@ -1,4 +1,5 @@
-"""Workspace lifecycle. Deleting a workspace removes its rows, vectors, lexical index and unshared blobs."""
+"""Workspace lifecycle. Deleting a workspace removes its rows, vectors, lexical index and unshared blobs, and queues
+the ModelMesh clean-up (its cache namespace and the feedback on its requests) when ModelMesh is configured."""
 
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from mezvuat.core.errors import NotFoundError
 from mezvuat.core.ids import new_id
 from mezvuat.persistence.blobstore import BlobStore
+from mezvuat.persistence.modelmesh_outbox import enqueue_workspace_cleanup
 from mezvuat.persistence.models import DocumentVersion, Workspace
 from mezvuat.persistence.qdrant import QdrantDenseIndex
 from mezvuat.retrieval.lexical import WorkspaceLexicalIndexStore
@@ -40,6 +42,8 @@ def delete_workspace(
     dense: QdrantDenseIndex,
     lexical: WorkspaceLexicalIndexStore,
     blobs: BlobStore,
+    modelmesh_cleanup: bool = False,
+    cache_namespace: str | None = None,
 ) -> None:
     workspace = get_workspace(session, workspace_id)
     digests = {
@@ -51,6 +55,9 @@ def delete_workspace(
     }
     # Vectors go first: if this fails, the rows remain and the delete can simply be retried.
     dense.delete_workspace(workspace_id)
+    if modelmesh_cleanup:
+        # Same transaction as the delete: the clean-up is queued exactly when the workspace is gone.
+        enqueue_workspace_cleanup(session, workspace_id, cache_namespace)
     session.delete(workspace)
     session.commit()
     lexical.delete_workspace(workspace_id)

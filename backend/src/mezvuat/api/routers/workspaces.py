@@ -4,7 +4,15 @@ from collections.abc import Sequence
 
 from fastapi import APIRouter, Depends, Response, status
 
-from mezvuat.api.deps import SessionDep, get_blob_store, get_dense_index, get_lexical_store, require_api_key
+from mezvuat.api.deps import (
+    SessionDep,
+    SettingsDep,
+    get_blob_store,
+    get_dense_index,
+    get_lexical_store,
+    modelmesh_namespace,
+    require_api_key,
+)
 from mezvuat.api.schemas import WorkspaceCreate, WorkspaceOut
 from mezvuat.persistence.models import Workspace
 from mezvuat.workspaces import service
@@ -28,12 +36,14 @@ def get_workspace(workspace_id: str, session: SessionDep) -> Workspace:
 
 
 @router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_workspace(workspace_id: str, session: SessionDep) -> Response:
+def delete_workspace(workspace_id: str, session: SessionDep, settings: SettingsDep) -> Response:
     service.delete_workspace(
         session,
         workspace_id,
         dense=get_dense_index(),
         lexical=get_lexical_store(),
         blobs=get_blob_store(),
+        modelmesh_cleanup=settings.modelmesh_url is not None,
+        cache_namespace=modelmesh_namespace(settings, workspace_id),
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

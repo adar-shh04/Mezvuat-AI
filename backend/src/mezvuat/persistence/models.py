@@ -299,3 +299,25 @@ class RunFeedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     __table_args__ = (CheckConstraint("rating IN ('up', 'down')", name="ck_feedback_rating"),)
+
+
+class ModelMeshOutbox(Base):
+    """Durable queue of ModelMesh side effects (M8): feedback batches, and the cache purge and feedback deletion a
+    workspace deletion requires. No foreign key on purpose: the rows must outlive the workspace they clean up."""
+
+    __tablename__ = "modelmesh_outbox"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    kind: Mapped[str] = mapped_column(String(20))
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(String(12), server_default="queued")
+    attempts: Mapped[int] = mapped_column(Integer, server_default=text("0"))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        CheckConstraint("kind IN ('cache_invalidate', 'feedback_delete', 'feedback_post')", name="ck_outbox_kind"),
+        CheckConstraint("status IN ('queued', 'done', 'failed')", name="ck_outbox_status"),
+        Index("ix_outbox_claim", "status", "created_at"),
+    )

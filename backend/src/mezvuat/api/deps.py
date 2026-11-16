@@ -18,7 +18,8 @@ from mezvuat.api.runs import RunLimits, RunService
 from mezvuat.citations import NliScores, load_thresholds
 from mezvuat.core.config import Settings, get_settings
 from mezvuat.core.errors import MezvuatError, NotFoundError
-from mezvuat.inference import DataPolicy, LLMClient, build_llm_client
+from mezvuat.inference import DataPolicy, InferenceRejectedError, LLMClient, build_llm_client, namespace_secret
+from mezvuat.inference.modelmesh import ModelMeshClient, cache_namespace
 from mezvuat.ml.models import CrossEncoderReranker, SentenceTransformerEmbedder
 from mezvuat.ml.registry import get_embedder_spec
 from mezvuat.orchestration import RunFilters, WorkflowDeps, checkpoint_serializer, memory_checkpointer
@@ -166,6 +167,23 @@ class PipelineSearch:
 @lru_cache
 def get_llm_client() -> LLMClient:
     return build_llm_client(get_settings())
+
+
+def negotiate_modelmesh() -> None:
+    """Start-up negotiation (ADR-0011). A contract mismatch is a hard failure: the API does not start."""
+    client = get_llm_client()
+    if isinstance(client, ModelMeshClient):
+        client.negotiate()
+
+
+def modelmesh_namespace(settings: Settings, workspace_id: str) -> str | None:
+    """The workspace's ModelMesh cache namespace, or None when ModelMesh or the secret is not configured."""
+    if settings.modelmesh_url is None:
+        return None
+    try:
+        return cache_namespace(namespace_secret(settings), workspace_id)
+    except InferenceRejectedError:
+        return None
 
 
 _checkpointer_lock = threading.Lock()

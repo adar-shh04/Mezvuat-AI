@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-from mezvuat.api.deps import get_dense_index, preload_nli
+from mezvuat.api.deps import get_dense_index, negotiate_modelmesh, preload_nli
 from mezvuat.api.routers import documents, runs, search, workspaces
 from mezvuat.api.schemas import HealthOut
 from mezvuat.core.config import get_settings
@@ -35,6 +35,8 @@ def create_app() -> FastAPI:
         # The NLI model takes tens of seconds to load on CPU; load it before the first run needs it.
         if settings.nli_enabled and settings.mezvuat_env != "test":
             threading.Thread(target=preload_nli, name="nli-preload", daemon=True).start()
+        if settings.inference_mode != "direct":
+            negotiate_modelmesh()
         yield
 
     app = FastAPI(title="Mezvuat AI", version="0.1.0", lifespan=lifespan)

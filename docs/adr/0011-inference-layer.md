@@ -269,6 +269,51 @@ The product owner chose public cloud for the public corpus and local models for 
 - **Ollama structured output** was checked live on Ollama 0.40.16 with `llama3.2:3b`: `response_format: json_schema` is honoured through the OpenAI-compatible endpoint.
 - `INFERENCE_MODE=modelmesh*` fails at start-up with `inference_mode_unsupported` until M8.
 
+## Amendment, 2026-11-17: the ModelMesh client as built in M8 (tested against a mocked ModelMesh only)
+
+Code: `backend/src/mezvuat/inference/modelmesh/`. No request has been sent to a real ModelMesh yet; live integration
+is a later step.
+
+- **Wire models are hand-written, and checked against the spec instead of generated.** The client parses only the
+  fields it uses (`ContractInfo`, `RoutingCalibration`, the `modelmesh` block, `FeedbackRequest`). Contract tests
+  load `docs/contract/openapi-v1.yaml` and check, with `jsonschema` (MIT, dev only): every request body the client
+  sends, every mocked response, the parse models' required fields against the spec's, and that every extension the
+  builder can emit is defined in `RoutingOptions` or `CacheOptions`. The fallback tests are parametrised over every
+  error status the spec lists for `POST /v1/chat/completions`. The mocks serve the spec's own examples.
+- **Negotiation.** `GET /v1/contract` is read lazily on the first call and cached for 10 minutes; the API also reads
+  it at start-up, and a missing `routing.data_policy` or `cache.namespace`, or a major version other than 1, stops
+  the API (`inference_contract_mismatch`). An unreachable ModelMesh at start-up is only logged. Calibration is cached
+  for an hour; when it cannot be read, nothing counts as calibrated (retried after a minute).
+- **`cache.context_fingerprint`** hashes `{v, workspace_id, prompt_version, sorted[(chunk_id, version_id,
+  sha256(chunk text))]}`: the SHA-256 of the text actually shown, rather than the version's `text_sha256`, so a
+  re-chunked or edited passage also changes the key. Cache `mode` is `exact` for deterministic calls and `off` for
+  `final_response` or any sampled call without a seed.
+- **`cache.namespace`** uses `MEZVUAT_SECRET_KEY` as the HMAC secret; ModelMesh modes refuse to start without it.
+- **`traceparent`.** The active OpenTelemetry span's trace id when there is one (Langfuse, M6); otherwise a trace id
+  derived from the run id, so every call of a run shares one trace id. A fresh span id per call.
+  `modelmesh.trace_id` is stored in `llm_call.modelmesh_trace_id`.
+- **`end_user_id` is not sent**: Mezvuat has no per-user identity yet (one shared API key).
+- **Retries.** Network errors: one retry with jitter, then fallback. 500/502/503/504: at most two retries (honouring
+  `Retry-After`), then fallback. A 200 with an unreadable body counts as unavailable. A 400 `unknown_parameter`
+  re-reads the contract and resends once. A 422 while requiring `json_schema_strict` resends once with `json_schema`.
+- **Streams.** The client raises `StreamIncompleteError` on `stream_interrupted` or a missing `[DONE]`; the respond
+  node already discards the partial text (`answer_reset`) and retries once with a new `X-Request-ID`. Only failures
+  before the commit point fall back; a stream that started on ModelMesh never switches backend.
+- **Circuit breaker** counts failed *calls* (after their retries), not HTTP attempts. 4xx and 429 reset the count.
+- **Recording.** Every attempt becomes an `llm_call` row with `backend`, the `mmr_` id, the trace id, cache status,
+  estimated cost and, on direct attempts made in fallback, `fallback_reason` (`modelmesh_503`,
+  `modelmesh_unreachable`, `circuit_open`, ...). The run summary lists the backends and fallback reasons, and the UI
+  badges show them.
+- **Outbox (migration 0004).** Workspace deletion queues `POST /v1/cache/invalidate {namespace}` and
+  `DELETE /v1/feedback/{mmr id}` for every ModelMesh request of the workspace, in the deleting transaction. A rating
+  on a whole answer queues `user_thumbs` labels (`user_signal`, `attribution: workflow`, never training-eligible) for
+  the run's requests. The worker drains the queue at most every 30 s and pauses while ModelMesh is down. A second,
+  different rating of the same run is a `conflict` and is logged, not overwritten. Evaluation labels (M6) use the
+  same poster, `ModelMeshOps.post_feedback`.
+- **Combined benchmark**: `mezvuat-exp combined-benchmark` (`evaluation/combined_benchmark.py`). ModelMesh arms run
+  without fallback and pin the routing policy for every task type. Not run yet; see
+  `docs/eval/combined_benchmark/report.md`.
+
 ## Consequences
 
 - Mezvuat runs without ModelMesh: public workspaces need a Groq key, private workspaces need Ollama. ModelMesh adds routing, caching and telemetry with no node changes.

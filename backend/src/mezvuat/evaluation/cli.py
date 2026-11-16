@@ -22,7 +22,28 @@ def main() -> None:
     report = sub.add_parser("report")
     report.add_argument("summaries", type=Path, nargs="+")
     report.add_argument("--out", type=Path, required=True)
+    bench = sub.add_parser("combined-benchmark", help="direct vs ModelMesh routing policies (M8); see the module doc")
+    bench.add_argument("--items", type=Path, required=True, help="gold eval items, JSONL with item_id and question")
+    bench.add_argument("--workspace", required=True, help="a verified public-corpus workspace id (decision D1)")
+    bench.add_argument(
+        "--arms",
+        default="direct,modelmesh:cost_optimized,modelmesh:quality_balanced,modelmesh:latency_optimized",
+        help="comma-separated: direct and modelmesh:<policy>",
+    )
+    bench.add_argument("--limit", type=int, default=None, help="only the first N items")
+    bench.add_argument("--no-mlflow", action="store_true", help="skip MLflow logging")
+    bench.add_argument("--out", type=Path, required=True, help="directory for results.json and report.md")
     args = parser.parse_args()
+    if args.command == "combined-benchmark":
+        from mezvuat.evaluation import combined_benchmark as cb
+
+        arms = [cb.Arm.parse(a.strip()) for a in args.arms.split(",") if a.strip()]
+        items = cb.read_items(args.items)[: args.limit]
+        run_item, fetch = cb.production_runner(args.workspace, arms)
+        result = cb.run_benchmark(items, arms, run_item, fetch)
+        mlflow_runs = None if args.no_mlflow else cb.log_to_mlflow(result.summary())
+        print(cb.write_outputs(args.out, result, mlflow_runs))
+        return
     if args.command == "report":
         args.out.write_text(render(args.summaries), encoding="utf-8", newline="\n")
         return

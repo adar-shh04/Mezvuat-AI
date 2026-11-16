@@ -101,6 +101,93 @@ Each claim gets one status: `supported`, `partially_supported`, `unsupported`, `
 - **No markers outside verified claims.** Model text shown anywhere other than a verified claim's markers is stripped of bracketed citation-like text: claim text, dropped-claim notes, gaps, and document titles in the Sources section.
 - **Measured.** The adversarial suite (`tests/unit/test_adversarial.py`) has 22 hostile documents and a scripted model that obeys them. In all 22, no unknown citation and no prompt text reaches the answer. The heuristics flag 20 of the 22; the 2 they miss are deliberately subtle. They flag 0 of 8 benign controls. On real papers, 16 of 2,261 chunks (0.71%) are flagged, in 60 demo-corpus papers with one version each. These are mostly papers that quote prompt templates. Nobody has checked these flags by hand, so they are not a precision figure.
 
+## Amendment, 2026-11-16: the NLI verifier, the judge fallback and conflicts (M5, part 3)
+
+**Model.** [`cross-encoder/nli-deberta-v3-small`](https://huggingface.co/cross-encoder/nli-deberta-v3-small), pinned at revision `fa2804872c3b4bd748f38c0185cc85775361e735` (`ml/registry.py`).
+- **Licence:** Apache-2.0, per the model card and the Hub's licence tag (checked 2026-11-16). This is compatible with AGPL-3.0, which is decision D7.
+- **Base model:** `microsoft/deberta-v3-small`, under the MIT licence.
+- **Training data:** SNLI and MultiNLI. The weights carry the model's own licence. The datasets' licences cover the data, which is not redistributed here.
+- **Size:** 141.9M parameters, most of them in the 128k-token embedding table, with 6 transformer layers. The fp32 `model.safetensors` is 567.6 MB.
+- **Output order:** `contradiction, entailment, neutral`, from the model's `config.json` `id2label`. The adapter checks this order at load time and refuses a model whose order differs.
+- **Card accuracy:** 91.65 on SNLI test and 87.55 on MNLI mismatched. These are the card's figures; they are not measured on this corpus.
+- **Why not the others:** `-base` is about twice the size, and `-xsmall` is weaker on the card. Either can replace it once the owner's labels show the difference.
+
+**CPU only.** The verifier uses `NLI_DEVICE=cpu` by default. A run scores only a handful of claims, and the GPU stays free.
+- **Measured on the dev machine** (Intel family 6 model 141, 6 torch threads, CUDA hidden), on the 150 calibration pairs (mean premise 383 characters):
+  - one pair per call: median 231 ms, p95 586 ms, maximum 1,435 ms;
+  - all 150 in batches of 16: 155 ms per pair.
+- **Load time:** 33 s, which is why the API preloads the model in a background thread at start-up.
+- **Caveat:** the ModelMesh benchmark was using the machine at the same time, so these are not clean-machine numbers.
+- **Run time:** a claim citing one span is one pair. `verify` scores all its claims in a single batched call.
+- **Memory:** loading the model added about 680 MB to the process working set, and about 830 MB after a batch of 16. This was measured natively on Windows.
+- **Compose:** the API container's 1200m limit already holds the embedder and the reranker, so compose sets `NLI_ENABLED=false` by default. This is not verified in a container. Raising the limit, then setting `NLI_ENABLED=true`, turns NLI on there.
+
+**Premise and labels.**
+- **Premise:** the verified quote is widened to whole sentences, plus one sentence on each side (`premise_window`), and capped at 1,500 characters around the quote. Sentence splitting skips common abbreviations in papers, such as "et al." and "e.g.".
+- **Per span:** each span gets `supported` if p(entailment) ≥ τ_e, or `contradicted` if p(contradiction) ≥ τ_c. If both thresholds pass, the higher probability wins. Otherwise the label is `not_enough_info`.
+- **Several spans:** a claim citing several spans is also scored against the spans' joined premises, so a claim that combines two facts can still be entailed.
+- **Per claim:**
+  - `contradicted` if any span contradicts the claim;
+  - otherwise `supported` if any span, or the joined premise, entails it;
+  - otherwise `not_enough_info`.
+- **Thresholds:** there is no calibrated τ yet. Until `nli-calibrate` writes `data/domain/nli/v1/thresholds.json`, τ_e = τ_c = 0.5. Every answer states that this rule is "provisional: not calibrated", and so does `verification.nli_thresholds_calibrated`.
+
+**Statuses.** This refines the 2026-11-14 amendment.
+
+| Outcome | `status` | `method` | In the answer |
+|---|---|---|---|
+| Quote check fails | `unsupported` | `none` | Dropped after the one re-synthesis |
+| NLI entails | `supported` | `nli` | Kept |
+| NLI contradicts | `contradicted` | `nli` | Gets the one re-synthesis, then is dropped and listed under **Conflicting evidence** |
+| NLI undecided | `partially_supported` | `quote_match` | Kept. The answer says it rests on the verbatim quote only |
+| No NLI model configured | `supported` | `quote_match` | Kept, with the M4 quote-only limitation |
+| NLI failed or no time left | `supported` | `quote_match` | Kept. The answer says the verifier was unavailable |
+
+- **Why undecided claims are kept.** The thresholds are uncalibrated, and the ADR already expects NLI to be weak on long technical passages. Dropping every undecided claim would make the system abstain too often. This choice is revisited once calibration has run.
+- **When NLI is skipped.** NLI is skipped when less than `nli_min_time_s` (10 s) of the run deadline is left. Any exception from the model is caught. Neither case fails the run.
+
+**LLM judge** (step 3). It is off by default (`VERIFY_LLM_JUDGE=false`) until its agreement with the owner's labels has been measured.
+- **Where it runs.** Behind `LLMClient` with `task_type=citation_verification`, a JSON schema, temperature 0, prompt `judge_claim@1` and the run's data policy (decision D1).
+- **Which claims.** Only claims that NLI left undecided. It makes at most `VERIFY_MAX_JUDGE_CALLS` calls per verification (default 3).
+- **Budget.** It runs only when the call budget still has room for the response, so it never uses the call held back for the answer.
+- **Accepting a verdict.** A `supported` or `contradicted` verdict counts only when its quote passes `check_quote` against the claim's cited evidence. Otherwise the verdict is recorded with `accepted: false` and the NLI outcome stands.
+- **Deviation from the original decision.** The original text said such a claim is "downgraded to `unverifiable`". That would drop a claim that NLI alone would have kept, just because the judge misquoted. A judge mistake should not make the outcome worse.
+- **Failures.** A judge failure, including a fatal inference error, stops further judge calls for that verification. It never fails the run.
+- **Tests.** The judge is tested with scripted fakes only. It has made no live call.
+
+**Conflicting evidence.**
+- **What is listed.** Every contradicted claim, together with:
+  - the spans that contradict it: the NLI-contradicting spans, or the judge's verified span;
+  - any cited spans that support it.
+- **Data.** `FinalAnswer.conflicts` holds them as `Citation`s, with pages, offsets and dates by kind. `between_documents` is true when the contradicting and supporting spans come from different documents.
+- **Markdown.** The section names evidence ids without brackets, because they are not answer citations. The `[E#]` rule above therefore still holds.
+- **Frontend.** The conflicts panel reads the conflicts and opens each span in the evidence viewer.
+- **Which check was used.** `FinalAnswer.verification` records the checks that ran, the NLI model, whether the thresholds are calibrated, whether NLI was unavailable, and claim counts by status. The answer's limitations say the same in words.
+
+**Calibration set** (`data/domain/nli/v1/`, `mezvuat-dataset nli-pairs`).
+- **Source.** 150 claim and evidence pairs from 29 papers of the val family split, so tuning stays on validation data (ADR-0007). They are built from the public demo corpus without any LLM.
+- **Ollama was not used.** The 4 GB GPU held the benchmark's `qwen3:4b`, and loading a second model would have disturbed it.
+- **The premise** is the verifier's own window.
+- **Methods.** Each method has an *expected* label by construction. This label is a prior for balancing the sample, not gold.
+  - **Supported, 50:** `sentence_verbatim` 12 and `sentence_rewrite` 38. A rewrite drops an opener, a reporting frame, a parenthetical or a trailing subordinate clause.
+  - **Contradicted, 50:** `perturb_number` 15, `perturb_negation` 13, `perturb_antonym` 16 and `perturb_swap` 6. A swap exchanges two system names in a comparative sentence.
+  - **Neutral, 50:** `same_passage_far` 20, `same_paper_other_passage` 18 and `other_paper` 12. In each, the premise is the most word-overlapping window that does not contain the claim, and near-duplicates are excluded.
+- **Limits per paper and per sentence.** At most 9 pairs come from one paper. Each source sentence is used once.
+- **Text filters.** References, formulas and fragments are filtered out.
+- **Order.** Pairs are shuffled, so their ids say nothing about the method.
+
+**Review** (`.\scripts\review.ps1 nli`).
+- **No suggestion of any kind is shown**, following the D2 amendment of 2026-11-14. The screen does not show the construction method, the expected label or any model score.
+- **Saving.** Labels are appended to `data/domain/nli/v1/review.human.jsonl` as supported, contradicted, neutral or unusable, with a fingerprint of the text shown. The review can be resumed, and an undo is a retraction record.
+- **Workload:** about 0.8 to 1.5 hours (EST, 20 to 35 s a pair).
+
+**Calibration** (`mezvuat-dataset nli-calibrate`). It refuses to run without at least 20 owner labels for each class.
+- **Search.** It scores the labelled pairs on CPU and grid-searches τ_e and τ_c from 0.10 to 0.95 in steps of 0.05, using the verifier's own rule.
+- **Objective.** Macro-F1, among the points where the precision of `supported` is at least 0.9. A false "supported" hides a gap, so it is the costly error. Ties go to the stricter thresholds.
+- **Report.** Stratified 5-fold cross-validation, with the provisional rule for comparison.
+- **Output.** `thresholds.json`, which the API loads through `NLI_THRESHOLDS_FILE`, and `calibration_report.json`.
+- **Status.** It has been tested on synthetic labels only. **No threshold has been calibrated and none is claimed.**
+
 ## Consequences
 
 - **Citations are verifiable by construction.** The UI can highlight the exact span on the exact page.

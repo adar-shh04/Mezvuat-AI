@@ -16,6 +16,10 @@ x-backend: &backend
     QDRANT_URL: http://qdrant:6333
     ML_DEVICE: cpu
     MEZVUAT_API_KEY: ${MEZVUAT_API_KEY:-}
+    # The NLI verifier adds about 0.7-0.85 GB to the API process (measured natively on Windows, 2026-11-16), which
+    # is unlikely to fit beside the embedder and reranker in the 1200m API limit (not tried). Off in compose until the
+    # limit is raised; claims then keep the quote-match check and the answer says so. NLI_ENABLED=true turns it on.
+    NLI_ENABLED: ${NLI_ENABLED:-false}
   volumes:
     - app_data:/data
     - hf_cache:/cache/hf

@@ -235,7 +235,7 @@ export const ANSWER: S["FinalAnswer"] = {
 
 const NODES = ["understand_query", "plan_research", "retrieve", "assess_evidence", "synthesize", "verify", "respond"];
 
-export function sseBody(runId: string): string {
+export function sseBody(runId: string, summary: S["RunSummaryOut"] = SUMMARY): string {
   const events: Array<[string, unknown]> = [
     ["run_queued", { run_id: runId }],
     ["run_started", { run_id: runId }],
@@ -244,7 +244,7 @@ export function sseBody(runId: string): string {
     ["answer_delta", { text: "hybrid retrieval improved ranking quality." }],
     ["answer_final", { rendering: "model" }],
     ["node", { node: "respond" }],
-    ["run_completed", { run_id: runId, answer: ANSWER, summary: SUMMARY }],
+    ["run_completed", { run_id: runId, answer: ANSWER, summary }],
   ];
   return events.map(([event, data], i) => `id: ${i + 1}\nevent: ${event}\ndata: ${JSON.stringify(data)}\n\n`).join("");
 }
@@ -263,7 +263,23 @@ const SUMMARY: S["RunSummaryOut"] = {
   completion_tokens: 700,
 };
 
+// A question mentioning ModelMesh gets a run whose ModelMesh calls stopped halfway and fell back to Groq (M8).
+export const FALLBACK_QUESTION = "What changed when ModelMesh stopped mid-run?";
+
+function summaryFor(question: string): S["RunSummaryOut"] {
+  if (!question.includes("ModelMesh")) return SUMMARY;
+  return {
+    ...SUMMARY,
+    llm_calls: 5,
+    backend: "modelmesh+direct",
+    backends: ["modelmesh", "direct"],
+    fallback: true,
+    fallback_reasons: ["modelmesh_unreachable"],
+  };
+}
+
 function runOut(runId: string, question: string): S["RunOut"] {
+  if (question.includes("ModelMesh")) return fallbackRunOut(runId, question);
   const call = (node: string, task: string): S["LlmCallOut"] => ({
     client_request_id: `req_${node}`,
     workflow_node: node,
@@ -295,6 +311,55 @@ function runOut(runId: string, question: string): S["RunOut"] {
       call("assess_evidence", "evidence_assessment"),
       call("synthesize", "evidence_synthesis"),
       call("respond", "final_response"),
+    ],
+  };
+}
+
+function fallbackRunOut(runId: string, question: string): S["RunOut"] {
+  const base = runOut(runId, "plain");
+  const template = base.llm_calls[0]!;
+  const mesh = (node: string, task: string, mmr: string, cache: string): S["LlmCallOut"] => ({
+    ...template,
+    client_request_id: `req_${node}`,
+    workflow_node: node,
+    task_type: task,
+    backend: "modelmesh",
+    model: "groq/openai/gpt-oss-20b",
+    modelmesh_request_id: mmr,
+    modelmesh_trace_id: "4bf92f3577b34da6a3ce929d0e0e4736",
+    cache_status: cache,
+    cost_estimated_usd: 0.0002,
+  });
+  const failed = (node: string, task: string): S["LlmCallOut"] => ({
+    ...template,
+    client_request_id: `req_${node}_mm`,
+    workflow_node: node,
+    task_type: task,
+    backend: "modelmesh",
+    provider: "modelmesh",
+    model: "auto",
+    status: "error",
+    error_code: "ConnectError",
+    prompt_tokens: null,
+    completion_tokens: null,
+  });
+  const direct = (node: string, task: string): S["LlmCallOut"] => ({
+    ...template,
+    client_request_id: `req_${node}`,
+    workflow_node: node,
+    task_type: task,
+    fallback_reason: "modelmesh_unreachable",
+  });
+  return {
+    ...base,
+    question,
+    summary: summaryFor(question),
+    llm_calls: [
+      mesh("understand_query", "query_classification", "mmr_01JC3ZR2A4B6C8D0E2F4G6H8J0", "hit_exact"),
+      mesh("assess_evidence", "evidence_assessment", "mmr_01JC3ZR2A4B6C8D0E2F4G6H8J1", "miss"),
+      failed("synthesize", "evidence_synthesis"),
+      direct("synthesize", "evidence_synthesis"),
+      direct("respond", "final_response"),
     ],
   };
 }
@@ -377,7 +442,7 @@ export function createMockApi() {
     if (runMatch && runs.has(runMatch[1]!)) {
       const runId = runMatch[1]!;
       if (method === "GET" && runMatch[2] === "/events") {
-        return { status: 200, contentType: "text/event-stream", body: sseBody(runId) };
+        return { status: 200, contentType: "text/event-stream", body: sseBody(runId, summaryFor(runs.get(runId)!)) };
       }
       if (method === "GET" && !runMatch[2]) return reply(200, runOut(runId, runs.get(runId)!));
       if (method === "POST" && runMatch[2] === "/feedback") {

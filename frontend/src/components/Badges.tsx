@@ -43,16 +43,25 @@ export function IngestionBadge({ status }: { status: string }) {
 }
 
 /**
- * Which inference path answered. Until M8 the only path is the direct backend; a run that fell back from
- * ModelMesh will carry `fallback: true` in its summary, or calls on more than one backend.
+ * Which inference path answered, from the run's `llm_calls` rows and summary (M8). A call answered by a direct
+ * backend because ModelMesh could not serve it carries `fallback_reason`; the summary lists the reasons. Cost is
+ * ModelMesh's estimate and is shown only when ModelMesh reported one.
  */
 export function BackendBadges({ run, summary }: { run: Pick<RunOut, "data_policy" | "llm_calls"> | null; summary?: RunSummary | null }) {
   const calls: LlmCall[] = run?.llm_calls ?? [];
-  const backends = [...new Set(calls.map((c) => c.backend))];
-  const backend = summary?.backend ?? backends[0] ?? null;
+  const backends = summary?.backends?.length ? [...summary.backends] : [...new Set(calls.map((c) => c.backend))];
+  if (!backends.length && summary?.backend) backends.push(summary.backend);
   const providers = summary?.providers?.length ? summary.providers : [...new Set(calls.map((c) => c.provider).filter(Boolean))];
   const models = [...new Set(calls.map((c) => c.model).filter(Boolean))];
-  const fallback = summary?.fallback === true || backends.length > 1;
+  const fallbackCalls = calls.filter((c) => c.fallback_reason && c.status === "ok");
+  const reasons = summary?.fallback_reasons?.length
+    ? summary.fallback_reasons
+    : [...new Set(calls.map((c) => c.fallback_reason).filter((r): r is string => Boolean(r)))];
+  const fallback = summary?.fallback === true || reasons.length > 0;
+  const cacheHits = calls.filter((c) => c.cache_status?.startsWith("hit")).length;
+  const costs = calls.map((c) => c.cost_estimated_usd).filter((c): c is number => typeof c === "number");
+  const cost = costs.length ? costs.reduce((a, b) => a + b, 0) : null;
+  const answered = calls.filter((c) => c.status === "ok").length;
   return (
     <div className="row" aria-label="Inference details">
       {run && (
@@ -63,7 +72,11 @@ export function BackendBadges({ run, summary }: { run: Pick<RunOut, "data_policy
           {run.data_policy === "local_only" ? "local only" : "cloud allowed (public corpus)"}
         </Badge>
       )}
-      {backend && <Badge tone="info">backend: {backend}</Badge>}
+      {backends.map((b) => (
+        <Badge key={b} tone="info">
+          backend: {b}
+        </Badge>
+      ))}
       {providers.map((p) => (
         <Badge key={p}>provider: {p}</Badge>
       ))}
@@ -71,11 +84,27 @@ export function BackendBadges({ run, summary }: { run: Pick<RunOut, "data_policy
         <Badge key={m}>model: {m}</Badge>
       ))}
       {fallback ? (
-        <Badge tone="warn" title="The primary backend was unavailable for at least one call">
-          fallback used
-        </Badge>
+        <>
+          <Badge
+            tone="warn"
+            title={`ModelMesh could not serve ${fallbackCalls.length} of ${answered} answered calls; a direct backend answered them under the same data policy`}
+          >
+            fallback used
+          </Badge>
+          {reasons.map((r) => (
+            <Badge key={r} tone="warn">
+              fallback reason: {r}
+            </Badge>
+          ))}
+        </>
       ) : (
-        backend && <Badge tone="ok">no fallback</Badge>
+        backends.length > 0 && <Badge tone="ok">no fallback</Badge>
+      )}
+      {cacheHits > 0 && <Badge title="Calls ModelMesh answered from its cache">cache hits: {cacheHits}</Badge>}
+      {cost !== null && (
+        <Badge title="ModelMesh's estimate from its pricing tables; not billing data">
+          est. cost ${cost.toFixed(5)}
+        </Badge>
       )}
     </div>
   );

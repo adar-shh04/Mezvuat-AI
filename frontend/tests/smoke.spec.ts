@@ -4,6 +4,7 @@
 import { expect, test } from "@playwright/test";
 import {
   CONTRADICTED_CLAIM,
+  FALLBACK_QUESTION,
   QUOTE_INJECTION,
   QUOTE_LIMITS,
   QUOTE_RESULT,
@@ -93,6 +94,25 @@ test("clicking a citation opens the right document, page and highlighted span (D
   await expect(page.getByLabel("Current page")).toHaveText("Page 1 of 3");
   await expect(page.getByTestId("page-text").locator("mark")).toHaveText(QUOTE_INJECTION);
 
+  expect(backend.unmatched).toEqual([]);
+});
+
+test("a run that fell back from ModelMesh shows its backends, the fallback reason, cache hits and cost (M8)", async ({
+  page,
+}) => {
+  const backend = await mockBackend(page);
+  await page.goto(`/workspaces/${WORKSPACE.id}/research`);
+  await page.getByRole("textbox", { name: "Question" }).fill(FALLBACK_QUESTION);
+  await page.getByRole("button", { name: "Ask" }).click();
+  await expect(page.getByTestId("run-status")).toHaveText("Completed");
+  const badges = page.getByLabel("Inference details");
+  await expect(badges).toContainText("backend: modelmesh");
+  await expect(badges).toContainText("backend: direct");
+  await expect(badges).toContainText("fallback used");
+  await expect(badges).toContainText("fallback reason: modelmesh_unreachable");
+  await expect(badges).not.toContainText("no fallback");
+  await expect(badges).toContainText("cache hits: 1");
+  await expect(badges).toContainText("est. cost $0.00040");
   expect(backend.unmatched).toEqual([]);
 });
 

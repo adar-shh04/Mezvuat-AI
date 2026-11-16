@@ -24,6 +24,7 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from mezvuat.core.ids import new_id
 from mezvuat.inference import DataPolicy
+from mezvuat.observability.tracing import NoopTracer, RunTracer
 from mezvuat.orchestration import Budget, ResearchState, RunEvent, RunFilters, WorkflowDeps, build_graph, run_to_end
 from mezvuat.retrieval.types import RetrievalMode
 
@@ -136,8 +137,10 @@ class RunService:
         concurrency: int,
         bus: RunEventBus | None = None,
         clock: Callable[[], float] = time.time,
+        tracer: RunTracer | None = None,
     ) -> None:
         self.store = store
+        self.tracer: RunTracer = tracer or NoopTracer()
         self.bus = bus or RunEventBus()
         self._workflow = workflow
         self._checkpointer = checkpointer
@@ -197,7 +200,8 @@ class RunService:
 
             with self._workflow(run_id, workspace_id, mode) as deps:
                 graph = build_graph(deps, self._checkpointer())
-                final = run_to_end(graph, initial, forward)
+                with self.tracer.run(run_id, metadata={"workspace_id": workspace_id, "retrieval_mode": mode}) as cbs:
+                    final = run_to_end(graph, initial, forward, callbacks=cbs)
         except Exception as exc:  # A bug or an unexpected outage: record it, never leave the run "running".
             log.exception("research run crashed", extra={"run_id": run_id})
             message = f"internal error ({type(exc).__name__})"

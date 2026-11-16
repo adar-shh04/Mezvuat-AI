@@ -149,6 +149,7 @@ class ResearchNodes:
     def _records(
         self, state: ResearchState, node: str, task_type: str, prompt: Prompt, attempts: Sequence[LLMAttempt], mode: str
     ) -> list[LLMCallRecord]:
+        trace_id = self.deps.langfuse_trace_id(state.run_id)
         return [
             LLMCallRecord(
                 client_request_id=a.client_request_id,
@@ -175,6 +176,7 @@ class ResearchNodes:
                 cache_status=a.cache_status,
                 cost_estimated_usd=a.cost_estimated_usd,
                 fallback_reason=a.fallback_reason,
+                langfuse_trace_id=trace_id,
             )
             for a in attempts
         ]

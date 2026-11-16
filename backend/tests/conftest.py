@@ -25,6 +25,8 @@ os.environ.update(
         "INFERENCE_MODE": "direct",
         "DIRECT_PUBLIC_BACKEND": "groq",
         "RUN_CHECKPOINTER": "memory",
+        # RAGAS sends anonymous usage events unless this is set.
+        "RAGAS_DO_NOT_TRACK": "true",
     }
 )
 

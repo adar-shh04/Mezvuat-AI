@@ -89,9 +89,15 @@ class RunEvent:
     data: dict[str, Any]
 
 
-def stream_run(graph: CompiledStateGraph[Any], initial: ResearchState) -> Iterator[RunEvent]:
-    """Run to completion, yielding progress. The final state is read back from the checkpointer."""
+def stream_run(
+    graph: CompiledStateGraph[Any], initial: ResearchState, callbacks: list[Any] | None = None
+) -> Iterator[RunEvent]:
+    """Run to completion, yielding progress. The final state is read back from the checkpointer.
+
+    `callbacks` are LangChain callback handlers (the Langfuse tracer, M6); they never change the run's outcome."""
     config = run_config(initial.run_id)
+    if callbacks:
+        config["callbacks"] = callbacks
     for mode, chunk in graph.stream(initial, config, stream_mode=["updates", "custom"]):
         if mode == "updates":
             for node in chunk:
@@ -107,9 +113,12 @@ def final_state(graph: CompiledStateGraph[Any], run_id: str) -> ResearchState:
 
 
 def run_to_end(
-    graph: CompiledStateGraph[Any], initial: ResearchState, on_event: Callable[[RunEvent], None] | None = None
+    graph: CompiledStateGraph[Any],
+    initial: ResearchState,
+    on_event: Callable[[RunEvent], None] | None = None,
+    callbacks: list[Any] | None = None,
 ) -> ResearchState:
-    for event in stream_run(graph, initial):
+    for event in stream_run(graph, initial, callbacks):
         if on_event is not None:
             on_event(event)
     return final_state(graph, initial.run_id)

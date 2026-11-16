@@ -75,6 +75,14 @@ def enqueue_run_thumbs(
         return len(items)
 
 
+def enqueue_feedback(sessions: sessionmaker[Session], items: Sequence[FeedbackItem], batch: int = 500) -> int:
+    """Queue evaluation labels (M6) for `POST /v1/feedback/batch`, at most `batch` per outbox row."""
+    with sessions.begin() as session:
+        for start in range(0, len(items), batch):
+            _add(session, "feedback_post", {"items": [item.wire() for item in items[start : start + batch]]})
+    return len(items)
+
+
 def _run(ops: OutboxOps, row: ModelMeshOutbox) -> None:
     payload = row.payload
     if row.kind == "cache_invalidate":

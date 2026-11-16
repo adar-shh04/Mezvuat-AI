@@ -167,6 +167,7 @@ class SqlCallRecorder:
                         modelmesh_request_id=r.modelmesh_request_id,
                         modelmesh_trace_id=r.modelmesh_trace_id,
                         fallback_reason=r.fallback_reason,
+                        langfuse_trace_id=r.langfuse_trace_id,
                         prompt_tokens=r.prompt_tokens,
                         completion_tokens=r.completion_tokens,
                         usage_source=r.usage_source,

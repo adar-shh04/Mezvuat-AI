@@ -111,6 +111,50 @@ The spec asks for RAGAS plus custom metrics, and splits the tools: Langfuse for 
 
 **MLflow:** tracking server in compose (ADR-0014). Postgres backend store (the same Postgres instance, a separate `mlflow` database) and a local artifact volume.
 
+## Amendment, 2026-11-17: M6 scaffolding as built (tested with fakes only; no evaluation has run)
+
+The owner's labels are not finished, so nothing here has produced a number yet. The commands are in
+`docs/eval/answer_eval/README.md`.
+
+- **Pluggable judge** (`evaluation/judge.py`): anything with `model` and `structured(prompt, response_model)`.
+  Production judges use Mezvuat's own `LLMClient` with `task_type: evaluation_judge`, a pinned `model`, temperature 0
+  and seed 0, so ModelMesh gets `routing.fallback: "none"`, `cache.mode: "exact"` and no `min_quality` from the same
+  code as every other call. **This replaces the planned httpx transport hook on RAGAS's OpenAI client**: RAGAS calls
+  the judge through a thin `InstructorBaseRagasLLM` adapter instead, so no OpenAI client is involved. The direct judge
+  is Groq with the model pinned. Judge calls always send `data_policy: "any"`, so the runner refuses any workspace
+  that is not a verified public-corpus workspace (D1).
+- **RAGAS 0.4.4** (`evaluation/ragas_metrics.py`, `eval` group): `Faithfulness`, `AnswerRelevancy` (Mezvuat's own
+  embedder through a `BaseRagasEmbedding` adapter), `ContextPrecisionWithReference`, `ContextRecall`. Missing inputs
+  (no reference, no contexts, an abstained answer) skip a metric; NaN is "not scored". RAGAS's output models were
+  checked to fit the portable schema subset, so strict JSON schema works for the judge. RAGAS analytics are turned
+  off (`RAGAS_DO_NOT_TRACK=true`) before RAGAS is imported.
+- **Custom metrics** (`evaluation/answer_metrics.py`): `citation_validity`, `citation_support_rate`,
+  `citation_precision`/`citation_recall` (against `gold_chunk_ids`), `unsupported_claim_rate`, `claims_dropped`,
+  `abstention_correct`, `temporal_accuracy`, and per-run calls, tokens, LLM latency and ModelMesh's estimated cost
+  (absent on the direct path, never estimated by Mezvuat). A metric that does not apply to an item is absent, not 0.
+- **Batch runner** (`evaluation/answer_eval.py`, `mezvuat-exp answer-eval`): every gold item through the full
+  workflow per retrieval configuration (`bm25`, `dense`, `hybrid_rrf`, `hybrid_rrf_rerank`); an MLflow parent run with
+  one nested run per configuration; per-item rows and the Langfuse trace ids as MLflow artifacts; `results.json` and
+  `report.md` generated from the same rows. `--post-feedback` queues ModelMesh labels through the M8 outbox:
+  `faithfulness` on the synthesis request and `answer_relevancy` on the final answer (`attribution: direct`), and
+  `task_success` on every request of the run (`attribution: workflow`). `eval_results` is not a table: the rows live
+  in `results.json` and in MLflow, joined to `llm_call` by `run_id`.
+- **Gold items**: `mezvuat-exp export-gold` merges the temporal drafts with the owner's latest review decision
+  (read-only; rejected and unreviewed items are left out). Domain test questions need reference answers and gold
+  chunk ids in the same JSONL format before they can join.
+- **MLflow**: local SQLite at `X:/mezvuat-cache/mlflow/mlflow.db` through `MLFLOW_TRACKING_URI` (set by
+  `scripts/dev-env.sh`), not the compose tracking server, while memory is tight.
+- **Langfuse** (`observability/tracing.py`): `langfuse` moved to the runtime dependencies, because tracing happens in
+  the API. With either key unset, or the SDK missing, tracing is a no-op. One trace per run, with the trace id derived
+  from the run id (`Langfuse.create_trace_id(seed=run_id)`), stored in every `llm_call.langfuse_trace_id`; the
+  LangChain callback handler traces the graph. The `mask` function runs in the process before export and replaces
+  every string that is not an identifier with its length and a short hash; `LANGFUSE_CAPTURE_CONTENT=true` turns
+  that off. Tests run the real SDK with an in-memory exporter and check that the question, the documents and the
+  system prompt never reach it, and that runs still complete when export fails or tracing cannot start. User ratings
+  become a `user_thumbs` score on the run's trace. While a run is traced, its OpenTelemetry span is current, so the
+  `traceparent` sent to ModelMesh carries the Langfuse trace id; whether ModelMesh's `trace_id` then equals it is
+  checked at live integration.
+
 ## Consequences
 
 - The eval group is heavy, but it never ships in the API image.

@@ -114,6 +114,8 @@ class LLMCallRecord(BaseModel):
     cache_status: str | None = None
     cost_estimated_usd: float | None = None
     fallback_reason: str | None = None
+    # The run's Langfuse trace id (M6), when tracing is on.
+    langfuse_trace_id: str | None = None
 
 
 class Budget(BaseModel):

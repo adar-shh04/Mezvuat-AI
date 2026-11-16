@@ -72,3 +72,5 @@ class WorkflowDeps:
     # The LLM judge for claims NLI leaves undecided. Off until its agreement with the owner's labels is measured.
     llm_judge: bool = False
     max_judge_calls: int = 3
+    # The run's Langfuse trace id (M6); stored on every `llm_call` row. None when tracing is off.
+    langfuse_trace_id: Callable[[str], str | None] = field(default=lambda _run_id: None)

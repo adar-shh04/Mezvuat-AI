@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     run_concurrency: int = Field(default=2, gt=0)
     run_checkpointer: Literal["postgres", "memory"] = "postgres"
 
+    # Langfuse (ADR-0012, decision D3). Unset keys mean no tracing. Content is masked unless capture is turned on.
+    langfuse_host: str | None = None
+    langfuse_public_key: SecretStr | None = None
+    langfuse_secret_key: SecretStr | None = None
+    langfuse_capture_content: bool = False
+
     embedding_model_id: str = "BAAI/bge-small-en-v1.5"
     reranker_model_id: str = "cross-encoder/ms-marco-MiniLM-L6-v2"
     ml_device: Literal["auto", "cpu", "cuda"] = "auto"

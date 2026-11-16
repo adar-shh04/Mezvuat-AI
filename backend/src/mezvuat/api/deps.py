@@ -22,6 +22,7 @@ from mezvuat.inference import DataPolicy, InferenceRejectedError, LLMClient, bui
 from mezvuat.inference.modelmesh import ModelMeshClient, cache_namespace
 from mezvuat.ml.models import CrossEncoderReranker, SentenceTransformerEmbedder
 from mezvuat.ml.registry import get_embedder_spec
+from mezvuat.observability.tracing import RunTracer, build_tracer
 from mezvuat.orchestration import RunFilters, WorkflowDeps, checkpoint_serializer, memory_checkpointer
 from mezvuat.persistence.blobstore import LocalBlobStore
 from mezvuat.persistence.db import get_session_factory
@@ -226,13 +227,31 @@ def production_workflow(run_id: str, workspace_id: str, mode: RetrievalMode) -> 
             nli_thresholds=load_thresholds(settings.nli_thresholds_file),
             llm_judge=settings.verify_llm_judge,
             max_judge_calls=settings.verify_max_judge_calls,
+            langfuse_trace_id=get_tracer().trace_id,
         )
+
+
+def _secret(value: Any) -> str | None:
+    return value.get_secret_value() if value is not None and value.get_secret_value() else None
+
+
+@lru_cache
+def get_tracer() -> RunTracer:
+    """Langfuse when both keys are set (decision D3: optional, masked by default); otherwise a no-op."""
+    settings = get_settings()
+    return build_tracer(
+        public_key=_secret(settings.langfuse_public_key),
+        secret_key=_secret(settings.langfuse_secret_key),
+        host=settings.langfuse_host,
+        capture_content=settings.langfuse_capture_content,
+    )
 
 
 @lru_cache
 def get_run_service() -> RunService:
     settings = get_settings()
     return RunService(
+        tracer=get_tracer(),
         store=SqlRunStore(get_session_factory()),
         workflow=production_workflow,
         checkpointer=get_checkpointer,

@@ -119,6 +119,9 @@ def create_feedback(workspace_id: str, run_id: str, body: FeedbackCreate, servic
     )
     if row is None:
         raise NotFoundError("run not found")
+    if body.claim_id is None:
+        # Langfuse score on the run's trace (no-op when tracing is off); never content, only the rating.
+        service.tracer.score(run_id, "user_thumbs", 1.0 if body.rating == "up" else 0.0)
     if body.claim_id is None and get_settings().modelmesh_url is not None:
         # A rating on the whole answer is shared by every ModelMesh request of the run (`attribution: workflow`).
         # It is queued, not sent, so the user's click never waits on ModelMesh.

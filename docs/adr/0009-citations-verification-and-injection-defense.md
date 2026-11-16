@@ -113,7 +113,7 @@ Each claim gets one status: `supported`, `partially_supported`, `unsupported`, `
 - **Why not the others:** `-base` is about twice the size, and `-xsmall` is weaker on the card. Either can replace it once the owner's labels show the difference.
 
 **CPU only.** The verifier uses `NLI_DEVICE=cpu` by default. A run scores only a handful of claims, and the GPU stays free.
-- **Measured on the dev machine** (Intel family 6 model 141, 6 torch threads, CUDA hidden), on the 150 calibration pairs (mean premise 383 characters):
+- **Measured on the dev machine** (Intel family 6 model 141, 6 torch threads, CUDA hidden), on the 150 v1 calibration pairs (mean premise 383 characters):
   - one pair per call: median 231 ms, p95 586 ms, maximum 1,435 ms;
   - all 150 in batches of 16: 155 ms per pair.
 - **Load time:** 33 s, which is why the API preloads the model in a background thread at start-up.
@@ -173,8 +173,14 @@ Each claim gets one status: `supported`, `partially_supported`, `unsupported`, `
   - **Contradicted, 50:** `perturb_number` 15, `perturb_negation` 13, `perturb_antonym` 16 and `perturb_swap` 6. A swap exchanges two system names in a comparative sentence.
   - **Neutral, 50:** `same_passage_far` 20, `same_paper_other_passage` 18 and `other_paper` 12. In each, the premise is the most word-overlapping window that does not contain the claim, and near-duplicates are excluded.
 - **Limits per paper and per sentence.** At most 9 pairs come from one paper. Each source sentence is used once.
-- **Text filters.** References, formulas and fragments are filtered out.
+- **Text filters.** References, formulas, fragments and quoted prompt templates are filtered out. So are chunks and sentences with glued text, meaning a run of 28 or more letters where PDF extraction lost the spaces.
 - **Order.** Pairs are shuffled, so their ids say nothing about the method.
+- **Version 2 (2026-11-16, `nli-pairs-v2`).** A review of v1 found about 10 of the 50 perturbations that changed no meaning or broke the text. The set was rebuilt before any labelling, with the same 150 pairs, 50/50/50 balance and method counts. Perturbations now skip:
+  - **numbers** inside `[...]` citations, years, versions, licences, dataset names and venues, ordinals, dash ranges, ratios, and parts of grouped numbers. A grouped number is changed whole or not at all, and measured numbers are preferred.
+  - **antonyms** that are deictic or positional words, fixed terms, idioms and discourse markers;
+  - **swaps** unless two distinct systems, not metrics, stand on either side of a comparison in one clause;
+  - **negations** next to a word that already negates, in sentences that are already negative, or where "have" or "do" is the main verb.
+- **Rejection counts.** `manifest.json` (`rejection_audit`) counts how often each rule fires over the whole candidate pool.
 
 **Review** (`.\scripts\review.ps1 nli`).
 - **No suggestion of any kind is shown**, following the D2 amendment of 2026-11-14. The screen does not show the construction method, the expected label or any model score.

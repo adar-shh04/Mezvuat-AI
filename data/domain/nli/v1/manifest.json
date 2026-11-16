@@ -1,9 +1,9 @@
 {
- "generator_version": "nli-pairs-v1",
+ "generator_version": "nli-pairs-v2",
  "seed": 13,
  "family_split": "val",
  "corpus_digest": "c23031f00a996b7a72254a0c1200a4d9d344872873fc4358688e0a5cfd17a4f1",
- "pairs_sha256": "20c24302aa478a15a7cae1bfe6cbe0ad6c7b0cd6dc12b6c20056136e93c01249",
+ "pairs_sha256": "9795ca6a7e4a28f1138e1aa7a4f3b2d79c1a17033faebb775c75e07f387e9bd4",
  "quotas": {
   "sentence_verbatim": {
    "expected": "supported",
@@ -63,6 +63,43 @@
   },
   "papers": 29
  },
- "method": "Claim/evidence pairs for calibrating the NLI thresholds (ADR-0009, M5 part 3).\n\nEvery pair is built from the public demo corpus without an LLM. A claim is a sentence of a passage, a light rewrite\nof it, a perturbation meant to contradict it, or a sentence from elsewhere; the premise is what the verifier would\nsee for that sentence: the sentence with one neighbour on each side (`premise_window`). Each method has an\n*expected* label by construction, which is a prior for balancing the sample, never a gold label: the owner labels\nevery pair without seeing it (D2 amendment of 2026-11-14).\n\nMethods, by expected label:\n- supported: `sentence_verbatim` (the sentence itself, an easy anchor) and `sentence_rewrite` (a discourse opener,\n  reporting frame such as \"we show that\", trailing parenthetical or subordinate clause removed).\n- contradicted: `perturb_number` (one number changed), `perturb_negation` (a negation added or removed),\n  `perturb_antonym` (one directional word swapped, e.g. higher/lower), `perturb_swap` (two named systems swapped in\n  a comparative sentence).\n- neutral: `same_passage_far` (a sentence of the same passage outside the premise window), `same_paper_other_passage`\n  (a sentence of another section of the same paper, against the most word-overlapping window there) and\n  `other_paper` (the most word-overlapping window of a different paper).\n\nPapers come from the `val` family split only (ADR-0007): thresholds are tuned on validation data.",
- "built_at": "2026-11-16T15:37:50.396231+00:00"
+ "rejection_audit": {
+  "candidate_sentences": 5196,
+  "glued_text_chunks_excluded": 34,
+  "glued_text_papers": [
+   "Bringing Agentic Search to Earth Observation Data Discovery",
+   "Querit-Reranker: Training Compact Multilingual Rerankers via Efficient Label-Free Distribution Adaptation",
+   "RAG-Stack: Co-Optimizing RAG Serving Performance and Quality"
+  ],
+  "rejections": {
+   "antonym:deictic_or_positional_word": 104,
+   "antonym:fixed_term_idiom_or_discourse_marker": 66,
+   "antonym:no_directional_word": 4184,
+   "negation:have_or_do_as_main_verb": 60,
+   "negation:negative_word_at_insertion_point": 187,
+   "negation:no_auxiliary": 2761,
+   "negation:sentence_already_negative": 467,
+   "number:after_a_name": 53,
+   "number:end_of_a_dash_range": 110,
+   "number:inside_citation_brackets": 602,
+   "number:no_valid_replacement": 44,
+   "number:not_a_measurement_or_comparison": 607,
+   "number:section_table_or_figure_number": 284,
+   "number:version_licence_dataset_or_venue": 17,
+   "number:year": 147,
+   "swap:first_name_is_not_the_subject": 2,
+   "swap:name_repeated": 2,
+   "swap:names_contain_each_other": 5,
+   "swap:no_comparative_relation": 5032,
+   "swap:no_name_on_both_sides": 142
+  },
+  "perturbations_possible": {
+   "perturb_antonym": 1012,
+   "perturb_negation": 1721,
+   "perturb_number": 476,
+   "perturb_swap": 13
+  }
+ },
+ "method": "Claim/evidence pairs for calibrating the NLI thresholds (ADR-0009, M5 part 3).\n\nEvery pair is built from the public demo corpus without an LLM. A claim is a sentence of a passage, a light rewrite\nof it, a perturbation meant to contradict it, or a sentence from elsewhere; the premise is what the verifier would\nsee for that sentence: the sentence with one neighbour on each side (`premise_window`). Each method has an\n*expected* label by construction, which is a prior for balancing the sample, never a gold label: the owner labels\nevery pair without seeing it (D2 amendment of 2026-11-14).\n\nMethods, by expected label:\n- supported: `sentence_verbatim` (the sentence itself, an easy anchor) and `sentence_rewrite` (a discourse opener,\n  reporting frame such as \"we show that\", trailing parenthetical or subordinate clause removed).\n- contradicted: `perturb_number` (one number changed), `perturb_negation` (a negation added or removed),\n  `perturb_antonym` (one directional word swapped, e.g. higher/lower), `perturb_swap` (two named systems swapped in\n  a comparative sentence).\n- neutral: `same_passage_far` (a sentence of the same passage outside the premise window), `same_paper_other_passage`\n  (a sentence of another section of the same paper, against the most word-overlapping window there) and\n  `other_paper` (the most word-overlapping window of a different paper).\n\nPapers come from the `val` family split only (ADR-0007): thresholds are tuned on validation data.\n\nPerturbations must change what the claim says, so they skip (v2, after a review of v1):\n- numbers inside `[...]` citations, years, section/table/figure numbers, versions, licences, dataset names and\n  venues (\"Apache 2.0\", \"SQuAD 2.0\", \"CIKM '26\"), ordinals, dash ranges, ratios, and digits that are part of a\n  larger grouped number (a grouped number is changed whole or not at all); measured numbers (%, x, points,\n  tokens, ...) are preferred, and an unmeasured number is used only in a comparative sentence;\n- deictic and positional words (above, below, earlier, later, former, latter), fixed terms (\"large language\n  models\", \"high-level\"), idioms (\"no longer\", \"how many\", \"to better ...\") and discourse markers (\"More broadly,\");\n- swaps unless two distinct systems stand on either side of a comparative relation in the same clause (not\n  metrics, not names that contain each other, not a name that is the object of a preposition);\n- negations next to a word that already negates (\"insufficient\", \"irrelevant\", \"less\"), in sentences that are\n  already negative, or where \"have\"/\"do\" is the main verb.\nSentences and chunks with glued text (a run of 28 or more letters: lost spaces from PDF extraction) are excluded,\nand so are quoted prompt templates (\"You are ...\"). `rejection_audit` counts each rule over the whole pool.",
+ "built_at": "2026-11-16T16:02:15.334604+00:00"
 }

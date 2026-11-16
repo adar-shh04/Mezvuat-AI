@@ -110,7 +110,7 @@ Executed on the dev machine, branch `phase-2`, while the ModelMesh benchmark was
 | `mypy` | no issues in 92 source files |
 | `lint-imports` | 7 contracts kept, 0 broken |
 | `python ../scripts/export_openapi.py --check` | `frontend/openapi.json` is up to date |
-| `pytest -q` with the compose Postgres and Qdrant up | **328 passed, 0 skipped** (281 before). The live-model test ran because the model is in the local cache. |
+| `pytest -q` with the compose Postgres and Qdrant up | **328 passed, 0 skipped** (281 before); **339 passed** after the v2 pair rules (11 more skip-rule tests). The live-model test ran because the model is in the local cache. |
 | `npm run typecheck`, `npm run lint`, `npm run build` | no errors, no problems, compiled |
 | `npx playwright test` (dev server, mocked backend) | **3 passed** |
 
@@ -158,9 +158,55 @@ The new tests are in `tests/unit/test_nli_verifier.py` (20) and `tests/unit/test
 
 - **Review command:** `.\scripts\review.ps1 nli`. Nothing is labelled yet.
 
+### Version 2 of the set, rebuilt before any labelling
+
+The coordinator reviewed v1 and found about 10 of the 50 perturbations that changed no meaning or produced broken text:
+- numbers inside citation brackets;
+- version, licence, dataset or venue numbers;
+- a digit taken out of a grouped number;
+- "above" swapped for "below";
+- name swaps that were not comparisons;
+- double negatives.
+
+v2 (`nli-pairs-v2`) adds a skip rule for each, plus a few more I found while reading every v2 perturbation: dash ranges, ratios, metric names in swaps, idioms such as "no longer" and "how many", and "have" or "do" as the main verb. Each rule has a unit test that uses the cases from the review.
+
+**Result:** still 150 pairs from 29 papers, with 50/50/50 by expected label and the same per-method counts as above. 147 of the 150 pairs differ from v1, because the filters changed the candidate pool. `review.human.jsonl` did not exist when the file was overwritten.
+
+**Rule counts.** Each rule is counted over the whole pool of 5,196 candidate sentences: per number occurrence for the number rules, per sentence for the others. The numbers are in `manifest.json` under `rejection_audit`.
+
+| Rule | Rejected |
+|---|---|
+| number in a citation bracket | 602 |
+| unmeasured number in a sentence with no comparison | 607 |
+| section, table or figure number | 284 |
+| year | 147 |
+| end of a dash range | 110 |
+| number right after a name | 53 |
+| no valid replacement | 44 |
+| version, licence, dataset or venue | 17 |
+| antonym: deictic or positional word | 104 |
+| antonym: fixed term, idiom or discourse marker | 66 |
+| negation: sentence already negative | 467 |
+| negation: a negating word at the insertion point | 187 |
+| negation: "have" or "do" as the main verb | 60 |
+| swap: no comparison in the sentence | 5,032 |
+| swap: no name on both sides of the comparison in one clause | 142 |
+| swap: names contain each other | 5 |
+| swap: first name is not the subject | 2 |
+| swap: a name is repeated | 2 |
+
+**Perturbations possible after these rules:** number 476, negation 1,721, antonym 1,012, swap 13.
+
+**Known extraction issue: glued text.** PyMuPDF drops the spaces in some text of the RAG-Stack paper, for example "retrievalandgeneration:theretrieverruns". In the whole corpus, 53 of 10,125 chunks contain a run of 28 or more letters:
+- 37 of RAG-Stack's 94 chunks;
+- most of the others contain only long CamelCase identifiers such as `MultipleNegativesRankingLoss`;
+- one train-split paper has a short glued run.
+
+Among the val chunks the builder can use, 34 are excluded for this reason, from 3 papers. The ingestion pipeline does not fix the glued text, so retrieval and quote matching on those chunks see it as it is.
+
 ## CPU latency
 
-Measured on the 150 pairs, with 6 torch threads, while the benchmark shared the machine:
+Measured on the 150 v1 pairs, with 6 torch threads, while the benchmark shared the machine:
 
 | Measure | Result |
 |---|---|

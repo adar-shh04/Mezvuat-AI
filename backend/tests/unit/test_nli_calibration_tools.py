@@ -89,6 +89,150 @@ def test_sentence_filter_rejects_references_formulas_and_fragments() -> None:
         assert not nli_pairs.good_sentence(bad), bad
 
 
+# ----- skip rules (v2): one test per rule, with the cases found in the review of v1 -----------------------------------
+
+
+def _number(sentence: str) -> tuple[Any, Counter[str]]:
+    stats: Counter[str] = Counter()
+    return nli_pairs.perturb_number(sentence, random.Random(7), stats), stats  # noqa: S311
+
+
+def test_numbers_inside_citation_brackets_are_never_changed() -> None:
+    result, stats = _number("Prior work [22,19,9,8] and later studies [13, 23, 61] use dense retrieval at scale.")
+    assert result is None and stats["number:inside_citation_brackets"] == 3
+
+
+def test_versions_licences_dataset_names_and_venues_are_not_quantities() -> None:
+    for sentence, rule in (
+        ("The code is released under the Apache 2.0 licence for everyone.", "number:version_licence_dataset_or_venue"),
+        ("We evaluate the reader on SQuAD 2.0 and report the exact match.", "number:version_licence_dataset_or_venue"),
+        ("We evaluate the reader on TriviaQA 1.0 and report the exact match.", "number:after_a_name"),
+        ("We use version 3 of the toolkit for all the experiments here.", "number:version_licence_dataset_or_venue"),
+    ):
+        result, stats = _number(sentence)
+        assert result is None and stats[rule] == 1, sentence
+    # A venue year written with an apostrophe is not even a candidate.
+    assert _number("This paper appears at CIKM \u201926 in the applied research track.")[0] is None
+    assert _number("This paper appears at CIKM '26 in the applied research track.")[0] is None
+
+
+def test_grouped_numbers_are_changed_whole_or_not_at_all() -> None:
+    result, _ = _number("The corpus holds 14,692,232 passages after deduplication.")
+    assert result is not None
+    text, detail = result
+    assert detail["from"] == "14,692,232" and "," in detail["to"] and detail["to"] in text
+    assert "14,692,232" not in text and "7," not in text.replace(detail["to"], "")
+
+
+def test_years_ranges_ratios_and_unmeasured_numbers_are_skipped() -> None:
+    for sentence, rule in (
+        ("In 2024 the community moved on to retrieval-augmented generation.", "number:year"),
+        ("Each query requires reasoning over 2\u20134 documents in the collection.", "number:end_of_a_dash_range"),
+        (
+            "The pipeline has 3 stages that run one after another on the server.",
+            "number:not_a_measurement_or_comparison",
+        ),
+    ):
+        result, stats = _number(sentence)
+        assert result is None and stats[rule] >= 1, sentence
+    assert _number("PRR improves or matches the baseline in 94/120 conditions overall.")[0] is None
+    assert _number("Linear interpolation merges all parameters with weights 2:1:1 in our runs.")[0] is None
+
+
+def test_measured_numbers_are_preferred_over_other_numbers() -> None:
+    result, _ = _number("Across 3 datasets the reranker gains 4.1 points of nDCG over BM25.")
+    assert result is not None and result[1]["from"] == "4.1"
+
+
+def test_deictic_and_positional_words_are_not_antonyms() -> None:
+    stats: Counter[str] = Counter()
+    assert nli_pairs.perturb_antonym("The pipeline described above runs on one machine.", stats) is None
+    assert stats["antonym:deictic_or_positional_word"] == 1
+    swapped = nli_pairs.perturb_antonym("As described above, recall is higher with fusion.")
+    assert swapped is not None and swapped[1] == {"from": "higher", "to": "lower"}
+
+
+def test_fixed_terms_idioms_and_discourse_markers_are_not_antonyms() -> None:
+    for sentence in (
+        "Retrieval augmented generation helps large language models answer questions.",
+        "The updated synthesis no longer described the impacts in chemical terms.",
+        "More broadly, the study highlights the importance of retrieval precision.",
+        "To better exploit the training signal, we add a joint reranker.",
+        "We ask how many escalators the building has in the example query.",
+        "The local result should be read as a lower-level systems component.",
+    ):
+        stats: Counter[str] = Counter()
+        assert nli_pairs.perturb_antonym(sentence, stats) is None, sentence
+        assert stats["antonym:fixed_term_idiom_or_discourse_marker"] >= 1, sentence
+
+
+def test_swaps_need_two_distinct_systems_around_a_comparison() -> None:
+    for sentence, rule in (
+        ("REACT-BM25 outperforms REACT on every benchmark in the suite.", "swap:names_contain_each_other"),
+        ("ColBERT and BM25 are both used throughout this study.", "swap:no_comparative_relation"),
+        ("A scorer fine-tuned on NASA- EOBench beats cosine and BM25 baselines.", "swap:first_name_is_not_the_subject"),
+        ("BGE scores well overall; the comparison with ColBERT is in the appendix.", "swap:no_comparative_relation"),
+    ):
+        stats: Counter[str] = Counter()
+        assert nli_pairs.perturb_swap(sentence, stats) is None, sentence
+        assert stats[rule] == 1, sentence
+    # A metric is what is compared, not a system: "F1 exceeds ... PPR" must not become "PPR exceeds ... F1".
+    assert nli_pairs.perturb_swap("Its average F1 exceeds those of PPR and beam search by 0.8 points.") is None
+    assert nli_pairs.perturb_swap("NEST achieves lower latency than CHyD on QuoteSum.") == (
+        "CHyD achieves lower latency than NEST on QuoteSum.",
+        {"from": "NEST ... CHyD", "to": "CHyD ... NEST"},
+    )
+
+
+def test_negation_skips_words_that_already_negate_and_main_verbs() -> None:
+    for sentence, rule in (
+        (
+            "The model expresses uncertainty when evidence is insufficient for an answer.",
+            "negation:negative_word_at_insertion_point",
+        ),
+        (
+            "Some facts of a case may be irrelevant to some of its questions.",
+            "negation:negative_word_at_insertion_point",
+        ),
+        (
+            "Data discovery is less a problem of scarcity than of fragmented metadata.",
+            "negation:negative_word_at_insertion_point",
+        ),
+        (
+            "Five ArguAna queries have judged-positive documents missing from the archive.",
+            "negation:have_or_do_as_main_verb",
+        ),
+        (
+            "What these paradigms lack is an explicit evaluator for candidate sets.",
+            "negation:sentence_already_negative",
+        ),
+    ):
+        stats: Counter[str] = Counter()
+        assert nli_pairs.perturb_negation(sentence, stats) is None, sentence
+        assert stats[rule] == 1, sentence
+    assert nli_pairs.perturb_negation("Software development has been central to the community.") == (
+        "Software development has not been central to the community.",
+        {"from": "has", "to": "has not"},
+    )
+
+
+def test_glued_text_and_prompt_templates_never_reach_labelling() -> None:
+    glued = "The two core stages are retrievalandgeneration:theretrieverrunsavectorsearch over the corpus."
+    assert not nli_pairs.good_sentence(glued)
+    assert not nli_pairs.good_sentence("You are an expert relevance judge for conversational search tasks.")
+    chunk = corpus(1)[0]
+    broken = DomainChunk(**{**chunk.__dict__, "chunk_id": "glued", "text": chunk.text + " " + glued})
+    assert [c.chunk_id for c in nli_pairs.eligible_chunks([chunk, broken])] == [chunk.chunk_id]
+    assert len(nli_pairs.eligible_chunks([chunk, broken], exclude_glued=False)) == 2
+
+
+def test_the_audit_counts_rules_over_the_whole_pool() -> None:
+    audit = nli_pairs.rejection_audit(corpus(), seed=13)
+    assert audit["candidate_sentences"] > 0 and audit["glued_text_chunks_excluded"] == 0
+    assert audit["perturbations_possible"]["perturb_number"] > 0
+    assert all(":" in reason for reason in audit["rejections"])
+
+
 # ----- the pair builder -----------------------------------------------------------------------------------------------
 
 TEMPLATES = (

@@ -533,6 +533,7 @@ def cmd_nli_pairs(args: argparse.Namespace) -> None:
         "quotas": {m: {"expected": e, "quota": n} for m, (e, n) in nli_pairs.QUOTAS.items()},
         "max_pairs_per_paper": nli_pairs.MAX_PAIRS_PER_PAPER,
         "summary": info,
+        "rejection_audit": nli_pairs.rejection_audit(chunks.values(), seed=SEED, split=args.split),
         "method": (nli_pairs.__doc__ or "").strip(),
         "built_at": _now(),
     }
